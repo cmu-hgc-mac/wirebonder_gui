@@ -1,7 +1,7 @@
 # wirebonder_gui
 Packages required:
 ```
-pip install pyqt5 asyncio asyncpg
+pip install pyqt5 pandas asyncpg
 ```
 Opens on home page; select module type from dropdown and type in last four digits of module name. Below input, a list of modules that need to be revisited is shown. This includes any module with at least one channel marked "needs to be grounded," or if module pedestal testing has occured, any module that has a cell marked as dead/noisy during the test but has not been marked as grounded in the wirebonder GUI. This marking as "needs to be revisited" can be overriden by checking the "mark as done" box on the front and back pages of the GUI for that module.
 
