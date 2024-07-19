@@ -15,7 +15,6 @@ import geometries.module_type_at_mac as mod_type_mac
 import conn
 from graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, button_font_size, text_font_size
 
-#test comment
 scaling_factor = 90
 hex_length = 0
 y_offset = add_y_offset
