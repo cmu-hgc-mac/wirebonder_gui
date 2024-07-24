@@ -263,7 +263,7 @@ class BackPage(QMainWindow):
             self.marked_done.setCheckState(Qt.Checked)
 
         reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget)
-        reset_button.setGeometry(w_width-10-reset_button.width,10, reset_button.width, reset_button.height)
+        reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
         reset_button.show()
 
         pads = []

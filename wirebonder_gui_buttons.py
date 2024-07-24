@@ -170,6 +170,8 @@ class HalfHexWithButtons(Hex):
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
+        x_offset = 0
+        y_offset = 0
         if self.channeltype == 2:
             x_offset = -12
         elif self.channeltype == 3:

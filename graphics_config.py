@@ -10,5 +10,6 @@ add_x_offset = 0
 
 
 #dimensions of scroll areas
-scroll_width = 1450 #doesn't need to be changed
-scroll_height = 1500 #doesn't need to be changed
+#doesn't need to be changed
+scroll_width = 1450
+scroll_height = 1500
