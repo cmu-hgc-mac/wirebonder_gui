@@ -58,8 +58,7 @@ class FrontPage(QMainWindow):
         #make label of state counter
         for state in self.state_counter:
             lab = QLabel(f"{state} missing bonds: {self.state_counter[state]}", self.widget)
-            lab.setFont(QFont('Arial', 14))
-            lab.setGeometry(20,10 + state * 20,200, 20)
+            lab.setGeometry(20,10 + state * 20,250, 20)
             self.state_counter_labels[state] = lab
 
         for i in range(60):  ##### This allows scrolling. Weirdly..
@@ -222,8 +221,7 @@ class BackPage(QMainWindow):
         #make label of state counter
         for state in self.state_counter:
             lab = QLabel(f"{state} missing bonds: {self.state_counter[state]}", self.widget)
-            lab.setFont(QFont('Arial', 14))
-            lab.setGeometry(20,10 + state * 20,200, 20)
+            lab.setGeometry(20,10 + state * 20,250, 20)
             self.state_counter_labels[state] = lab
 
         for i in range(60):  ##### This allows scrolling. Weirdly..
