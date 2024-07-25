@@ -56,6 +56,36 @@ async def fetch_PostgreSQL(query):
 #     result = await fetch_PostgreSQL(query)
 #     return result
 
+def add_new_to_db(modname):
+    read_query = f"""SELECT EXISTS(SELECT module_name
+        FROM module_info
+        WHERE module_name ='{modname}');"""
+    check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+    if not check['exists']:
+        db_upload = {
+            'module_name' : modname
+        }
+
+        try:
+            asyncio.run(upload_PostgreSQL('module_info', db_upload)) ## python 3.7
+        except:
+            (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
+
+    read_query = f"""SELECT module_no
+        FROM module_info
+        WHERE module_name = '{modname}';"""
+    module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
+
+    db_upload = {
+        'module_no' : module_no
+    }
+
+    try:
+        asyncio.run(upload_PostgreSQL('hexaboard', db_upload)) ## python 3.7
+    except:
+        (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
+
+
 #get list of modules to revisit
 def find_to_revisit():
     bad_modules = []

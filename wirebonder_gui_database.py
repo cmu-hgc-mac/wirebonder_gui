@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
-from postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps
+from postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
 from wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, InfoButton, SwitchPageButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
 import geometries.module_type_at_mac as mod_type_mac
 import conn
@@ -487,9 +487,12 @@ class MainWindow(QMainWindow):
         self.label3 = QLabel(self)
         self.modname = ''
         self.scrolllabel = ScrollLabel(self)
-        self.scrolllabel.setGeometry(int(w_width/2-75), 540, 300, 100)
-        self.label5 = QLabel("Information not found,\nPlease enter valid module serial number",self)
+        self.scrolllabel.setGeometry(int(w_width/2-75), 580, 300, 100)
+        self.label5 = QLabel("Information not found,\nPlease enter valid module serial number or",self)
         self.label5.setGeometry(int(w_width/2-75), 490, 300, 50)
+        self.addbutton = GreyButton("Add as blank module",100,25,self)
+        self.addbutton.setGeometry(int(w_width/2-75), 540, 100, 50)
+        self.addbutton.clicked.connect(self.add_new_to_db_helper)
         self.show_start()
 
     #showing home page
@@ -507,26 +510,62 @@ class MainWindow(QMainWindow):
         self.logolabel.show()
         self.namelabel.show()
         self.label5.hide()
+        self.addbutton.hide()
         string = 'To revisit (frontside only):\n'
         for module_name in find_to_revisit():
             string = string + (module_name + "\n")
         self.scrolllabel.setText(string)
 
     def load(self, page):
+        self.label5.setText("Information not found,\nPlease enter valid module serial number or")
         #check if the module exists
         self.modname = self.combobox.currentText()+"-"+self.modid.text()
         read_query = f"""SELECT EXISTS(SELECT module_name
         FROM module_info
         WHERE module_name ='{self.modname}');"""
         check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-        if check['exists'] or page == "encapspage":
+
+        read_query = f"""SELECT EXISTS(SELECT module_name
+        FROM module_info
+        WHERE module_name ='{self.modname}');"""
+        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+
+        read_query = f"""SELECT EXISTS(SELECT module_name
+        FROM module_info
+        WHERE module_name ='{self.modname}');"""
+        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+
+        if check['exists']:
+            read_query = f"""SELECT module_no
+            FROM module_info
+            WHERE module_name = '{self.modname}';"""
+            module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
+
+            read_query = f"""SELECT EXISTS(SELECT module_no
+            FROM hexaboard
+            WHERE module_no ='{module_no}');"""
+            check2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+
+            read_query = f"""SELECT EXISTS(SELECT module_name
+            FROM front_wirebond
+            WHERE module_name ='{self.modname}');"""
+            check3 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+
+            if check2['exists'] or check3['exists']:
+                self.begin_program(page)
+            else:
+                self.label5.show()
+                self.addbutton.show()
+        elif page == "encapspage":
             self.begin_program(page)
         else:
             self.label5.show()
+            self.addbutton.show()
 
     #create pages, button to switch between pages, button to save
     def begin_program(self,page):
         self.label5.hide()
+        self.addbutton.hide()
         hexaboard_type = self.modname[5] + self.modname[7]
         global hex_length, y_offset, num_non_signal, x_offset
         if self.modname[5] == "L":
@@ -616,6 +655,10 @@ class MainWindow(QMainWindow):
         elif page.pageid == "encapspage":
             upload_encaps(page.modules, page.techname.text(), page.comments.toPlainText())
         self.show_start()
+
+    def add_new_to_db_helper(self):
+        add_new_to_db(self.combobox.currentText()+"-"+self.modid.text())
+        self.label5.setText("Added as blank hexaboard to database")
 
     def paintEvent(self, event):
         painter = QPainter(self)
