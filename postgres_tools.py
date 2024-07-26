@@ -220,6 +220,7 @@ def read_front_db(modname, df_pad_map):
         WHERE module_name = '{modname}'
         ORDER BY frwirebond_no DESC LIMIT 1;"""
         front_wirebond_info = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+
         '''
         read_query = f"""SELECT technician, comment
         FROM front_encap
@@ -240,6 +241,21 @@ def read_front_db(modname, df_pad_map):
             else:
                 state = is_grounded = 0
             df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {'state' : state, 'grounded' : is_grounded}
+
+    #autofill wedge_id and spool_batch with the most recent one used if it's blank
+    if front_wirebond_info['wedge_id'] == None or front_wirebond_info['wedge_id'] == '':
+        read_query = f"""SELECT module_name, wedge_id
+        FROM front_wirebond
+        ORDER BY frwirebond_no DESC LIMIT 1;"""
+        old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        front_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+
+    if front_wirebond_info['spool_batch'] == None or front_wirebond_info['spool_batch'] == '':
+        read_query = f"""SELECT module_name, spool_batch
+        FROM front_wirebond
+        ORDER BY frwirebond_no DESC LIMIT 1;"""
+        old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        front_wirebond_info['spool_batch'] = old_w_i['spool_batch']
 
     return {"df_front_states" : df_front_states,  "front_encaps_info":None,
         "front_wirebond_info": front_wirebond_info}

@@ -7,21 +7,19 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QPushButt
 from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
-'''
+
 class MainWindow2(QMainWindow):
     def __init__(self):
         super().__init__()
-        fname = f'./L5_hex_positions.csv'
+        fname = f'./geometries/HR_hex_positions.csv'
         with open(fname, 'r') as file:
             #read in all the pad positions
             df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition'])
             df_pad_map = df_pad_map.set_index("padnumber")
         print(df_pad_map)
         for index,row0 in df_pad_map.iterrows():
-            if index > 444:
-                continue
             pad = Hex(25, str(index), [0,0],'#d1d1d1', self)
-            pad.setGeometry(int(float(row0["xposition"]*90) + 700),int(float(row0["yposition"]*-90) + 500), int(pad.radius)*2, int(pad.radius)*2)
+            pad.setGeometry(int(float(row0["xposition"]*90) + 700),int(float(row0["yposition"]*-90) + 200), int(pad.radius)*2, int(pad.radius)*2)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -49,3 +47,4 @@ with open(fname, 'r') as file:
 
 sorted_df = df_pad_map.sort_values(by=['PAD'], ascending=True)
 sorted_df.to_csv(f'./geometries/LR_pad_to_channel_mapping2.csv')
+'''
