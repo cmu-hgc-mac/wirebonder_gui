@@ -8,8 +8,8 @@ from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 
-from postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_encaps, upload_bond_pull_test, read_front_db, read_back_db, read_pull_db
-from graphics_config import button_font_size
+from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_encaps, upload_bond_pull_test, read_front_db, read_back_db, read_pull_db
+from config.graphics_config import button_font_size
 font = QFont("Calibri", button_font_size)
 
 #normal cell class (doesn't include calibration channels)

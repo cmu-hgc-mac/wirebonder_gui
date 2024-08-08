@@ -17,9 +17,11 @@ class MainWindow2(QMainWindow):
             df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition'])
             df_pad_map = df_pad_map.set_index("padnumber")
         print(df_pad_map)
+        i = 0
         for index,row0 in df_pad_map.iterrows():
             pad = Hex(25, str(index), [0,0],'#d1d1d1', self)
             pad.setGeometry(int(float(row0["xposition"]*90) + 700),int(float(row0["yposition"]*-90) + 200), int(pad.radius)*2, int(pad.radius)*2)
+            i += 1
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

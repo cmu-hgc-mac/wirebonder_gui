@@ -2,7 +2,7 @@ import sys
 import asyncio, asyncpg
 import numpy as np
 import pandas as pd
-from conn import host, database, user, password
+from config.conn import host, database, user, password
 from datetime import datetime
 
 # Write query
@@ -311,6 +311,21 @@ def read_back_db(modname, df_backside_mbites_pos):
             else:
                 state = 0
             df_back_states.loc[df_backside_mbites_pos.loc[index]['padnumber']] = {"state": state,"grounded":0}
+
+        #autofill wedge_id and spool_batch with the most recent one used if it's blank
+    if back_wirebond_info['wedge_id'] == None or back_wirebond_info['wedge_id'] == '':
+        read_query = f"""SELECT module_name, wedge_id
+        FROM back_wirebond
+        ORDER BY bkwirebond_no DESC LIMIT 1;"""
+        old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        back_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+
+    if back_wirebond_info['spool_batch'] == None or back_wirebond_info['spool_batch'] == '':
+        read_query = f"""SELECT module_name, spool_batch
+        FROM back_wirebond
+        ORDER BY bkwirebond_no DESC LIMIT 1;"""
+        old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        back_wirebond_info['spool_batch'] = old_w_i['spool_batch']
 
     return { "df_back_states": df_back_states, "back_encaps_info" : None,
        "back_wirebond_info": back_wirebond_info}

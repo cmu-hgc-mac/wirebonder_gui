@@ -9,11 +9,11 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
-from postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
-from wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, InfoButton, SwitchPageButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
+from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
+from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, InfoButton, SwitchPageButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
 import geometries.module_type_at_mac as mod_type_mac
-import conn
-from graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, button_font_size, text_font_size
+import config.conn as conn
+from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, button_font_size, text_font_size
 
 scaling_factor = 90
 hex_length = 0

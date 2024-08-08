@@ -14,7 +14,7 @@ for i2 in range(12):
     for j2 in range(3+int((i+1)/2)):
 
         j = 3+int((i+1)/2) - j2 -1
-        xpos  = ((i+1)%2)*0.54/2 + j*0.54
+        xpos  = ((i2)%2)*0.54/2 + j2*0.54
         ypos = -0.47*(11-i) -0.47/2
         df.loc[len(df)] = ['',xpos,ypos]
 
