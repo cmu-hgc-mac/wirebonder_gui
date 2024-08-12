@@ -9,9 +9,6 @@ pip install pyqt5 asyncpg numpy pandas
 ```
 git clone https://github.com/nkalliney1/wirebonder_gui.git
 ```
-**Note: the files [conn.py](conn.py) and [graphics_config.py](graphics_config.py) are NOT downloaded when you do this. This is because the .gitignore file tells git to not pull those files. This is because these files contain computer-specific information, so without this file, you would need to manually revert these files every time you ```git pull```. 
-
-You need to manually download [conn.py](conn.py) and [graphics_config.py](graphics_config.py) and move them to the directory ```wirebonder_gui```.
 
 Go into [conn.py](conn.py) and edit your ```institution_name``` and ```inst_code``` to your respective institution. Change ```host``` to the static IP address of your database computer. Run the code and edit the graphics configuration file.
 
