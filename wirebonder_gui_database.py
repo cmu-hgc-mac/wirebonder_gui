@@ -72,36 +72,67 @@ class FrontPage(QMainWindow):
         info_label.setOpenExternalLinks(True)
         info_label.setGeometry(scroll_width-40, 110, 100, 25)
 
+        lab6 = QLabel("<b>Wirebonding Information:</b>", self.widget)
+        lab6.setGeometry(20,275, 200, 25)
         lab6 = QLabel("Technician CERN ID:", self.widget)
-        lab6.setGeometry(20,100, 150, 25)
+        lab6.setGeometry(20,300, 150, 25)
         self.techname = QLineEdit(self.widget)
-        self.techname.setGeometry(20,125, 150, 25)
+        self.techname.setGeometry(20,325, 150, 25)
         self.techname.setText(self.info_dict["front_wirebond_info"]["technician"])
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,285,150,50)
+        lab4.setGeometry(20,455,150,50)
         self.comments = QTextEdit(self.widget)
-        self.comments.setGeometry(20, 330, 150, 150)
+        self.comments.setGeometry(20, 500, 150, 150)
         self.comments.setText(self.info_dict["front_wirebond_info"]["comment"])
         lab4 = QLabel("Wedge ID:", self.widget)
-        lab4.setGeometry(20,140,150,50)
+        lab4.setGeometry(20,340,150,50)
         self.wedgeid = QLineEdit(self.widget)
-        self.wedgeid.setGeometry(20, 180, 150, 25)
+        self.wedgeid.setGeometry(20, 380, 150, 25)
         self.wedgeid.setText(self.info_dict["front_wirebond_info"]["wedge_id"])
         lab4 = QLabel("Spool batch:", self.widget)
-        lab4.setGeometry(20,200,150,50)
+        lab4.setGeometry(20,400,150,50)
         self.spool = QLineEdit(self.widget)
-        self.spool.setGeometry(20, 240, 150, 25)
+        self.spool.setGeometry(20, 440, 150, 25)
         self.spool.setText(self.info_dict["front_wirebond_info"]["spool_batch"])
+
+
         label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: 2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: Needs to be grounded<br>Black fill: Grounded",self.widget)
         label5.setWordWrap(True)
         label5.setTextFormat(Qt.RichText)
-        label5.setGeometry(20,490, 170,150)
+        label5.setGeometry(20,90, 170,150)
         self.marked_done = QCheckBox("Mark as done", self.widget)
-        self.marked_done.setGeometry(20,275,150,25)
+        self.marked_done.setGeometry(20,240,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
-        reset_button = ResetButton(self.modname, "front", self.df_pad_map, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget)
+
+        lab6 = QLabel("<b>Pull Test (optional):</b>", self.widget)
+        lab6.setGeometry(20,675, 200, 25)
+        lab6 = QLabel("Technician CERN ID:", self.widget)
+        lab6.setGeometry(20,700, 150, 25)
+        self.pull_techname = QLineEdit(self.widget)
+        self.pull_techname.setGeometry(20,725, 150, 25)
+        lab4 = QLabel("Comments:", self.widget)
+        lab4.setGeometry(20,855,150,50)
+        self.pull_comments = QTextEdit(self.widget)
+        self.pull_comments.setGeometry(20, 900, 150, 150)
+        lab4 = QLabel("Mean:", self.widget)
+        lab4.setGeometry(20,740,150,50)
+        self.mean = QLineEdit(self.widget)
+        self.mean.setGeometry(20, 780, 150, 25)
+        lab4 = QLabel("Standard deviation:", self.widget)
+        lab4.setGeometry(20,800,150,50)
+        self.std = QLineEdit(self.widget)
+        self.std.setGeometry(20, 840, 150, 25)
+
+        #load pull test data
+        self.pull_techname.setText(str(self.info_dict["pull_info"]["technician"]))
+        self.mean.setText(str(self.info_dict["pull_info"]["avg_pull_strg_g"]))
+        self.std.setText(str(self.info_dict["pull_info"]["std_pull_strg_g"]))
+        self.pull_comments.setText(str(self.info_dict["pull_info"]["comment"]))
+
+        reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
+            self.pull_techname, self.pull_comments, self.std, self.mean, self.widget)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
         reset_button.show()
 
@@ -294,61 +325,6 @@ class BackPage(QMainWindow):
         pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset - diff), int(pad.radius*2), int(pad.radius*2))
 
 
-#"results" page
-class PullPage(QMainWindow):
-    def __init__(self,modname,info_dict):
-        super().__init__()
-        self.pageid = "pullpage"
-        self.setWindowTitle("Tri-State Buttons")
-        self.setGeometry(0, 0, w_width, w_height)
-
-        self.scroll = QScrollArea()
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setWidgetResizable(True)  # Allow the widget inside the scroll area to resize
-        self.setCentralWidget(self.scroll)
-
-        self.widget = QWidget()
-        self.scroll.setWidget(self.widget)
-        self.vbox = QVBoxLayout()  # Create a layout for the buttons
-        self.widget.setLayout(self.vbox)  # Set the layout for the widget contained within the scroll area
-        self.widget.adjustSize()
-        self.modname = modname
-        self.info_dict = info_dict
-
-        for i in range(60):  ##### This allows scrolling. Weirdly..
-            label = QLabel(f"")
-            self.vbox.addWidget(label)
-
-        lab2 = QLabel("Technician CERN ID:", self)
-        lab2.setGeometry(20,20, 150, 25)
-        self.techname = QLineEdit(self)
-        self.techname.setGeometry(20,45, 150, 25)
-        lab3 = QLabel("Results from Pull Testing (optional):", self)
-        lab3.setGeometry(20,90, 250, 25)
-        lab4 = QLabel("Mean:", self)
-        lab4.setGeometry(20,115, 150, 25)
-        self.mean = QLineEdit(self)
-        self.mean.setGeometry(20,140, 150, 25)
-        lab5 = QLabel("Standard deviation:", self)
-        lab5.setGeometry(20,165, 150, 25)
-        self.std= QLineEdit(self)
-        self.std.setGeometry(20,190, 150, 25)
-        lab6 = QLabel("Comments:", self)
-        lab6.setGeometry(20,215, 150, 25)
-        self.comments= QTextEdit(self)
-        self.comments.setGeometry(20,245, 300, 150)
-
-        #load pull test data
-        self.techname.setText(str(self.info_dict["pull_info"]["technician"]))
-        self.mean.setText(str(self.info_dict["pull_info"]["avg_pull_strg_g"]))
-        self.std.setText(str(self.info_dict["pull_info"]["std_pull_strg_g"]))
-        self.comments.setText(str(self.info_dict["pull_info"]["comment"]))
-
-        reset_button = ResetButton2(self.modname, self.techname, self.comments, self.mean, self.std, "Reset to last\nsaved version\n(irreversible)", 90, 50, self)
-        reset_button.setGeometry(20,415, reset_button.width, reset_button.height)
-        reset_button.show()
-
 class EncapsPage(QMainWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
@@ -465,9 +441,6 @@ class MainWindow(QMainWindow):
         self.load_button2 = GreyButton("Load back", 75, 25, self)
         self.load_button2.setGeometry(int(w_width/2+20), 470, 75, 25)
         self.load_button2.clicked.connect(lambda: self.load("backpage"))
-        self.load_button3 = GreyButton("Load pull info", 75, 25, self)
-        self.load_button3.setGeometry(int(w_width/2+20+75+20), 470, 75, 25)
-        self.load_button3.clicked.connect(lambda: self.load("pullpage"))
         self.load_button4 = GreyButton("Encapsulation", 75, 25, self)
         self.load_button4.setGeometry(int(w_width/2-75), 280, 75, 25)
         self.load_button4.clicked.connect(lambda: self.load("encapspage"))
@@ -619,10 +592,6 @@ class MainWindow(QMainWindow):
                 frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict)
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
-            elif page == "pullpage":
-                pullpage = PullPage(self.modname, info_dict)
-                self.widget.addWidget(pullpage)
-                self.widget.setCurrentWidget(pullpage)
             elif page == "backpage":
                 backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict)
                 self.widget.addWidget(backpage)
@@ -648,8 +617,7 @@ class MainWindow(QMainWindow):
         page = widget.currentWidget()
         if page.pageid == "frontpage":
             upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
-        elif page.pageid == "pullpage":
-            upload_bond_pull_test(self.modname, page.mean.text(), page.std.text(), page.techname.text(), page.comments.toPlainText())
+            upload_bond_pull_test(self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText())
         elif page.pageid == "backpage":
             upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
         elif page.pageid == "encapspage":

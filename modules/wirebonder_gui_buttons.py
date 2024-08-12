@@ -317,7 +317,7 @@ class GreyButton(QPushButton):
 
 #button that resets states to the most recent saved version,
 #erasing any changes made since then
-#for both front + back wirebonding pages
+#for back wirebonding page
 class ResetButton(GreyButton):
     def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, parent = None):
         super().__init__(button_text, width, height, parent)
@@ -330,15 +330,9 @@ class ResetButton(GreyButton):
         self.clicked.connect(self.reset)
 
     def reset(self):
-        if self.side == "front":
-            df_states = read_front_db(self.module_name, self.df_pos)["df_front_states"]
-            self.techname.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["technician"])
-            self.comments.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["comment"])
-
-        elif self.side == "back":
-            df_states = read_back_db(self.module_name, self.df_pos)["df_back_states"]
-            self.techname.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["technician"])
-            self.comments.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["comment"])
+        df_states = read_back_db(self.module_name, self.df_pos)["df_back_states"]
+        self.techname.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["technician"])
+        self.comments.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["comment"])
 
         for index in df_states.index:
             self.buttons[str(int(index))].state = df_states.loc[int(index)]['state']
@@ -348,23 +342,38 @@ class ResetButton(GreyButton):
 
 #button that resets states to the most recent saved version,
 #erasing any changes made since then
-#for pull testing page
+#for front page
 class ResetButton2(GreyButton):
-    def __init__(self, module_name, techname, comments, avg, sd, button_text, width, height, parent = None):
+    def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, pull_techname, pull_comments, std, mean, parent = None):
         super().__init__(button_text, width, height, parent)
+        self.buttons = buttons
         self.module_name = module_name
-        self.avg = avg
+        self.df_pos = df_pos
         self.techname = techname
         self.comments = comments
-        self.sd = sd
+        self.side = side
+        self.module_name = module_name
+        self.mean = mean
+        self.pull_techname = pull_techname
+        self.pull_comments = pull_comments
+        self.std = std
         self.clicked.connect(self.reset)
 
     def reset(self):
+        df_states = read_front_db(self.module_name, self.df_pos)["df_front_states"]
+        self.techname.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["technician"])
+        self.comments.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["comment"])
+
+        for index in df_states.index:
+            self.buttons[str(int(index))].state = df_states.loc[int(index)]['state']
+            self.buttons[str(int(index))].grounded = df_states.loc[int(index)]['grounded']
+            self.buttons[str(int(index))].update()
+
         info = read_pull_db(self.module_name)["pull_info"]
-        self.techname.setText(info["technician"])
-        self.comments.setText(info["comment"])
-        self.sd.setText(str(info["std_pull_strg_g"]))
-        self.avg.setText(str(info["avg_pull_strg_g"]))
+        self.pull_techname.setText(info["technician"])
+        self.pull_comments.setText(info["comment"])
+        self.std.setText(str(info["std_pull_strg_g"]))
+        self.mean.setText(str(info["avg_pull_strg_g"]))
 
 #button that resets states to default/nominal
 class SetToNominal(GreyButton):
@@ -519,8 +528,7 @@ class SaveButton(QPushButton):
         page = self.widget.currentWidget()
         if page.pageid == "frontpage":
             upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
-        elif page.pageid == "pullpage":
-            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.techname.text(), page.comments.toPlainText())
+            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText())
         elif page.pageid == "backpage":
             upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
         elif page.pageid == "encapspage":
