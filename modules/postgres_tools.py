@@ -394,6 +394,7 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
                 bond_type.append("N")
             elif buttons[button].grounded == 2:
                 bond_type.append("G")
+                list_grounded_cells.append(button)
 
     date = datetime.now().date()
     time = datetime.now().time()
