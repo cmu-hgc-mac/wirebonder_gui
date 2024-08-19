@@ -100,11 +100,12 @@ class FrontPage(QMainWindow):
         label5.setWordWrap(True)
         label5.setTextFormat(Qt.RichText)
         label5.setGeometry(20,90, 170,150)
-        self.marked_done = QCheckBox("Mark as done", self.widget)
-        self.marked_done.setGeometry(20,240,150,25)
+        self.wb_done = QCheckBox("Initial wirebonding done", self.widget)
+        self.wb_done.setGeometry(20,235,200,25)
+        self.marked_done = QCheckBox("Frontside complete", self.widget)
+        self.marked_done.setGeometry(20,255,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
-
 
         lab6 = QLabel("<b>Pull Test (optional):</b>", self.widget)
         lab6.setGeometry(20,675, 200, 25)
@@ -272,9 +273,9 @@ class BackPage(QMainWindow):
         self.techname.setGeometry(20,125, 150, 25)
         self.techname.setText(self.info_dict["back_wirebond_info"]["technician"])
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,285,150,50)
+        lab4.setGeometry(20,305,150,50)
         self.comments = QTextEdit(self.widget)
-        self.comments.setGeometry(20, 330, 150, 150)
+        self.comments.setGeometry(20, 350, 150, 150)
         self.comments.setText(self.info_dict["back_wirebond_info"]["comment"])
         lab4 = QLabel("Wedge ID:", self.widget)
         lab4.setGeometry(20,140,150,50)
@@ -286,8 +287,10 @@ class BackPage(QMainWindow):
         self.spool = QLineEdit(self.widget)
         self.spool.setGeometry(20, 240, 150, 25)
         self.spool.setText(self.info_dict["back_wirebond_info"]["spool_batch"])
-        self.marked_done = QCheckBox("Mark as done", self.widget)
-        self.marked_done.setGeometry(20,275,150,25)
+        self.wb_done = QCheckBox("Initial wirebonding done", self.widget)
+        self.wb_done.setGeometry(20,270,200,25)
+        self.marked_done = QCheckBox("Backside complete", self.widget)
+        self.marked_done.setGeometry(20,295,150,25)
         if self.info_dict["back_wirebond_info"]["wb_bk_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
@@ -353,9 +356,53 @@ class EncapsPage(QMainWindow):
         self.techname = QLineEdit(self)
         self.techname.setGeometry(300,45, 150, 25)
         lab6 = QLabel("Comments:", self)
-        lab6.setGeometry(300,70, 150, 25)
+        lab6.setGeometry(300,245, 150, 25)
         self.comments= QTextEdit(self)
-        self.comments.setGeometry(300,100, 300, 150)
+        self.comments.setGeometry(300,270, 300, 150)
+        label = QLabel("<b>Encapsulation</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label.setGeometry(300,70, 400, 25)
+        label = QLabel("Date: ", self)
+        label.setGeometry(300,95, 100, 25)
+        self.enc_date = QLineEdit(self)
+        self.enc_date.setGeometry(340,95, 150, 25)
+        label = QLabel("Time: ", self)
+        label.setGeometry(500,95, 100, 25)
+        self.enc_time = QLineEdit(self)
+        self.enc_time.setGeometry(550,95, 150, 25)
+        nowbutton1 = GreyButton("Now", 50, 25, self)
+        nowbutton1.setGeometry(725, 95, 50, 25)
+        nowbutton1.clicked.connect(lambda: self.set_to_now(self.enc_date, self.enc_time))
+
+        label = QLabel("Cure <b>start</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label.setGeometry(300,120, 400, 25)
+        label = QLabel("Date: ", self)
+        label.setGeometry(300,145, 100, 25)
+        self.start_date = QLineEdit(self)
+        self.start_date.setGeometry(340,145, 150, 25)
+        label = QLabel("Time: ", self)
+        label.setGeometry(500,145, 100, 25)
+        self.start_time = QLineEdit(self)
+        self.start_time.setGeometry(550,145, 150, 25)
+        nowbutton2 = GreyButton("Now", 50, 25, self)
+        nowbutton2.setGeometry(725, 145, 50, 25)
+        nowbutton2.clicked.connect(lambda: self.set_to_now(self.start_date, self.start_time))
+
+        label = QLabel("Cure <b>end</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label.setGeometry(300,170, 400, 25)
+        label = QLabel("Date: ", self)
+        label.setGeometry(300,195, 100, 25)
+        self.end_date = QLineEdit(self)
+        self.end_date.setGeometry(340,195, 150, 25)
+        label = QLabel("Time: ", self)
+        label.setGeometry(500,195, 100, 25)
+        self.end_time = QLineEdit(self)
+        self.end_time.setGeometry(550,195, 150, 25)
+        nowbutton2 = GreyButton("Now", 50, 25, self)
+        nowbutton2.setGeometry(725, 195, 50, 25)
+        nowbutton2.clicked.connect(lambda: self.set_to_now(self.end_date, self.end_time))
+
+        self.enc_done = QCheckBox("Encapsulation done", self.widget)
+        self.enc_done.setGeometry(300,220,200,25)
 
         self.label = QLabel("Module type:",self)
         self.label.setGeometry(20, 20, 150, 25)
@@ -412,6 +459,11 @@ class EncapsPage(QMainWindow):
         for module in self.modules:
             string = string + module +' ' + self.modules[module] + "\n"
         self.scrolllabel.setText(string)
+
+    def set_to_now(self,date, time):
+        now = datetime.now()
+        date.setText(str(now.month) + "/" + str(now.day) + "/" + str(now.year))
+        time.setText(str(now.hour)+":"+str(now.minute))
 
 #overarching window
 class MainWindow(QMainWindow):
@@ -484,7 +536,7 @@ class MainWindow(QMainWindow):
         self.namelabel.show()
         self.label5.hide()
         self.addbutton.hide()
-        string = 'To revisit (frontside only):\n'
+        string = 'Incomplete modules (frontside only right now):\n'
         for module_name in find_to_revisit():
             string = string + (module_name + "\n")
         self.scrolllabel.setText(string)

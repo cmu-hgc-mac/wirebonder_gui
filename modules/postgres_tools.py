@@ -394,7 +394,7 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
                 bond_type.append("N")
             elif buttons[button].grounded == 2:
                 bond_type.append("G")
-                list_grounded_cells.append(button)
+                list_grounded_cells.append(int(button))
 
     date = datetime.now().date()
     time = datetime.now().time()
@@ -521,7 +521,7 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment):
     #print(modname, 'uploaded!')
 
 #save pull test information to database
-def upload_encaps(modules, technician, comment):
+def upload_encaps(modules, technician, cure_start, cure_end, enc_done, comment):
     for module in modules:
         #get module number
         read_query = f"""SELECT module_no
