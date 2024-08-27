@@ -88,7 +88,7 @@ def add_new_to_db(modname):
 
 #get list of modules to revisit
 def find_to_revisit():
-    bad_modules = []
+    bad_modules = {}
     #get module numbers
     read_query = f"""SELECT module_name
         FROM module_info;"""
@@ -97,58 +97,33 @@ def find_to_revisit():
         read_query = f"""SELECT EXISTS(SELECT module_name
         FROM front_wirebond
         WHERE module_name ='{module['module_name']}');"""
-        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        check1 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        front_res = {"wb_fr_marked_done": False}
         #check if the module is in front wirebonding tables
-        if check['exists']:
-            read_query = f"""SELECT cell_no, bond_count_for_cell, bond_type, wb_fr_marked_done
+        if check1['exists']:
+            read_query = f"""SELECT wb_fr_marked_done
             FROM front_wirebond
             WHERE module_name = '{module['module_name']}'
             ORDER BY frwirebond_no DESC LIMIT 1;"""
             front_res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
-            '''read_query = f"""SELECT wb_bk_marked_done
+        read_query = f"""SELECT EXISTS(SELECT module_name
+        FROM back_wirebond
+        WHERE module_name ='{module['module_name']}');"""
+        check2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+        #check if the module is in front wirebonding tables
+        back_res = {"wb_fr_marked_done": False}
+        if check2['exists']:
+            read_query = f"""SELECT wb_bk_marked_done
             FROM back_wirebond
             WHERE module_name = '{module['module_name']}'
             ORDER BY bkwirebond_no DESC LIMIT 1;"""
-            back_res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]'''
+            back_res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
-            #adding [:] makes it a copy instead of the same list
-            new_cell_no = front_res['cell_no'][:]
-            new_bond_type = front_res['bond_type'][:]
-            new_bond_count_for_cell = front_res['bond_count_for_cell'][:]
-            #if module_pedestal_test is not empty (i.e. test has been run) for this particular module
-            read_query = f"""SELECT EXISTS(SELECT module_name
-            FROM module_pedestal_test
-            WHERE module_name ='{module['module_name']}');"""
-            check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-            if check['exists']:
-                read_query = f"""SELECT list_dead_cells, list_noisy_cells
-                FROM module_pedestal_test
-                WHERE module_name ='{module['module_name']}';"""
-                res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-                #cells that need to be grounded according to test table
-                if res['list_dead_cells'] != None:
-                    if res['list_noisy_cells'] != None:
-                        ground = np.union1d(res['list_dead_cells'], res['list_noisy_cells'])
-                    else:
-                        ground = res['list_dead_cells']
-                else:
-                    ground = []
-                for cell in ground:
-                    if cell in new_cell_no:
-                        if new_bond_type[new_cell_no.index(cell)] == "S":
-                            new_bond_type[new_cell_no.index(cell)] = "N"
-                    else:
-                        new_cell_no.append(cell)
-                        new_bond_type.append("N")
-                        new_bond_count_for_cell.append(3)
-                if new_cell_no != front_res['cell_no'] or new_bond_type != front_res['bond_type']:
-                    upload_front_wirebond2(module['module_name'], new_cell_no, new_bond_count_for_cell, new_bond_type)
+        if check1['exists'] and check2['exists']:
+            if not (front_res["wb_fr_marked_done"] and back_res["wb_bk_marked_done"]):
+                bad_modules[module['module_name']] = [front_res["wb_fr_marked_done"], back_res["wb_bk_marked_done"]]
 
-            #add to list if any module has any 'need to be grounded'
-            if not (front_res['wb_fr_marked_done']):
-                if "N" in new_bond_type:
-                    bad_modules.append(module['module_name'])
     return(bad_modules)
 
 def read_from_db(modname, df_pad_map, df_backside_mbites_pos):

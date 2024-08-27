@@ -100,10 +100,8 @@ class FrontPage(QMainWindow):
         label5.setWordWrap(True)
         label5.setTextFormat(Qt.RichText)
         label5.setGeometry(20,90, 170,150)
-        self.wb_done = QCheckBox("Initial wirebonding done", self.widget)
-        self.wb_done.setGeometry(20,235,200,25)
         self.marked_done = QCheckBox("Frontside complete", self.widget)
-        self.marked_done.setGeometry(20,255,150,25)
+        self.marked_done.setGeometry(20,245,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
@@ -287,10 +285,8 @@ class BackPage(QMainWindow):
         self.spool = QLineEdit(self.widget)
         self.spool.setGeometry(20, 240, 150, 25)
         self.spool.setText(self.info_dict["back_wirebond_info"]["spool_batch"])
-        self.wb_done = QCheckBox("Initial wirebonding done", self.widget)
-        self.wb_done.setGeometry(20,270,200,25)
         self.marked_done = QCheckBox("Backside complete", self.widget)
-        self.marked_done.setGeometry(20,295,150,25)
+        self.marked_done.setGeometry(20,280,150,25)
         if self.info_dict["back_wirebond_info"]["wb_bk_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
@@ -536,9 +532,15 @@ class MainWindow(QMainWindow):
         self.namelabel.show()
         self.label5.hide()
         self.addbutton.hide()
-        string = 'Incomplete modules (frontside only right now):\n'
-        for module_name in find_to_revisit():
-            string = string + (module_name + "\n")
+        string = 'Incomplete or unstarted modules:\n'
+        bad_modules = find_to_revisit()
+        for module in bad_modules:
+            mod_str = module + ' '
+            if not bad_modules[module][0]: #true = frontside done
+                mod_str = mod_str + "fr "
+            if not bad_modules[module][1]: # true = backside done
+                mod_str = mod_str + " bk"
+            string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
 
     def load(self, page):
