@@ -219,22 +219,37 @@ def read_front_db(modname, df_pad_map):
 
     #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if front_wirebond_info['wedge_id'] == None or front_wirebond_info['wedge_id'] == '':
+        old_w_i = {'wedge_id':"","spool_batch":""}
         read_query = f"""SELECT module_name, wedge_id
         FROM front_wirebond
         ORDER BY frwirebond_no DESC LIMIT 1;"""
+<<<<<<< HEAD
         old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
         if len(old_w_i) != 0:
             old_w_i = old_w_i[0]
             front_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+=======
+        old_w_i_list = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
+        if (len(old_w_i_list) > 0):
+            old_w_i = old_w_i_list[0]
+        front_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+>>>>>>> dd18a1b (fixed error in autofilling wedge_id and spool_batch)
 
     if front_wirebond_info['spool_batch'] == None or front_wirebond_info['spool_batch'] == '':
         read_query = f"""SELECT module_name, spool_batch
         FROM front_wirebond
         ORDER BY frwirebond_no DESC LIMIT 1;"""
+<<<<<<< HEAD
         old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
         if len(old_w_i) != 0:
             old_w_i = old_w_i[0]
             front_wirebond_info['spool_batch'] = old_w_i['spool_batch']
+=======
+        old_w_i_list = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
+        if (len(old_w_i_list) > 0):
+            old_w_i = old_w_i_list[0]
+        front_wirebond_info['spool_batch'] = old_w_i['spool_batch']
+>>>>>>> dd18a1b (fixed error in autofilling wedge_id and spool_batch)
 
     return {"df_front_states" : df_front_states,  "front_encaps_info":None,
         "front_wirebond_info": front_wirebond_info}
@@ -293,22 +308,37 @@ def read_back_db(modname, df_backside_mbites_pos):
 
         #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if back_wirebond_info['wedge_id'] == None or back_wirebond_info['wedge_id'] == '':
+        old_w_i = {"wedge_id":"", "spool_batch":""}
         read_query = f"""SELECT module_name, wedge_id
         FROM back_wirebond
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
+<<<<<<< HEAD
         old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
         if len(old_w_i) != 0:
             old_w_i = old_w_i[0]
             back_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+=======
+        old_w_i_list = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
+        if (len(old_w_i_list)>0):
+            old_w_i = old_w_i_list[0]
+        back_wirebond_info['wedge_id'] = old_w_i['wedge_id']
+>>>>>>> dd18a1b (fixed error in autofilling wedge_id and spool_batch)
 
     if back_wirebond_info['spool_batch'] == None or back_wirebond_info['spool_batch'] == '':
         read_query = f"""SELECT module_name, spool_batch
         FROM back_wirebond
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
+<<<<<<< HEAD
         old_w_i = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
         if len(old_w_i) != 0:
             old_w_i = old_w_i[0]
             back_wirebond_info['spool_batch'] = old_w_i['spool_batch']
+=======
+        old_w_i_list = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
+        if (len(old_w_i_list)>0):
+            old_w_i = old_w_i_list[0]
+        back_wirebond_info['spool_batch'] = old_w_i['spool_batch']
+>>>>>>> dd18a1b (fixed error in autofilling wedge_id and spool_batch)
 
     return { "df_back_states": df_back_states, "back_encaps_info" : None,
        "back_wirebond_info": back_wirebond_info}
