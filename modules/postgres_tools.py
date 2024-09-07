@@ -498,7 +498,7 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment):
     #print(modname, 'uploaded!')
 
 #save pull test information to database
-def upload_encaps(modules, technician, cure_start, cure_end, enc_done, comment):
+def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
     for module in modules:
         #get module number
         read_query = f"""SELECT module_no
@@ -508,6 +508,9 @@ def upload_encaps(modules, technician, cure_start, cure_end, enc_done, comment):
 
         date = datetime.now().date()
         time = datetime.now().time()
+        date_format = "%m/%d/%Y %H:%M:%S"
+        cure_start = datetime.strptime(cure_start, date_format)
+        cure_end = datetime.strptime(cure_end, date_format)
 
         db_upload = {
             'module_name' : module,
@@ -515,7 +518,13 @@ def upload_encaps(modules, technician, cure_start, cure_end, enc_done, comment):
             'time_encap' : time,
             'technician' : technician,
             'comment' : comment,
-            'module_no' : int(module_no)
+            'module_no' : int(module_no),
+            'cure_start': cure_start,
+            'cure_end': cure_end,
+            'temp_c': temperature,
+            'rel_hum': rel_hum,
+            'epoxy_batch': epoxy_batch,
+
         }
 
         if modules[module] == "frontside":
