@@ -66,8 +66,9 @@ def add_new_to_db(modname):
             'module_name' : modname
         }
 
+        db_table_name = 'module_info'
         try:
-            asyncio.run(upload_PostgreSQL('module_info', db_upload)) ## python 3.7
+            asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
         except:
             (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
 
@@ -393,8 +394,9 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
         'wb_fr_marked_done': marked_done
     }
 
+    db_table_name = 'front wirebond'
     try:
-        asyncio.run(upload_PostgreSQL('front_wirebond', db_upload)) ## python 3.7
+        asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
     except:
         (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
     #print(modname, 'uploaded!')
@@ -424,8 +426,9 @@ def upload_front_wirebond2(modname, cell_no, bond_count_for_cell, bond_type):
         'wb_fr_marked_done': info['wb_fr_marked_done']
     }
 
+    db_table_name = 'front_wirebond'
     try:
-        asyncio.run(upload_PostgreSQL('front_wirebond', db_upload)) ## python 3.7
+        asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
     except:
         (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
     #print(modname, 'uploaded!')
@@ -463,8 +466,9 @@ def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, ma
         'wb_bk_marked_done': marked_done
     }
 
+    db_table_name = 'back_wirebond'
     try:
-        asyncio.run(upload_PostgreSQL('back_wirebond', db_upload)) ## python 3.7
+        asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
     except:
         (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
     #print(modname, 'uploaded!')
@@ -491,8 +495,9 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment):
         'module_no' : int(module_no)
     }
 
+    db_table_name = 'bond_pull_test'
     try:
-        asyncio.run(upload_PostgreSQL('bond_pull_test', db_upload)) ## python 3.7
+        asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
     except:
         (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
     #print(modname, 'uploaded!')
@@ -528,11 +533,11 @@ def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hu
         }
 
         if modules[module] == "frontside":
-            table = "front_encap"
+            db_table_name = "front_encap"
         else:
-            table = "back_encap"
+            db_table_name = "back_encap"
         try:
-            asyncio.run(upload_PostgreSQL(table, db_upload)) ## python 3.7
+            asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
         except:
             (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
         #print(modname, 'uploaded!')
