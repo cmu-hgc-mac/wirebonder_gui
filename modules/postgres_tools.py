@@ -396,7 +396,7 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
 
     db_table_name = 'front_wirebond'
     try:
-        asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
+        asyncio.run(upload_PostgreSQL(db_table_name, db_upload))## python 3.7
     except:
         (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
     #print(modname, 'uploaded!')

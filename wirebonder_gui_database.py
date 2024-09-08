@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
 from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
-from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, InfoButton, SwitchPageButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
+from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, button_font_size, text_font_size
@@ -352,9 +352,9 @@ class EncapsPage(QMainWindow):
         self.techname = QLineEdit(self)
         self.techname.setGeometry(300,45, 150, 25)
         lab6 = QLabel("Comments:", self)
-        lab6.setGeometry(300,360, 150, 25)
+        lab6.setGeometry(300,245, 150, 25)
         self.comments= QTextEdit(self)
-        self.comments.setGeometry(300,385, 300, 150)
+        self.comments.setGeometry(300,270, 300, 150)
         label = QLabel("<b>Encapsulation</b> (MM/DD/YYYY, HH:MM in military time):", self)
         label.setGeometry(300,70, 400, 25)
         label = QLabel("Date: ", self)
@@ -397,18 +397,8 @@ class EncapsPage(QMainWindow):
         nowbutton2.setGeometry(725, 195, 50, 25)
         nowbutton2.clicked.connect(lambda: self.set_to_now(self.end_date, self.end_time))
 
-        label = QLabel("Epoxy Batch:", self)
-        label.setGeometry(300,220, 100, 25)
-        self.epoxy_batch = QLineEdit(self)
-        self.epoxy_batch.setGeometry(300,245, 150, 25)
-        label = QLabel("Temperature:", self)
-        label.setGeometry(300,265, 150, 25)
-        self.temperature = QLineEdit(self)
-        self.temperature.setGeometry(300,290, 150, 25)
-        label = QLabel("Relative Humidity:",self)
-        label.setGeometry(300,315, 150, 25)
-        self.rel_hum = QLineEdit(self)
-        self.rel_hum.setGeometry(300,335, 150, 25)
+        self.enc_done = QCheckBox("Encapsulation done", self.widget)
+        self.enc_done.setGeometry(300,220,200,25)
 
         self.label = QLabel("Module type:",self)
         self.label.setGeometry(20, 20, 150, 25)
@@ -685,9 +675,7 @@ class MainWindow(QMainWindow):
         elif page.pageid == "backpage":
             upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
         elif page.pageid == "encapspage":
-            cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
-            cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            upload_encaps(page.modules, page.techname.text(), cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            upload_encaps(page.modules, page.techname.text(), page.comments.toPlainText())
         self.show_start()
 
     def add_new_to_db_helper(self):
