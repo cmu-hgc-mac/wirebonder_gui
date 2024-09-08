@@ -394,7 +394,7 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
         'wb_fr_marked_done': marked_done
     }
 
-    db_table_name = 'front wirebond'
+    db_table_name = 'front_wirebond'
     try:
         asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
     except:
