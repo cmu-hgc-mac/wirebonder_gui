@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import os.path
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QCheckBox
-from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QPointF
-from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF, QPixmap, QFont
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
+from PyQt5.QtCore import Qt,  QPoint
+from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
@@ -13,7 +13,7 @@ from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_
 from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
-from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, button_font_size, text_font_size
+from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
 
 scaling_factor = 90
 hex_length = 0
@@ -458,8 +458,8 @@ class EncapsPage(QMainWindow):
 
     def set_to_now(self,date, time):
         now = datetime.now()
-        date.setText(str(now.month) + "/" + str(now.day) + "/" + str(now.year))
-        time.setText(str(now.hour)+":"+str(now.minute))
+        date.setText(str(now.strftime("%m")) + "/" + str(now.strftime("%d")) + "/" + str(now.strftime("%Y")))
+        time.setText(str(now.strftime("%H"))+":"+str(now.strftime("%M")))
 
 #overarching window
 class MainWindow(QMainWindow):

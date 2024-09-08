@@ -3,12 +3,12 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import os.path
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QPushButton, QLabel, QTextEdit, QLineEdit
-from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QPointF
-from PyQt5.QtGui import QPainter, QPen, QColor, QRegion, QPainterPath, QPolygonF, QFont
+from PyQt5.QtWidgets import QPushButton, QLabel
+from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
+from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 
-from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_encaps, upload_bond_pull_test, read_front_db, read_back_db, read_pull_db
+from modules.postgres_tools import  upload_front_wirebond, upload_back_wirebond, upload_encaps, upload_bond_pull_test, read_front_db, read_back_db, read_pull_db
 from config.graphics_config import button_font_size
 font = QFont("Calibri", button_font_size)
 
@@ -37,7 +37,7 @@ class Hex(QWidget):
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
-        label_rect = QRectF(self.label_pos[0], self.label_pos[1] , self.width()+2, -0 +self.height())  # Adjust label position relative to button
+        label_rect = QRectF(self.label_pos[0], self.label_pos[1] , self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
 #normal cell class (doesn't include calibration channels)
@@ -79,7 +79,7 @@ class HalfHex(QWidget):
             x_offset = -12
         elif self.channeltype == 3:
             x_offset = 12
-        label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1], self.width()+2, -0 +self.height())  # Adjust label position relative to button
+        label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1], self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
 
@@ -111,7 +111,7 @@ class HexWithButtons(Hex):
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
-        label_rect = QRectF(self.label_pos[0], self.label_pos[1] , self.width()+2, -0 +self.height())  # Adjust label position relative to button
+        label_rect = QRectF(self.label_pos[0], self.label_pos[1] , self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
         #based on position number of channel, calculate position of button within pad and find
@@ -180,7 +180,7 @@ class HalfHexWithButtons(Hex):
             y_offset = 9
         elif self.channel_pos == 2 or self.channel_pos == 4:
             y_offset = -9
-        label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1] + y_offset, self.width()+2, -0 +self.height())  # Adjust label position relative to button
+        label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1] + y_offset, self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
 #these are the clickable buttons that represent channels
@@ -226,7 +226,6 @@ class WedgeButton(QPushButton):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        rect = QRectF(0, 0, self.width(), self.height())
         pen = QPen(Qt.black)
         painter.setPen(pen)
         if self.state == 0:

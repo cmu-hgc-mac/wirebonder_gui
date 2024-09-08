@@ -52,10 +52,6 @@ async def fetch_PostgreSQL(query):
     await conn.close()
     return value
 
-# async def request_PostgreSQL(query):
-#     result = await fetch_PostgreSQL(query)
-#     return result
-
 def add_new_to_db(modname):
     read_query = f"""SELECT EXISTS(SELECT module_name
         FROM module_info
