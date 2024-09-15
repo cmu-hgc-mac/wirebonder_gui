@@ -352,9 +352,9 @@ class EncapsPage(QMainWindow):
         self.techname = QLineEdit(self)
         self.techname.setGeometry(300,45, 150, 25)
         lab6 = QLabel("Comments:", self)
-        lab6.setGeometry(300,245, 150, 25)
+        lab6.setGeometry(300,360, 150, 25)
         self.comments= QTextEdit(self)
-        self.comments.setGeometry(300,270, 300, 150)
+        self.comments.setGeometry(300,385, 300, 150)
         label = QLabel("<b>Encapsulation</b> (MM/DD/YYYY, HH:MM in military time):", self)
         label.setGeometry(300,70, 400, 25)
         label = QLabel("Date: ", self)
@@ -397,8 +397,18 @@ class EncapsPage(QMainWindow):
         nowbutton2.setGeometry(725, 195, 50, 25)
         nowbutton2.clicked.connect(lambda: self.set_to_now(self.end_date, self.end_time))
 
-        self.enc_done = QCheckBox("Encapsulation done", self.widget)
-        self.enc_done.setGeometry(300,220,200,25)
+        label = QLabel("Epoxy Batch:", self)
+        label.setGeometry(300,220, 100, 25)
+        self.epoxy_batch = QLineEdit(self)
+        self.epoxy_batch.setGeometry(300,245, 150, 25)
+        label = QLabel("Temperature:", self)
+        label.setGeometry(300,265, 150, 25)
+        self.temperature = QLineEdit(self)
+        self.temperature.setGeometry(300,290, 150, 25)
+        label = QLabel("Relative Humidity:",self)
+        label.setGeometry(300,315, 150, 25)
+        self.rel_hum = QLineEdit(self)
+        self.rel_hum.setGeometry(300,335, 150, 25)
 
         self.label = QLabel("Module type:",self)
         self.label.setGeometry(20, 20, 150, 25)
@@ -458,8 +468,8 @@ class EncapsPage(QMainWindow):
 
     def set_to_now(self,date, time):
         now = datetime.now()
-        date.setText(str(now.strftime("%m")) + "/" + str(now.strftime("%d")) + "/" + str(now.strftime("%Y")))
-        time.setText(str(now.strftime("%H"))+":"+str(now.strftime("%M")))
+        date.setText(str(now.month) + "/" + str(now.day) + "/" + str(now.year))
+        time.setText(str(now.hour)+":"+str(now.minute))
 
 #overarching window
 class MainWindow(QMainWindow):
