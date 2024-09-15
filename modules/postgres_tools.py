@@ -499,6 +499,9 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment):
 
 #save pull test information to database
 def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
+    #if this page is empty, don't save it (causes error with inputting date and time)
+    if (cure_start == " :00"):
+        return
     for module in modules:
         #get module number
         read_query = f"""SELECT module_no
