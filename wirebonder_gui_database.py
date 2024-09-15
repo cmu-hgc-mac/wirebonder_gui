@@ -675,7 +675,10 @@ class MainWindow(QMainWindow):
         elif page.pageid == "backpage":
             upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
         elif page.pageid == "encapspage":
-            upload_encaps(page.modules, page.techname.text(), page.comments.toPlainText())
+            cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
+            print(cure_start_full)
+            cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
+            upload_encaps(page.modules, page.techname.text(), cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
         self.show_start()
 
     def add_new_to_db_helper(self):
