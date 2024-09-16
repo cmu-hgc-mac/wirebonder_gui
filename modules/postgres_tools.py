@@ -502,7 +502,7 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment):
 def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
     #if this page is empty, don't save it (causes error with inputting date and time)
     #this tests if encapsulation page is empty
-    if (cure_start == " :00"):
+    if (cure_start == " :00" or cure_end == " :00"):
         return
     
     for module in modules:
@@ -517,7 +517,7 @@ def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hu
         date_format = "%m/%d/%Y %H:%M:%S"
         cure_start = datetime.strptime(cure_start, date_format)
         cure_end = datetime.strptime(cure_end, date_format)
-
+        print(cure_start, cure_end)
         db_upload = {
             'module_name' : module,
             'date_encap' : date,
