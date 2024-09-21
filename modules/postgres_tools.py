@@ -340,8 +340,22 @@ def read_pull_db(modname):
 
     return {"pull_info": pull_info}
 
+def read_encaps():
+    encaps_info = {}
+    encaps_info['epoxy_batch'] = ""
+    read_query = f"""SELECT epoxy_batch
+     FROM front_encap
+    ORDER BY frencap_no DESC LIMIT 1;"""
+    res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
+    if (len(res)>0):
+        res_l = res[0]
+    encaps_info['epoxy_batch'] = res_l['epoxy_batch']
+    print(encaps_info)
+    return encaps_info
+
+
 #save front wirebonder information to database
-def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, marked_done, buttons):
+def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
@@ -370,8 +384,10 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
                 bond_type.append("G")
                 list_grounded_cells.append(int(button))
 
-    date = datetime.now().date()
-    time = datetime.now().time()
+    date_time = datetime.strptime(wb_time, "%m/%d/%Y %H:%M:%S")
+
+    date = date_time.date()
+    time = date_time.time()
 
     db_upload = {
         'module_name' : modname,
@@ -430,7 +446,7 @@ def upload_front_wirebond2(modname, cell_no, bond_count_for_cell, bond_type):
     #print(modname, 'uploaded!')
 
 #save back wirebonder information to database
-def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, marked_done, buttons):
+def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
@@ -445,8 +461,10 @@ def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, ma
             cell_no.append(int(button))
             bond_count_for_cell.append(3-buttons[button].state)
 
-    date = datetime.now().date()
-    time = datetime.now().time()
+    date_time = datetime.strptime(wb_time, "%m/%d/%Y %H:%M:%S")
+
+    date = date_time.date()
+    time = date_time.time()
 
     db_upload = {
         'module_name' : modname,
@@ -470,15 +488,17 @@ def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, ma
     #print(modname, 'uploaded!')
 
 #save pull test information to database
-def upload_bond_pull_test(modname, avg, sd, technician, comment):
+def upload_bond_pull_test(modname, avg, sd, technician, comment, pull_time):
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
         WHERE module_name = '{modname}';"""
     module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
 
-    date = datetime.now().date()
-    time = datetime.now().time()
+    date_time = datetime.strptime(pull_time, "%m/%d/%Y %H:%M:%S")
+
+    date = date_time.date()
+    time = date_time.time()
 
     db_upload = {
         'module_name' : modname,

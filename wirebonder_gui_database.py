@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
-from modules.postgres_tools import fetch_PostgreSQL, read_from_db, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
+from modules.postgres_tools import fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
 from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
@@ -80,9 +80,9 @@ class FrontPage(QMainWindow):
         self.techname.setGeometry(20,325, 150, 25)
         self.techname.setText(self.info_dict["front_wirebond_info"]["technician"])
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,455,150,50)
+        lab4.setGeometry(20,515,150,50)
         self.comments = QTextEdit(self.widget)
-        self.comments.setGeometry(20, 500, 150, 150)
+        self.comments.setGeometry(20, 560, 150, 150)
         self.comments.setText(self.info_dict["front_wirebond_info"]["comment"])
         lab4 = QLabel("Wedge ID:", self.widget)
         lab4.setGeometry(20,340,150,50)
@@ -94,6 +94,11 @@ class FrontPage(QMainWindow):
         self.spool = QLineEdit(self.widget)
         self.spool.setGeometry(20, 440, 150, 25)
         self.spool.setText(self.info_dict["front_wirebond_info"]["spool_batch"])
+        lab4 = QLabel("Date and time:", self.widget)
+        lab4.setGeometry(20,455,150,50)
+        self.wb_time = QLineEdit(self.widget)
+        self.wb_time.setGeometry(20, 500, 150, 25)
+        self.wb_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
 
 
         label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: 2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: Needs to be grounded<br>Black fill: Grounded",self.widget)
@@ -106,23 +111,29 @@ class FrontPage(QMainWindow):
             self.marked_done.setCheckState(Qt.Checked)
 
         lab6 = QLabel("<b>Pull Test (optional):</b>", self.widget)
-        lab6.setGeometry(20,675, 200, 25)
+        lab6.setGeometry(20,735, 200, 25)
         lab6 = QLabel("Technician CERN ID:", self.widget)
-        lab6.setGeometry(20,700, 150, 25)
+        lab6.setGeometry(20,760, 150, 25)
         self.pull_techname = QLineEdit(self.widget)
-        self.pull_techname.setGeometry(20,725, 150, 25)
+        self.pull_techname.setGeometry(20,785, 150, 25)
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,855,150,50)
+        lab4.setGeometry(20,980,150,50)
         self.pull_comments = QTextEdit(self.widget)
-        self.pull_comments.setGeometry(20, 900, 150, 150)
+        self.pull_comments.setGeometry(20, 1025, 150, 150)
         lab4 = QLabel("Mean:", self.widget)
-        lab4.setGeometry(20,740,150,50)
-        self.mean = QLineEdit(self.widget)
-        self.mean.setGeometry(20, 780, 150, 25)
-        lab4 = QLabel("Standard deviation:", self.widget)
         lab4.setGeometry(20,800,150,50)
+        self.mean = QLineEdit(self.widget)
+        self.mean.setGeometry(20, 840, 150, 25)
+        lab4 = QLabel("Standard deviation:", self.widget)
+        lab4.setGeometry(20,860,150,50)
         self.std = QLineEdit(self.widget)
-        self.std.setGeometry(20, 840, 150, 25)
+        self.std.setGeometry(20, 900, 150, 25)
+        lab4 = QLabel("Date and time:", self.widget)
+        lab4.setGeometry(20,925,150,50)
+        self.pull_time = QLineEdit(self.widget)
+        self.pull_time.setGeometry(20, 965, 150, 25)
+        self.pull_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+
 
         #load pull test data
         self.pull_techname.setText(str(self.info_dict["pull_info"]["technician"]))
@@ -271,9 +282,9 @@ class BackPage(QMainWindow):
         self.techname.setGeometry(20,125, 150, 25)
         self.techname.setText(self.info_dict["back_wirebond_info"]["technician"])
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,305,150,50)
+        lab4.setGeometry(20,365,150,50)
         self.comments = QTextEdit(self.widget)
-        self.comments.setGeometry(20, 350, 150, 150)
+        self.comments.setGeometry(20, 405, 150, 150)
         self.comments.setText(self.info_dict["back_wirebond_info"]["comment"])
         lab4 = QLabel("Wedge ID:", self.widget)
         lab4.setGeometry(20,140,150,50)
@@ -289,6 +300,12 @@ class BackPage(QMainWindow):
         self.marked_done.setGeometry(20,280,150,25)
         if self.info_dict["back_wirebond_info"]["wb_bk_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
+
+        lab4 = QLabel("Date and time:", self.widget)
+        lab4.setGeometry(20,305,150,50)
+        self.wb_time = QLineEdit(self.widget)
+        self.wb_time.setGeometry(20, 345, 150, 25)
+        self.wb_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
 
         reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
@@ -400,6 +417,7 @@ class EncapsPage(QMainWindow):
         label = QLabel("Epoxy Batch:", self)
         label.setGeometry(300,220, 100, 25)
         self.epoxy_batch = QLineEdit(self)
+        self.epoxy_batch.setText(read_encaps()["epoxy_batch"])
         self.epoxy_batch.setGeometry(300,245, 150, 25)
         label = QLabel("Temperature:", self)
         label.setGeometry(300,265, 150, 25)
@@ -680,10 +698,10 @@ class MainWindow(QMainWindow):
     def helper(self, widget):
         page = widget.currentWidget()
         if page.pageid == "frontpage":
-            upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
-            upload_bond_pull_test(self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText())
+            upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
+            upload_bond_pull_test(self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
         elif page.pageid == "backpage":
-            upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
+            upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"

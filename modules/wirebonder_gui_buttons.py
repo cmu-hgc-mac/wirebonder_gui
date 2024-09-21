@@ -437,10 +437,10 @@ class SaveButton(QPushButton):
     def save(self):
         page = self.widget.currentWidget()
         if page.pageid == "frontpage":
-            upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
-            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText())
+            upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.wb_time.text(), page.buttons)
+            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
         elif page.pageid == "backpage":
-            upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.buttons)
+            upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
@@ -451,7 +451,7 @@ class SaveButton(QPushButton):
     #update label on when last save was
     def updateAboveLabel(self):
         now = datetime.now()
-        dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
+        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
         self.label.setText("Last Saved: " + dt_string)
 
     #draw button
