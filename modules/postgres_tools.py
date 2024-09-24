@@ -348,9 +348,7 @@ def read_encaps():
     ORDER BY frencap_no DESC LIMIT 1;"""
     res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))]
     if (len(res)>0):
-        res_l = res[0]
-    encaps_info['epoxy_batch'] = res_l['epoxy_batch']
-    print(encaps_info)
+        encaps_info['epoxy_batch'] = res[0]['epoxy_batch']
     return encaps_info
 
 
