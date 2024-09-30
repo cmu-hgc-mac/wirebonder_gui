@@ -109,7 +109,7 @@ def find_to_revisit():
         WHERE module_name ='{module['module_name']}');"""
         check2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
         #check if the module is in front wirebonding tables
-        back_res = {"wb_fr_marked_done": False}
+        back_res = {"wb_bk_marked_done": False}
         if check2['exists']:
             read_query = f"""SELECT wb_bk_marked_done
             FROM back_wirebond
@@ -117,7 +117,7 @@ def find_to_revisit():
             ORDER BY bkwirebond_no DESC LIMIT 1;"""
             back_res = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
-        if check1['exists'] and check2['exists']:
+        if check1['exists'] or check2['exists']:
             if not (front_res["wb_fr_marked_done"] and back_res["wb_bk_marked_done"]):
                 bad_modules[module['module_name']] = [front_res["wb_fr_marked_done"], back_res["wb_bk_marked_done"]]
 
