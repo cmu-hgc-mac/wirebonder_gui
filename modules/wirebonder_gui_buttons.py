@@ -454,7 +454,7 @@ class SaveButton(QPushButton):
     #update label on when last save was
     def updateAboveLabel(self):
         now = datetime.now()
-        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
+        dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
         self.label.setText("Last Saved: " + dt_string)
 
     #draw button

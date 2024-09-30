@@ -382,7 +382,7 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
                 bond_type.append("G")
                 list_grounded_cells.append(int(button))
 
-    date_time = datetime.strptime(wb_time, "%m/%d/%Y %H:%M:%S")
+    date_time = datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
@@ -459,7 +459,7 @@ def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, ma
             cell_no.append(int(button))
             bond_count_for_cell.append(3-buttons[button].state)
 
-    date_time = datetime.strptime(wb_time, "%m/%d/%Y %H:%M:%S")
+    date_time = datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
@@ -496,7 +496,7 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment, pull_time):
         WHERE module_name = '{modname}';"""
     module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
 
-    date_time = datetime.strptime(pull_time, "%m/%d/%Y %H:%M:%S")
+    date_time = datetime.strptime(pull_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
@@ -526,7 +526,7 @@ def upload_encaps(modules, technician, enc, cure_start, cure_end, temperature, r
     #and returns false, since we didn't actually save it
     if (enc == ":00" or cure_start == " :00" or cure_end == " :00"):
         return False
-    date_format = "%m/%d/%Y %H:%M:%S"
+    date_format = "%Y/%m/%d %H:%M:%S"
     enc_time = datetime.strptime(enc, date_format).time()
     enc_date = datetime.strptime(enc, date_format).date()
     cure_start = datetime.strptime(cure_start, date_format)

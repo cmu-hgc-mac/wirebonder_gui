@@ -98,7 +98,7 @@ class FrontPage(QMainWindow):
         lab4.setGeometry(20,455,150,50)
         self.wb_time = QLineEdit(self.widget)
         self.wb_time.setGeometry(20, 500, 150, 25)
-        self.wb_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+        self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
         label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: 2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: Needs to be grounded<br>Black fill: Grounded",self.widget)
@@ -132,7 +132,7 @@ class FrontPage(QMainWindow):
         lab4.setGeometry(20,925,150,50)
         self.pull_time = QLineEdit(self.widget)
         self.pull_time.setGeometry(20, 965, 150, 25)
-        self.pull_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+        self.pull_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
         #load pull test data
@@ -305,7 +305,7 @@ class BackPage(QMainWindow):
         lab4.setGeometry(20,305,150,50)
         self.wb_time = QLineEdit(self.widget)
         self.wb_time.setGeometry(20, 345, 150, 25)
-        self.wb_time.setText(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+        self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
         reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
@@ -372,7 +372,7 @@ class EncapsPage(QMainWindow):
         lab6.setGeometry(300,360, 150, 25)
         self.comments= QTextEdit(self)
         self.comments.setGeometry(300,385, 300, 150)
-        label = QLabel("<b>Encapsulation</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label = QLabel("<b>Encapsulation</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
         label.setGeometry(300,70, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,95, 100, 25)
@@ -386,7 +386,7 @@ class EncapsPage(QMainWindow):
         nowbutton1.setGeometry(725, 95, 50, 25)
         nowbutton1.clicked.connect(lambda: self.set_to_now(self.enc_date, self.enc_time))
 
-        label = QLabel("Cure <b>start</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label = QLabel("Cure <b>start</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
         label.setGeometry(300,120, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,145, 100, 25)
@@ -400,7 +400,7 @@ class EncapsPage(QMainWindow):
         nowbutton2.setGeometry(725, 145, 50, 25)
         nowbutton2.clicked.connect(lambda: self.set_to_now(self.start_date, self.start_time))
 
-        label = QLabel("Cure <b>end</b> (MM/DD/YYYY, HH:MM in military time):", self)
+        label = QLabel("Cure <b>end</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
         label.setGeometry(300,170, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,195, 100, 25)
@@ -486,7 +486,7 @@ class EncapsPage(QMainWindow):
 
     def set_to_now(self,date, time):
         now = datetime.now()
-        date.setText(str(now.month) + "/" + str(now.day) + "/" + str(now.year))
+        date.setText(str(now.year) + "/" + str(now.month) + "/" + str(now.day))
         time.setText(str(now.hour)+":"+str(now.minute))
 
 #overarching window
