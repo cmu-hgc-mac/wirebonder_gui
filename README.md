@@ -7,7 +7,7 @@ pip install pyqt5 asyncpg numpy pandas
 ```
 
 ```
-git clone https://github.com/nkalliney1/wirebonder_gui.git
+git clone https://github.com/nkalliney1/wirebonder_gui.git](https://github.com/cmu-hgc-mac/wirebonder_gui.git
 ```
 
 Go into [conn.py](conn.py) and edit your ```institution_name``` and ```inst_code``` to your respective institution. Change ```host``` to the static IP address of your database computer. Run the code and edit the graphics configuration file.
@@ -15,16 +15,28 @@ Go into [conn.py](conn.py) and edit your ```institution_name``` and ```inst_code
 In [graphics_config.py](graphics_config.py), you can edit the font size of the buttons and other text, as well as the window size to make it fit your computer. If the top of the hexaboard is cut off for the LD full frontside, increase ```add_y_offset```. If the left side of the hexaboard overlaps with the labels for the HD full frontside, increase ```add_x_offset```. Setting it to 40 is a good start.
 
 # Tour of the GUI!
-# Wirebonder
-### Home Page
+## Home Page
 When the code is run, it will open on the homepage.
-<img width="1359" alt="image" src="https://github.com/user-attachments/assets/e2ad8186-a8c0-45ef-9546-2c8ab7ccfbf0">
+<img width="1359" alt="image" src="https://github.com/user-attachments/assets/d1977268-8495-47e7-a183-242a229556f1">
+
+### Accessing the wirebonder page
 Select the module name prefix from the dropdown. The dropdown will only display the module types produced by your MAC.
 
 <img width="165" alt="image" src="https://github.com/user-attachments/assets/37165df8-b6c3-4883-a2cd-9a96f892b212">
 
-Enter the last four digits of the module name. Click the "load front" or "load back" buttons to show the module's front or back side, respectively. Click "load pull info" to load a page to input optional pull testing information.
+Enter the last four digits of the module name. Click the "load front" or "load back" buttons to show the module's front or back side, respectively.
 
+<img width="237" alt="image" src="https://github.com/user-attachments/assets/686dc13e-5929-4e51-87bb-0c4b69e2ec77">
+
+### Accessing the encapsulation page
+Click the encapsulation button to load the encapsulation page.
+
+### Other information
+
+The front page displays a list of all modules that exist in the both wirebonding tables in the database that have <b>not</b> been marked as complete.
+"fr" indicates the frontside is incomplete and "bk" indicates the backside is also incomplete.
+
+## Wirebonder
 ### Front page
 The frontside page looks like this.
 <img width="1359" alt="image" src="https://github.com/user-attachments/assets/d3c12df0-beff-45d8-8c67-81d39c54a773">
