@@ -34,6 +34,8 @@ Click the encapsulation button to load the encapsulation page.
 The front page displays a list of all modules that exist in the both wirebonding tables in the database that have <b>not</b> been marked as complete.
 "fr" indicates the frontside is incomplete and "bk" indicates the backside is also incomplete.
 
+Every time you go back to the home page from the encapsulation, front, or back page, the information of that page is automatically saved, except for a few exceptions mentioned below.
+
 ## Wirebonder
 ### Front page
 The front page consists of a schematic representation of the board type you have selected, with buttons and text entry on the sidebars.
@@ -62,15 +64,25 @@ The "reset to last saved version" resets all buttons (not text fields) to the la
 
 <img width="105" alt="image" src="https://github.com/user-attachments/assets/d4d43227-2f31-4c1e-881f-531fe786a24c">
 
-When wirebonding the board has been completed, the user should check the corresponding box:
+When wirebonding the board has been completed, the user should check the corresponding box, which will remove it from the front page list:
 
 <img width="152" alt="image" src="https://github.com/user-attachments/assets/cd833868-4c94-4814-bb8e-82b110fc9f34">
 
-
 ### Back page
 
-## Encapsulation
-On the encapsulation page, you can add modules to a list by selecting the module name prefix, typing in the number, selecting front or backside encapsulation, and clicking "add." Similarly, a module can be removed from the list if it's already there by clicking "remove." A technician may input their CERN ID and encapsulation information in the textboxes to the right. Clicking "save" will upload that information into the database for every module in the list.
+The back page is very similar. It displays a shadow of the frontside as well as the two backside modules holes for orientation, and lacks entries for pull testing. Similarly, when wirebonding has been completed, the user should check the corresponding box.
 
-<img width="624" alt="image" src="https://github.com/user-attachments/assets/ea0cbd6f-78e7-4256-a42d-53a9012815ee">
+<img width="1357" alt="image" src="https://github.com/user-attachments/assets/6e707038-82ac-43f4-9f58-6bf7ddaff268">
+
+
+## Encapsulation
+On the encapsulation page, you can add modules to a list by selecting the module name prefix, typing in the number, selecting front or backside encapsulation, and clicking "add." Similarly, a module can be removed from the list if it's already there by clicking "remove."
+
+Information about encapsulation may be entered in the fields to the right; this information will <b>not</b> be saved if any of Cure Start, Cure End, or Encapsulation Time is left empty!
+
+The epoxy batch is autofilled from the information of the previous module's, provided it is not empty.
+
+Clicking "save" will upload that information into the database for every module in the list.
+<img width="852" alt="image" src="https://github.com/user-attachments/assets/0395dfe4-051f-45d7-bdef-c140121284e2">
+
 
