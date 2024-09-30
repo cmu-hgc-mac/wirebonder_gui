@@ -1,4 +1,4 @@
-# Developer instuctions
+# Basics of the GUI
 
 # Installation instructions:
 Navigate to the directory where you want to keep the GUI code in terminal, then run:
