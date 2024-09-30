@@ -84,7 +84,7 @@ The back page is very similar. It displays a shadow of the frontside as well as 
 ## Encapsulation
 On the encapsulation page, you can add modules to a list by selecting the module name prefix, typing in the number, selecting front or backside encapsulation, and clicking "add." Similarly, a module can be removed from the list if it's already there by clicking "remove."
 
-Information about encapsulation may be entered in the fields to the right; this information will <b>not</b> be saved if any of Cure Start, Cure End, or Encapsulation Time is left empty!
+Information about encapsulation may be entered in the fields to the right; this information will <b>not</b> be saved if any of Cure Start, Cure End, or Encapsulation Time is left empty! The "now" buttons next to the date and time fields will set the date and time to the current time.
 
 The epoxy batch is autofilled from the information of the previous module's, provided it is not empty.
 
