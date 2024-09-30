@@ -26,6 +26,12 @@ Select the module name prefix from the dropdown. The dropdown will only display 
 
 Enter the last four digits of the module name. Click the "load front" or "load back" buttons to show the module's front or back side, respectively.
 
+If you enter the name of a module that doesn't exist yet in the hexaboard or wirebonding tables of the database, but, you can add it as a blank module to the database (to the module info and wirebonding tables):
+
+<img width="290" alt="image" src="https://github.com/user-attachments/assets/89f54880-88e0-4fff-9687-beb43d92ac48">
+
+Only add modules when strictly necessary! This feature should almost never be used when the workflow is implemented correctly.
+
 ### Accessing the encapsulation page
 Click the encapsulation button to load the encapsulation page.
 
