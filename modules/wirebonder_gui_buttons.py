@@ -391,9 +391,9 @@ class SetToNominal(GreyButton):
             self.buttons[button_id].update()
         for state, count_label in self.state_counter_labels.items():
             if state == 0:
-                count_label.setText(f"{state}: {len(self.buttons)}")
+                count_label.setText(f"{state} missing bonds: {len(self.buttons)}")
             else:
-                count_label.setText(f"{state}: {0}")
+                count_label.setText(f"{state} missing bonds: {0}")
 
 #button that switches to provided window
 class HomePageButton(QPushButton):

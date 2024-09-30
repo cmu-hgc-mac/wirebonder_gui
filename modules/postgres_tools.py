@@ -487,6 +487,9 @@ def upload_back_wirebond(modname, technician, comment, wedge_id, spool_batch, ma
 
 #save pull test information to database
 def upload_bond_pull_test(modname, avg, sd, technician, comment, pull_time):
+
+    if (technician == ""): return
+
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
