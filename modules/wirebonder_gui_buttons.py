@@ -439,13 +439,16 @@ class SaveButton(QPushButton):
         if page.pageid == "frontpage":
             upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.wb_time.text(), page.buttons)
             upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            self.updateAboveLabel()
         elif page.pageid == "backpage":
             upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
+            self.updateAboveLabel()
         elif page.pageid == "encapspage":
+            enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            upload_encaps(page.modules, page.techname.text(), cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
-        self.updateAboveLabel()
+            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            if (saved): self.updateAboveLabel()
         self.update()
 
     #update label on when last save was

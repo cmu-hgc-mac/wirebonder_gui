@@ -520,12 +520,15 @@ def upload_bond_pull_test(modname, avg, sd, technician, comment, pull_time):
     #print(modname, 'uploaded!')
 
 #save pull test information to database
-def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
+def upload_encaps(modules, technician, enc, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
     #if this page is empty, don't save it (causes error with inputting date and time)
     #this tests if encapsulation page is empty
-    if (cure_start == " :00" or cure_end == " :00"):
-        return
+    #and returns false, since we didn't actually save it
+    if (enc == ":00" or cure_start == " :00" or cure_end == " :00"):
+        return False
     date_format = "%m/%d/%Y %H:%M:%S"
+    enc_time = datetime.strptime(enc, date_format).time()
+    enc_date = datetime.strptime(enc, date_format).date()
     cure_start = datetime.strptime(cure_start, date_format)
     cure_end = datetime.strptime(cure_end, date_format)
     
@@ -536,13 +539,10 @@ def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hu
             WHERE module_name = '{module}';"""
         module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
 
-        date = datetime.now().date()
-        time = datetime.now().time()
-        print(cure_start, cure_end)
         db_upload = {
             'module_name' : module,
-            'date_encap' : date,
-            'time_encap' : time,
+            'date_encap' : enc_date,
+            'time_encap' : enc_time,
             'technician' : technician,
             'comment' : comment,
             'module_no' : int(module_no),
@@ -562,4 +562,6 @@ def upload_encaps(modules, technician, cure_start, cure_end, temperature, rel_hu
             asyncio.run(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.7
         except:
             (asyncio.get_event_loop()).run_until_complete(upload_PostgreSQL(db_table_name, db_upload)) ## python 3.6
+        # if we did actually save it return true
+        return True 
         #print(modname, 'uploaded!')

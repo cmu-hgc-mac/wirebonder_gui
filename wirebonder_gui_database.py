@@ -553,11 +553,11 @@ class MainWindow(QMainWindow):
         self.label2.show()
         self.label3.setText("Encaps and Wirebond")
         self.label3.setGeometry(int(w_width/2), 0, 150, 25)
-        self.label.show()
         self.load_button.show()
         self.scrolllabel.show()
         self.logolabel.show()
         self.namelabel.show()
+        self.label.hide()
         self.label5.hide()
         self.addbutton.hide()
         string = 'Incomplete or unstarted modules:\n'
@@ -703,9 +703,10 @@ class MainWindow(QMainWindow):
         elif page.pageid == "backpage":
             upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
+            enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            upload_encaps(page.modules, page.techname.text(), cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
         self.show_start()
 
     def add_new_to_db_helper(self):
