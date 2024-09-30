@@ -89,6 +89,7 @@ Information about encapsulation may be entered in the fields to the right; this 
 The epoxy batch is autofilled from the information of the previous module's, provided it is not empty.
 
 Clicking "save" will upload that information into the database for every module in the list.
-<img width="852" alt="image" src="https://github.com/user-attachments/assets/0395dfe4-051f-45d7-bdef-c140121284e2">
+<img width="823" alt="image" src="https://github.com/user-attachments/assets/e49d2417-319b-4ba6-9314-e1c5964ed41b">
+
 
 
