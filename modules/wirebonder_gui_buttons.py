@@ -1,8 +1,5 @@
-import sys, csv
 import numpy as np
-import pandas as pd
 from datetime import datetime
-import os.path
 from PyQt5.QtWidgets import QPushButton, QLabel
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont

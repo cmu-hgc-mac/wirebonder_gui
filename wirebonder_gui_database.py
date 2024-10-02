@@ -1,8 +1,6 @@
-import sys, csv
-import numpy as np
+import sys
 import pandas as pd
 from datetime import datetime
-import os.path
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt,  QPoint
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
