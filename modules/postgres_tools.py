@@ -5,7 +5,6 @@ from config.conn import host, database, user, password
 from datetime import datetime
 
 # Write query
-
 def get_query_write(table_name, column_names):
     pre_query = f""" INSERT INTO {table_name} ({', '.join(column_names)}) VALUES """
     data_placeholder = ', '.join(['${}'.format(i) for i in range(1, len(column_names)+1)])
@@ -412,7 +411,8 @@ def upload_front_wirebond(modname,  technician, comment, wedge_id, spool_batch, 
 
 #save front wirebond information to database with different input
 def upload_front_wirebond2(modname, cell_no, bond_count_for_cell, bond_type):
-    read_query = f"""SELECT technician, wedge_id, spool_batch, comment, list_grounded_cells, list_unbonded_cells, date_bond, time_bond, module_no, wb_fr_marked_done
+    read_query = f"""SELECT technician, wedge_id, spool_batch, comment, list_grounded_cells, \
+                    list_unbonded_cells, date_bond, time_bond, module_no, wb_fr_marked_done
     FROM front_wirebond
     WHERE module_name = '{modname}'
     ORDER BY frwirebond_no DESC LIMIT 1;"""

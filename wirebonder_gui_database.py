@@ -7,8 +7,10 @@ from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
 
-from modules.postgres_tools import fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db
-from modules.wirebonder_gui_buttons import Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel
+from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, 
+                                    upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
+from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, 
+                                            SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
@@ -48,8 +50,10 @@ class FrontPage(QMainWindow):
         self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
-        self.state_counter = {0: len(self.df_front_states[self.df_front_states['state'] == 0]), 1: len(self.df_front_states[self.df_front_states['state'] == 1]),
-            2: len(self.df_front_states[self.df_front_states['state'] == 2]), 3: len(self.df_front_states[self.df_front_states['state'] == 3])}
+        self.state_counter = {0: len(self.df_front_states[self.df_front_states['state'] == 0]), 
+                              1: len(self.df_front_states[self.df_front_states['state'] == 1]),
+                              2: len(self.df_front_states[self.df_front_states['state'] == 2]), 
+                              3: len(self.df_front_states[self.df_front_states['state'] == 3])}
         self.state_counter_labels = {}
         self.state_button_labels = {}
 
@@ -63,7 +67,8 @@ class FrontPage(QMainWindow):
             label = QLabel(f"")
             self.vbox.addWidget(label)
 
-        nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
+        nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, 
+                                      self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
         nominal_button.setGeometry(scroll_width-10-nominal_button.width,75, nominal_button.width, nominal_button.height)
         nominal_button.show()
         info_label = QLabel("<a href=\"https://github.com/nkalliney1/wirebonder_gui/blob/main/README.md\">Help",self.widget)
@@ -99,7 +104,9 @@ class FrontPage(QMainWindow):
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
-        label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: 2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: Needs to be grounded<br>Black fill: Grounded",self.widget)
+        label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
+                        2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
+                        Needs to be grounded<br>Black fill: Grounded",self.widget)
         label5.setWordWrap(True)
         label5.setTextFormat(Qt.RichText)
         label5.setGeometry(20,90, 170,150)
@@ -139,7 +146,8 @@ class FrontPage(QMainWindow):
         self.std.setText(str(self.info_dict["pull_info"]["std_pull_strg_g"]))
         self.pull_comments.setText(str(self.info_dict["pull_info"]["comment"]))
 
-        reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
+        reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, 
+                                    self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
             self.pull_techname, self.pull_comments, self.std, self.mean, self.widget)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
         reset_button.show()
@@ -158,42 +166,54 @@ class FrontPage(QMainWindow):
                 #tests for calibration channel before or after current cell
                 if (index < (len(self.df_pad_map) - num_non_signal-1)):
                     padnumafter = df_pad_map.loc[index+1]['padnumber']
-                    pad_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
+                    pad_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and 
+                                 self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[padnumafter]['Channeltype'] == 1)
                 if index > 0:
                     padnumbefore = df_pad_map.loc[index-1]['padnumber']
-                    pad_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
+                    pad_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and 
+                                  self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[padnumbefore]['Channeltype'] == 1)
                 #create cells
                 if pad_after or pad_before:
                     if row1['Channelpos'] == 0 or row1['Channelpos'] == 1 or row1['Channelpos'] == 5:
                         #move label position if button would cover it based on channelpos
-                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'], hex_length,
-                            str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                             self.state_button_labels, row2['state'], row2['grounded'], hex_length,
+                                             str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
                     else:
-                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'],row2['grounded'], hex_length,
-                            str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                             self.state_button_labels, row2['state'],row2['grounded'], hex_length,
+                                             str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
                     pad.lower()
                 else: #if there is no calibration channel, the label can be in the middle of the pad
-                    pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                        str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                    pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 #set pad position
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset ),int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset ),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             #create half hexagon cells
             elif row1['Channeltype'] == 2 and index > -1:
-                pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [hex_length/2,0],
-                    str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [hex_length/2,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
-                pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
-                    str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
-                pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'],
-                    str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3)), int(pad.radius*2), int(pad.radius*2))
+                pad = WedgeButton(self.state_counter, self.state_counter_labels, 
+                                  self.state_button_labels, row2['state'], row2['grounded'],
+                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget)
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3)), int(pad.radius*2), int(pad.radius*2))
                 #add manually to list of buttons
                 self.buttons[str(padnumber)] = pad
                 pad.raise_()
@@ -208,7 +228,8 @@ class FrontPage(QMainWindow):
                     size = 13
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'],
                     str(padnumber), 6, str(padnumber), [0,0], size, self.widget)
-                pad.setGeometry(int(float(row0["xposition"])*scaling_factor + scroll_width/2 + scaling_factor*0.25 + x_offset),int(float(row0["yposition"]*-1*scaling_factor + y_offset + w_height/2 + scaling_factor*0.25)),
+                pad.setGeometry(int(float(row0["xposition"])*scaling_factor + scroll_width/2 + scaling_factor*0.25 + x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset + w_height/2 + scaling_factor*0.25)),
                     int(pad.radius*2), int(pad.radius*2))
                 #manually add to list of buttons
                 self.buttons[str(padnumber)] = pad
@@ -252,8 +273,10 @@ class BackPage(QMainWindow):
         self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
-        self.state_counter = {0: len(self.df_back_states[self.df_back_states['state'] == 0]), 1: len(self.df_back_states[self.df_back_states['state'] == 1]),
-            2: len(self.df_back_states[self.df_back_states['state'] == 2]), 3: len(self.df_back_states[self.df_back_states['state'] == 3])}
+        self.state_counter = {0: len(self.df_back_states[self.df_back_states['state'] == 0]), 
+                              1: len(self.df_back_states[self.df_back_states['state'] == 1]),
+                              2: len(self.df_back_states[self.df_back_states['state'] == 2]), 
+                              3: len(self.df_back_states[self.df_back_states['state'] == 3])}
         self.state_counter_labels = {}
         self.state_button_labels = {}
 

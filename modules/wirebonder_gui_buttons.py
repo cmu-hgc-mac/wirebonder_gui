@@ -5,7 +5,8 @@ from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 
-from modules.postgres_tools import  upload_front_wirebond, upload_back_wirebond, upload_encaps, upload_bond_pull_test, read_front_db, read_back_db, read_pull_db
+from modules.postgres_tools import  (upload_front_wirebond, upload_back_wirebond, upload_encaps, 
+                                     upload_bond_pull_test, read_front_db, read_back_db, read_pull_db)
 from config.graphics_config import button_font_size
 font = QFont("Calibri", button_font_size)
 
@@ -23,7 +24,8 @@ class Hex(QWidget):
         #draw pad
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -82,7 +84,8 @@ class HalfHex(QWidget):
 
 #normal cell class (doesn't include calibration channels) with channel buttons
 class HexWithButtons(Hex):
-    def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None):
+    def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None):
         super().__init__(radius, cell_id, label_pos, color,parent)
         self.channel_id = channel_id
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
@@ -97,7 +100,8 @@ class HexWithButtons(Hex):
         #draw pad
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -120,7 +124,8 @@ class HexWithButtons(Hex):
 
 #normal half cell class (doesn't include calibration channels) with channel buttons
 class HalfHexWithButtons(Hex):
-    def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None):
+    def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None):
         super().__init__(radius, cell_id, label_pos, color,parent)
         self.channel_id = channel_id
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
@@ -182,7 +187,8 @@ class HalfHexWithButtons(Hex):
 
 #these are the clickable buttons that represent channels
 class WedgeButton(QPushButton):
-    def __init__(self, state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, channel_pos, label, label_pos, radius, parent=None):
+    def __init__(self, state_counter, state_counter_labels, state_button_labels, state,
+                 grounded, channel_id, channel_pos, label, label_pos, radius, parent=None):
         super().__init__(parent)
         self.state_counter = state_counter
         self.state_counter_labels = state_counter_labels
@@ -340,7 +346,8 @@ class ResetButton(GreyButton):
 #erasing any changes made since then
 #for front page
 class ResetButton2(GreyButton):
-    def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, pull_techname, pull_comments, std, mean, parent = None):
+    def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, pull_techname,
+                 pull_comments, std, mean, parent = None):
         super().__init__(button_text, width, height, parent)
         self.buttons = buttons
         self.module_name = module_name
@@ -434,17 +441,21 @@ class SaveButton(QPushButton):
     def save(self):
         page = self.widget.currentWidget()
         if page.pageid == "frontpage":
-            upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.wb_time.text(), page.buttons)
-            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), 
+                                  page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.wb_time.text(), page.buttons)
+            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), 
+                                  page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
             self.updateAboveLabel()
         elif page.pageid == "backpage":
-            upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
+            upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), 
+                                 page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
             self.updateAboveLabel()
         elif page.pageid == "encapspage":
             enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), 
+                                  page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
             if (saved): self.updateAboveLabel()
         self.update()
 
