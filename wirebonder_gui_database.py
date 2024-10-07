@@ -508,8 +508,8 @@ class EncapsPage(QMainWindow):
 
     def set_to_now(self,date, time):
         now = datetime.now()
-        date.setText(str(now.year) + "/" + str(now.month) + "/" + str(now.day))
-        time.setText(str(now.hour)+":"+str(now.minute))
+        date.setText(str(now.strftime("%Y")) + "/" + str(now.strftime("%m")) + "/" + str(now.strftime("%d")))
+        time.setText(str(now.strftime("%H"))+":"+str(now.strftime("%M")))
 
 #overarching window
 class MainWindow(QMainWindow):
