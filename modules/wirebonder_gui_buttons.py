@@ -430,34 +430,12 @@ class HomePageButton(QPushButton):
 class SaveButton(QPushButton):
     def __init__(self, widget, module_name, label, width, height, button_text, parent = None):
         super().__init__(parent)
-        self.clicked.connect(self.save)
         self.widget = widget
         self.module_name = module_name
         self.label = label
         self.width = width
         self.height = height
         self.button_text  = button_text
-
-    def save(self):
-        page = self.widget.currentWidget()
-        if page.pageid == "frontpage":
-            upload_front_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), 
-                                  page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(), page.wb_time.text(), page.buttons)
-            upload_bond_pull_test(self.module_name, page.mean.text(), page.std.text(), 
-                                  page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
-            self.updateAboveLabel()
-        elif page.pageid == "backpage":
-            upload_back_wirebond(self.module_name, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), 
-                                 page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
-            self.updateAboveLabel()
-        elif page.pageid == "encapspage":
-            enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
-            cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
-            cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), 
-                                  page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
-            if (saved): self.updateAboveLabel()
-        self.update()
 
     #update label on when last save was
     def updateAboveLabel(self):

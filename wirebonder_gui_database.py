@@ -67,6 +67,7 @@ class FrontPage(QMainWindow):
             label = QLabel(f"")
             self.vbox.addWidget(label)
 
+        #side bar buttons and text entry
         nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, 
                                       self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
         nominal_button.setGeometry(scroll_width-10-nominal_button.width,75, nominal_button.width, nominal_button.height)
@@ -545,6 +546,7 @@ class MainWindow(QMainWindow):
         self.df_pad_map = pd.DataFrame()
         self.df_backside_mbites_pos = pd.DataFrame()
         self.df_pad_to_channel = pd.DataFrame()
+
         self.logolabel = QLabel(self)
         logo = QPixmap('images/CMU_Logo_Stack_Red.png').scaled(75, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.logolabel.setPixmap(logo)
@@ -596,16 +598,6 @@ class MainWindow(QMainWindow):
         self.label5.setText("Information not found,\nPlease enter valid module serial number or")
         #check if the module exists
         self.modname = self.combobox.currentText()+"-"+self.modid.text()
-        read_query = f"""SELECT EXISTS(SELECT module_name
-        FROM module_info
-        WHERE module_name ='{self.modname}');"""
-        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-
-        read_query = f"""SELECT EXISTS(SELECT module_name
-        FROM module_info
-        WHERE module_name ='{self.modname}');"""
-        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-
         read_query = f"""SELECT EXISTS(SELECT module_name
         FROM module_info
         WHERE module_name ='{self.modname}');"""
@@ -708,15 +700,26 @@ class MainWindow(QMainWindow):
         self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
         self.label.show()
         save_button = SaveButton(self.widget, self.modname, self.label, 90, 25, "Save", self)
+        save_button.clicked.connect(lambda: self.save_button_helper(self.widget, save_button))
         save_button.setGeometry(w_width-save_button.width-10, 0, save_button.width, save_button.height)
         save_button.show()
 
         homebutton = HomePageButton("Home page", 75, 25, self)
         homebutton.setGeometry(0, 0, homebutton.width, homebutton.height)
-        homebutton.clicked.connect(lambda: self.helper(self.widget))
+        homebutton.clicked.connect(lambda: self.home_button_helper(self.widget))
         homebutton.show()
 
-    def helper(self, widget):
+    def home_button_helper(self, widget):
+        self.save(widget)
+        self.show_start()
+    
+    def save_button_helper(self, widget, save_button):
+        saved = self.save(widget)
+        if (saved): save_button.updateAboveLabel()
+
+    
+    def save(self, widget):
+        saved = True;
         page = widget.currentWidget()
         if page.pageid == "frontpage":
             upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
@@ -727,8 +730,8 @@ class MainWindow(QMainWindow):
             enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
-        self.show_start()
+            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+        return saved
 
     def add_new_to_db_helper(self):
         add_new_to_db(self.combobox.currentText()+"-"+self.modid.text())
