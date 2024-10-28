@@ -151,10 +151,15 @@ def read_front_db(modname, df_pad_map):
     #if so, it's an old module and read from database
     #if not, it's a new module and just read in ground info
     if not check['exists']:
-        read_query = f"""SELECT hexaboard.list_dead_cell_init, hexaboard.list_noisy_cell_init
-                FROM module_info
-                JOIN hexaboard ON module_info.module_no = hexaboard.module_no
-                WHERE module_info.module_no = '{module_no}' LIMIT 1;"""
+        # read_query = f"""SELECT hexaboard.list_dead_cell_init, hexaboard.list_noisy_cell_init
+        #        FROM module_info
+        #        JOIN hexaboard ON module_info.module_no = hexaboard.module_no
+        #        WHERE module_info.module_no = '{module_no}' LIMIT 1;"""
+        read_query = f"""SELECT hxb.list_dead_cells, hxb.list_noisy_cells
+                        FROM hxb_pedestal_test
+                        JOIN module_assembly ON module_assembly.hxb_name = hxb_pedestal_test.hxb_name
+                        WHERE module_assembly.module_name = '{modname}'
+                        ORDER BY hxb_pedestal_test.hxb_pedtest_no DESC LIMIT 1; """
         res2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
         dead = res2['list_dead_cell_init']
         noisy = res2['list_noisy_cell_init']
