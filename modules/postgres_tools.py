@@ -155,7 +155,7 @@ def read_front_db(modname, df_pad_map):
         #        FROM module_info
         #        JOIN hexaboard ON module_info.module_no = hexaboard.module_no
         #        WHERE module_info.module_no = '{module_no}' LIMIT 1;"""
-        read_query = f"""SELECT hxb.list_dead_cells, hxb.list_noisy_cells
+        read_query = f"""SELECT hxb_pedestal_test.list_dead_cells, hxb_pedestal_test.list_noisy_cells
                         FROM hxb_pedestal_test
                         JOIN module_assembly ON module_assembly.hxb_name = hxb_pedestal_test.hxb_name
                         WHERE module_assembly.module_name = '{modname}'

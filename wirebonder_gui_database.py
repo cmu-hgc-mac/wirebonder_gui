@@ -453,11 +453,11 @@ class EncapsPage(QMainWindow):
         self.label = QLabel("Module type:",self)
         self.label.setGeometry(20, 20, 150, 25)
         self.label.show()
-        self.combobox = QComboBox(self)
-        inst_code = conn.inst_code
-        mod_list = mod_type_mac.module_type[inst_code]
-        self.combobox.addItems(mod_list)
-        self.combobox.setGeometry(15, 45, 150, 25)
+        #self.combobox = QComboBox(self)
+        #inst_code = conn.inst_code
+        #mod_list = mod_type_mac.module_type[inst_code]
+        #self.combobox.addItems(mod_list)
+        #self.combobox.setGeometry(15, 45, 150, 25)
         self.label = QLabel()
         self.label2 = QLabel("Module no:",self)
         self.label2.setGeometry(20, 70, 150, 25)
@@ -483,7 +483,7 @@ class EncapsPage(QMainWindow):
 
     def add(self):
         self.problemlabel.hide()
-        modname = self.combobox.currentText()+"-"+self.modid.text()
+        modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT module_name
         FROM module_info
         WHERE module_name ='{modname}');"""
@@ -498,7 +498,7 @@ class EncapsPage(QMainWindow):
             self.problemlabel.show()
 
     def remove(self):
-        modname = self.combobox.currentText()+"-"+self.modid.text()
+        modname = (self.modid.text()).replace("-","")
         if modname in self.modules and self.modules[modname] == self.combobox2.currentText():
             del self.modules[modname]
         string = ""
@@ -522,11 +522,12 @@ class MainWindow(QMainWindow):
         labell.setGeometry(int(w_width/2-75), 330, 150, 25)
         self.label = QLabel("Module type:",self)
         self.label.setGeometry(int(w_width/2-75), 350, 150, 25)
-        self.combobox = QComboBox(self)
-        inst_code = conn.inst_code
-        mod_list = mod_type_mac.module_type[inst_code]
-        self.combobox.addItems(mod_list)
-        self.combobox.setGeometry(int(w_width/2-80), 375, 150, 25)
+        # commented out to move from dropdown to just a textbox entry system
+        #self.combobox = QComboBox(self)
+        #inst_code = conn.inst_code
+        #mod_list = mod_type_mac.module_type[inst_code]
+        #self.combobox.addItems(mod_list)
+        #self.combobox.setGeometry(int(w_width/2-80), 375, 150, 25)
         self.label2 = QLabel("Module no:",self)
         self.label2.setGeometry(int(w_width/2-75), 400, 150, 25)
         self.modid = QLineEdit(self)
@@ -572,7 +573,7 @@ class MainWindow(QMainWindow):
         self.widget.hide()
         self.modid.setText('')
         self.modid.show()
-        self.combobox.show()
+        #self.combobox.show()
         self.label2.show()
         self.label3.setText("Encaps and Wirebond")
         self.label3.setGeometry(int(w_width/2), 0, 150, 25)
@@ -597,7 +598,7 @@ class MainWindow(QMainWindow):
     def load(self, page):
         self.label5.setText("Information not found,\nPlease enter valid module serial number or")
         #check if the module exists
-        self.modname = self.combobox.currentText()+"-"+self.modid.text()
+        self.modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT module_name
         FROM module_info
         WHERE module_name ='{self.modname}');"""
@@ -634,19 +635,19 @@ class MainWindow(QMainWindow):
     def begin_program(self,page):
         self.label5.hide()
         self.addbutton.hide()
-        hexaboard_type = self.modname[5] + self.modname[7]
+        hexaboard_type = self.modname[4] + self.modname[5]
         global hex_length, y_offset, num_non_signal, x_offset
-        if self.modname[5] == "L":
+        if self.modname[4] == "L":
             hex_length = 38
-        elif self.modname[5] == "H":
+        elif self.modname[4] == "H":
             hex_length = 25
             y_offset += 40
             x_offset+=add_x_offset
 
         #load position files
-        if self.modname[7] == "5":
+        if self.modname[5] == "5":
             num_non_signal = 10
-        elif self.modname[7] == "L" or self.modname[7] == "R":
+        elif self.modname[5] == "L" or self.modname[5] == "R":
             num_non_signal = 8
         fname = f'./geometries/{hexaboard_type}_hex_positions.csv'
         with open(fname, 'r') as file:
@@ -666,7 +667,7 @@ class MainWindow(QMainWindow):
             self.df_pad_to_channel = self.df_pad_to_channel.set_index("padnumber")
 
         self.modid.hide()
-        self.combobox.hide()
+        #self.combobox.hide()
         self.label2.hide()
         self.scrolllabel.hide()
         self.label.hide()
@@ -734,7 +735,7 @@ class MainWindow(QMainWindow):
         return saved
 
     def add_new_to_db_helper(self):
-        add_new_to_db(self.combobox.currentText()+"-"+self.modid.text())
+        add_new_to_db((self.modid.text()).replace("-",""))
         self.label5.setText("Added as blank hexaboard to database")
 
     def paintEvent(self, event):

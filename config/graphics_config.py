@@ -1,5 +1,5 @@
-button_font_size = 9
-text_font_size = 14
+button_font_size = 7
+text_font_size = 11
 #window width and height
 w_width = 1360
 w_height = 1000
