@@ -484,9 +484,9 @@ class EncapsPage(QMainWindow):
     def add(self):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
-        read_query = f"""SELECT EXISTS(SELECT module_name
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
-        WHERE module_name ='{modname}');"""
+        WHERE REPLACE(module_name, '-','') ='{modname}');"""
         check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
         if check['exists']:
             self.modules[modname] = self.combobox2.currentText()
@@ -528,7 +528,7 @@ class MainWindow(QMainWindow):
         #mod_list = mod_type_mac.module_type[inst_code]
         #self.combobox.addItems(mod_list)
         #self.combobox.setGeometry(int(w_width/2-80), 375, 150, 25)
-        self.label2 = QLabel("Module no:",self)
+        self.label2 = QLabel("Module ID:",self)
         self.label2.setGeometry(int(w_width/2-75), 400, 150, 25)
         self.modid = QLineEdit(self)
         self.modid.setGeometry(int(w_width/2-75), 425, 150, 25)
@@ -599,25 +599,20 @@ class MainWindow(QMainWindow):
         self.label5.setText("Information not found,\nPlease enter valid module serial number or")
         #check if the module exists
         self.modname = (self.modid.text()).replace("-","")
-        read_query = f"""SELECT EXISTS(SELECT module_name
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
-        WHERE module_name ='{self.modname}');"""
+        WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
         check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
         if check['exists']:
-            read_query = f"""SELECT module_no
-            FROM module_info
-            WHERE module_name = '{self.modname}';"""
-            module_no = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]["module_no"]
-
-            read_query = f"""SELECT EXISTS(SELECT module_no
-            FROM hexaboard
-            WHERE module_no ='{module_no}');"""
+            read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+            FROM module_assembly
+            WHERE REPLACE(module_name, '-','') = '{self.modname}');"""
             check2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
-            read_query = f"""SELECT EXISTS(SELECT module_name
+            read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
             FROM front_wirebond
-            WHERE module_name ='{self.modname}');"""
+            WHERE REPLACE(module_name, '-','')='{self.modname}');"""
             check3 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
 
             if check2['exists'] or check3['exists']:
@@ -635,19 +630,19 @@ class MainWindow(QMainWindow):
     def begin_program(self,page):
         self.label5.hide()
         self.addbutton.hide()
-        hexaboard_type = self.modname[4] + self.modname[5]
+        hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
         global hex_length, y_offset, num_non_signal, x_offset
-        if self.modname[4] == "L":
+        if self.modname.replace("-","")[4] == "L":
             hex_length = 38
-        elif self.modname[4] == "H":
+        elif self.modname.replace("-","")[4] == "H":
             hex_length = 25
             y_offset += 40
             x_offset+=add_x_offset
 
         #load position files
-        if self.modname[5] == "5":
+        if self.modname.replace("-","")[5] == "5":
             num_non_signal = 10
-        elif self.modname[5] == "L" or self.modname[5] == "R":
+        elif self.modname.replace("-","")[5] == "L" or self.modname.replace("-","")[5] == "R":
             num_non_signal = 8
         fname = f'./geometries/{hexaboard_type}_hex_positions.csv'
         with open(fname, 'r') as file:
@@ -735,7 +730,7 @@ class MainWindow(QMainWindow):
         return saved
 
     def add_new_to_db_helper(self):
-        add_new_to_db((self.modid.text()).replace("-",""))
+        add_new_to_db(self.modid.text())
         self.label5.setText("Added as blank hexaboard to database")
 
     def paintEvent(self, event):
