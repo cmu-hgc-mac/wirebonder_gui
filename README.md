@@ -93,7 +93,7 @@ Clicking "save" will upload that information into the database for every module 
 
 # Setting up environments
 ### Conda
-If using `conda`, create an environment `wbgui`:
+We've had success with `conda` on Windows, macOS and Linux. If using `conda`, create an environment `wbgui`:
 ```
 conda create -n wbgui python=3.11 pip=23.2
 conda activate wbgui
