@@ -2,7 +2,12 @@
 
 # Installation instructions:
 
-We recommend running this is a separate conda environment or virtual environment ([See instructions](https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md#setting-up-environments))
+We recommend running this is a separate conda environment or virtual environment and install the required packages. ([See instructions](https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md#setting-up-environments))
+
+In `python=3.11` with `pip=23.2`, install with `pip`
+```
+pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+```
 
 Navigate to the directory where you want to keep the GUI code in terminal, then clone:
 ```
