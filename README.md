@@ -1,7 +1,6 @@
 # Basics of the GUI
 
 # Installation instructions:
-Navigate to the directory where you want to keep the GUI code in terminal, then run:
 
 We recommend running this is a separate conda environment or virtual environment ([See instructions](https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md#setting-up-environments))
 
