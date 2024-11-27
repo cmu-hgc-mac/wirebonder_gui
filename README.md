@@ -2,12 +2,12 @@
 
 # Installation instructions:
 Navigate to the directory where you want to keep the GUI code in terminal, then run:
-```
-pip install pyqt5 asyncpg numpy pandas
-```
 
+We recommend running this is a separate conda environment or virtual environment (See instructions)
+
+Navigate to the directory where you want to keep the GUI code in terminal, then clone:
 ```
-git clone https://github.com/nkalliney1/wirebonder_gui.git](https://github.com/cmu-hgc-mac/wirebonder_gui.git
+git clone https://github.com/cmu-hgc-mac/wirebonder_gui.git
 ```
 
 Go into [conn.py](conn.py) and edit your ```institution_name``` and ```inst_code``` to your respective institution. Change ```host``` to the static IP address of your database computer. Run the code and edit the graphics configuration file.
@@ -91,5 +91,30 @@ The epoxy batch is autofilled from the information of the previous module's, pro
 Clicking "save" will upload that information into the database for every module in the list.
 <img width="823" alt="image" src="https://github.com/user-attachments/assets/e49d2417-319b-4ba6-9314-e1c5964ed41b">
 
+# Setting up environments
+### Conda
+If using `conda`, create an environment `wbgui`:
+```
+conda create -n wbgui python=3.11 pip=23.2
+conda activate wbgui
+pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+```
+Run `conda activate wbgui`. In the environment, run `python wirebonder_gui_database.py`.
 
+### Python venv
+```
+python3 -m venv wbgui
+
+wbgui\Scripts\activate  # On Windows:
+source wbgui/bin/activate # On macOS/Linux
+
+pip install --upgrade pip==23.2
+pip install pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+```
+
+Run one of the following to activate the environment for running the GUI.
+```
+wbgui\Scripts\activate  # On Windows:
+source wbgui/bin/activate # On macOS/Linux
+```
 
