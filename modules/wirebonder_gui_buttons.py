@@ -406,18 +406,21 @@ class HomePageButton(QPushButton):
         self.width = width
         self.height = height
         self.text = text
+        self.original_color = QColor('#80d0e0')  # Default color
+        self.clicked_color = self.original_color.darker(120)  
+        self.hover_color = self.original_color.lighter(120)  
+        self.current_color = self.original_color 
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen(Qt.black)
-        painter.setBrush(QColor('#80d0e0'))
+        painter.setBrush(self.current_color)
         painter.setPen(pen)
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
         painter.drawPolygon(polygon)
         self.setStyleSheet("margin: 60;") #increases clickable area inside button
-
         #draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
@@ -425,6 +428,15 @@ class HomePageButton(QPushButton):
         label_rect = QRectF(0,0, self.width, self.height)  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.text)
         self.setStyleSheet("background-color: transparent")
+
+    def enterEvent(self, event):
+        self.current_color = self.hover_color  
+        self.update() 
+
+    def leaveEvent(self, event):
+        if not self.underMouse(): 
+            self.current_color = self.original_color  
+            self.update()  
 
 
 #button that saves all states and ground states to csv file
@@ -437,6 +449,10 @@ class SaveButton(QPushButton):
         self.width = width
         self.height = height
         self.button_text  = button_text
+        self.original_color = QColor('#80e085')  # Default color
+        self.clicked_color = self.original_color.darker(120)  
+        self.hover_color = self.original_color.lighter(120)  
+        self.current_color = self.original_color 
 
     #update label on when last save was
     def updateAboveLabel(self):
@@ -449,19 +465,28 @@ class SaveButton(QPushButton):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen(Qt.black)
-        painter.setBrush(QColor('#80e085'))
+        painter.setBrush(self.current_color)
         painter.setPen(pen)
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
         painter.drawPolygon(polygon)
         self.setStyleSheet("margin: 60;") #increases clickable area inside button
-
         #draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
         label_rect = QRectF(0,0, self.width, self.height)  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.button_text)
+
+    def enterEvent(self, event):
+        self.current_color = self.hover_color  
+        self.update() 
+
+    def leaveEvent(self, event):
+        if not self.underMouse(): 
+            self.current_color = self.original_color  
+            self.update()  
+
 
 # class for scrollable label
 class ScrollLabel(QScrollArea):
