@@ -6,7 +6,7 @@ We recommend running this is a separate conda environment or virtual environment
 
 In `python=3.11` with `pip=23.2`, install with `pip`
 ```
-pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
 ```
 
 Navigate to the directory where you want to keep the GUI code in terminal, then clone:
