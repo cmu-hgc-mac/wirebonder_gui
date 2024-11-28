@@ -26,7 +26,7 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
         if table_exists:
             query = get_query_write(table_name, db_upload_data.keys())
             await conn.execute(query, *db_upload_data.values())
-            print(f"Data for {db_upload_data["module_name"]} written into {table_name}")
+            print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
         else:
             print(f'Table {table_name} does not exist in the database.')
 
@@ -560,12 +560,10 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
             'rel_hum': rel_hum,
             'epoxy_batch': epoxy_batch,
         }
-        print(db_upload)
         try:  #get module number
             read_query = f"""SELECT module_no
                 FROM module_info
                 WHERE REPLACE(module_name, '-','') = '{module}';"""
-            print(read_query)
             records = await fetch_PostgreSQL(pool, read_query)
             module_no = [dict(record) for record in records][0]["module_no"]
             db_upload.update({'module_no' : int(module_no),})
