@@ -1,5 +1,5 @@
-conn.py
-graphics_config.py
+config/conn.py
+config/graphics_config.py
 *.pyc
 __pycache__/
 */__pycache__/
