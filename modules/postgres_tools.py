@@ -26,6 +26,7 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
         if table_exists:
             query = get_query_write(table_name, db_upload_data.keys())
             await conn.execute(query, *db_upload_data.values())
+            print(f"Data for {db_upload_data["module_name"]} written into {table_name}")
         else:
             print(f'Table {table_name} does not exist in the database.')
 
