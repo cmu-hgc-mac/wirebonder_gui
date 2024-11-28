@@ -1,5 +1,8 @@
 config/conn.py
 config/graphics_config.py
+geometries/__pycache__/*.pyc 
+modules/__pycache__/*.pyc 
+config/__pycache__/*.pyc 
 *.pyc
 __pycache__/
 */__pycache__/
