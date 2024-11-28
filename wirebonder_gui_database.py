@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt,  QPoint
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 import asyncio
+from qasync import QEventLoop
 
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, 
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
@@ -20,6 +21,14 @@ hex_length = 0
 y_offset = add_y_offset
 x_offset = 0
 num_non_signal = 12
+
+async def async_check(read_query):
+    try:
+        result = [dict(record) for record in await fetch_PostgreSQL(read_query)]
+        return result[0] if result else {}
+    except Exception as e:
+        print(f"Error in async_check: {e}")
+        return {}
 
 #hexaboard/"requirements" page
 class FrontPage(QMainWindow):
@@ -478,8 +487,16 @@ class EncapsPage(QMainWindow):
         self.combobox2 = QComboBox(self)
         self.combobox2.addItems(["frontside", "backside"])
         self.combobox2.setGeometry(15, 140, 150, 25)
-
         self.modules = {}
+
+    async def check_mod_exists_encap(self, check_task, modname):
+        check = await check_task
+        if check['exists']:
+            self.modules[modname] = self.combobox2.currentText()
+            string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
+            self.scrolllabel.setText(string)
+        else:
+            self.problemlabel.show()
 
     def add(self):
         self.problemlabel.hide()
@@ -487,15 +504,7 @@ class EncapsPage(QMainWindow):
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
-        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-        if check['exists']:
-            self.modules[modname] = self.combobox2.currentText()
-            string = ""
-            for module in self.modules:
-                string= string + module + ' ' + self.modules[module]  + "\n"
-            self.scrolllabel.setText(string)
-        else:
-            self.problemlabel.show()
+        asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(read_query), modname=modname))
 
     def remove(self):
         modname = (self.modid.text()).replace("-","")
@@ -595,27 +604,17 @@ class MainWindow(QMainWindow):
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
 
-    def load(self, page):
-        self.label5.setText("Information not found,\nPlease enter valid module serial number or")
-        #check if the module exists
-        self.modname = (self.modid.text()).replace("-","")
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
-        check = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-
+    async def check_mod_exists_main(self, check_task, page):
+        check = await check_task
         if check['exists']:
-            read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-            FROM module_assembly
-            WHERE REPLACE(module_name, '-','') = '{self.modname}');"""
-            check2 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
+            combined_query = f"""
+            SELECT 
+                EXISTS(SELECT 1 FROM module_assembly WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_assembly,
+                EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_wirebond;
+            """
+            combined_check = await async_check(combined_query)
 
-            read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-            FROM front_wirebond
-            WHERE REPLACE(module_name, '-','')='{self.modname}');"""
-            check3 = [dict(record) for record in asyncio.run(fetch_PostgreSQL(read_query))][0]
-
-            if check2['exists'] or check3['exists']:
+            if combined_check['in_assembly'] or combined_check['in_wirebond']:
                 self.begin_program(page)
             else:
                 self.label5.show()
@@ -625,6 +624,16 @@ class MainWindow(QMainWindow):
         else:
             self.label5.show()
             self.addbutton.show()
+
+    def load(self, page):
+        self.label5.setText("Information not found,\nPlease enter valid module serial number or")
+        #check if the module exists
+        self.modname = (self.modid.text()).replace("-","")
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+        FROM module_info
+        WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
+        asyncio.create_task(self.check_mod_exists_main(check_task=async_check(read_query), page=page))
+
 
     #create pages, button to switch between pages, button to save
     def begin_program(self,page):
@@ -715,7 +724,7 @@ class MainWindow(QMainWindow):
 
     
     def save(self, widget):
-        saved = True;
+        saved = True
         page = widget.currentWidget()
         if page.pageid == "frontpage":
             upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
@@ -745,7 +754,10 @@ if __name__ == "__main__":
     font = QFont("Calibri", text_font_size)
     font.setWeight(text_font_size)
     QApplication.setFont(font, "QLabel")
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
     mainWindow = MainWindow()
     mainWindow.setGeometry(0, 0, w_width, w_height)
     mainWindow.show()
-    sys.exit(app.exec_())
+    with loop:
+        sys.exit(loop.run_forever())
