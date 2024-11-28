@@ -411,6 +411,7 @@ class HomePageButton(QPushButton):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen(Qt.black)
+        painter.setBrush(QColor('#80d0e0'))
         painter.setPen(pen)
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)

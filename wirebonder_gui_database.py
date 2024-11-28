@@ -1,12 +1,11 @@
-import sys
+import asyncio, asyncpg, sys
 import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
-from PyQt5.QtCore import Qt,  QPoint
+from PyQt5.QtCore import Qt,  QPoint, QTimer
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
-import asyncio
-from qasync import QEventLoop
+from qasync import QEventLoop, asyncSlot
 
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, 
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
@@ -15,16 +14,30 @@ from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, Gr
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
+from config.conn import host, database, user, password
 
+pool = None
 scaling_factor = 90
 hex_length = 0
 y_offset = add_y_offset
 x_offset = 0
 num_non_signal = 12
 
-async def async_check(read_query):
+async def init_pool():
+    global pool
+    pool = await asyncpg.create_pool(
+        host=host,
+        database=database,
+        user=user,
+        password=password,
+        min_size=10,  # minimum number of connections in the pool
+        max_size=50   # maximum number of connections in the pool
+        )
+    print('Connection pool initialized!')
+
+async def async_check(pool, read_query):
     try:
-        result = [dict(record) for record in await fetch_PostgreSQL(read_query)]
+        result = [dict(record) for record in await fetch_PostgreSQL(pool, read_query)]
         return result[0] if result else {}
     except Exception as e:
         print(f"Error in async_check: {e}")
@@ -403,7 +416,7 @@ class EncapsPage(QMainWindow):
         lab6.setGeometry(300,360, 150, 25)
         self.comments= QTextEdit(self)
         self.comments.setGeometry(300,385, 300, 150)
-        label = QLabel("<b>Encapsulation</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
+        label = QLabel("<b>Encapsulation</b> (YYYY/MM/DD, HH:MM in 24h time): <b>*</b>", self)
         label.setGeometry(300,70, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,95, 100, 25)
@@ -417,7 +430,7 @@ class EncapsPage(QMainWindow):
         nowbutton1.setGeometry(725, 95, 50, 25)
         nowbutton1.clicked.connect(lambda: self.set_to_now(self.enc_date, self.enc_time))
 
-        label = QLabel("Cure <b>start</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
+        label = QLabel("Cure <b>start</b> (YYYY/MM/DD, HH:MM in 24h time): <b>*</b>", self)
         label.setGeometry(300,120, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,145, 100, 25)
@@ -431,7 +444,7 @@ class EncapsPage(QMainWindow):
         nowbutton2.setGeometry(725, 145, 50, 25)
         nowbutton2.clicked.connect(lambda: self.set_to_now(self.start_date, self.start_time))
 
-        label = QLabel("Cure <b>end</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
+        label = QLabel("Cure <b>end</b> (YYYY/MM/DD, HH:MM in 24h time): <b>*</b>", self)
         label.setGeometry(300,170, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(300,195, 100, 25)
@@ -448,7 +461,7 @@ class EncapsPage(QMainWindow):
         label = QLabel("Epoxy Batch:", self)
         label.setGeometry(300,220, 100, 25)
         self.epoxy_batch = QLineEdit(self)
-        self.epoxy_batch.setText(read_encaps()["epoxy_batch"])
+        self.epoxy_batch.setText("Waiting for batch...")
         self.epoxy_batch.setGeometry(300,245, 150, 25)
         label = QLabel("Temperature:", self)
         label.setGeometry(300,265, 150, 25)
@@ -488,6 +501,15 @@ class EncapsPage(QMainWindow):
         self.combobox2.addItems(["frontside", "backside"])
         self.combobox2.setGeometry(15, 140, 150, 25)
         self.modules = {}
+        self.async_epoxy_batch()
+
+    def run_async_function(self):
+        asyncio.ensure_future(self.async_task())
+    
+    @asyncSlot()
+    async def async_epoxy_batch(self):
+        result = await read_encaps(pool)  
+        self.epoxy_batch.setText(result["epoxy_batch"])
 
     async def check_mod_exists_encap(self, check_task, modname):
         check = await check_task
@@ -504,7 +526,7 @@ class EncapsPage(QMainWindow):
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
-        asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(read_query), modname=modname))
+        asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(pool, read_query), modname=modname))
 
     def remove(self):
         modname = (self.modid.text()).replace("-","")
@@ -570,21 +592,28 @@ class MainWindow(QMainWindow):
         self.modname = ''
         self.scrolllabel = ScrollLabel(self)
         self.scrolllabel.setGeometry(int(w_width/2-75), 580, 300, 100)
+        self.scrolllabel.setText("Waiting for modules...")
         self.label5 = QLabel("Information not found,\nPlease enter valid module serial number or",self)
         self.label5.setGeometry(int(w_width/2-75), 490, 300, 50)
         self.addbutton = GreyButton("Add as blank module",100,25,self)
         self.addbutton.setGeometry(int(w_width/2-75), 540, 100, 50)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
+        self.init_and_show()
+    
+    @asyncSlot()
+    async def init_and_show(self):
+        await init_pool()
         self.show_start()
 
     #showing home page
-    def show_start(self):
+    @asyncSlot()
+    async def show_start(self):
         self.widget.hide()
         self.modid.setText('')
         self.modid.show()
         #self.combobox.show()
         self.label2.show()
-        self.label3.setText("Encaps and Wirebond")
+        self.label3.setText("Wirebonding and Encapsulation")
         self.label3.setGeometry(int(w_width/2), 0, 150, 25)
         self.load_button.show()
         self.scrolllabel.show()
@@ -594,7 +623,7 @@ class MainWindow(QMainWindow):
         self.label5.hide()
         self.addbutton.hide()
         string = 'Incomplete or unstarted modules:\n'
-        bad_modules = find_to_revisit()
+        bad_modules = await find_to_revisit(pool)
         for module in bad_modules:
             mod_str = module + ' '
             if not bad_modules[module][0]: #true = frontside done
@@ -603,24 +632,25 @@ class MainWindow(QMainWindow):
                 mod_str = mod_str + " bk"
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
-
+        
     async def check_mod_exists_main(self, check_task, page):
         check = await check_task
+        print(check_task)
         if check['exists']:
             combined_query = f"""
             SELECT 
                 EXISTS(SELECT 1 FROM module_assembly WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_assembly,
                 EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_wirebond;
             """
-            combined_check = await async_check(combined_query)
+            combined_check = await async_check(pool, combined_query)
 
             if combined_check['in_assembly'] or combined_check['in_wirebond']:
-                self.begin_program(page)
+                asyncio.create_task(self.begin_program(page))
             else:
                 self.label5.show()
                 self.addbutton.show()
         elif page == "encapspage":
-            self.begin_program(page)
+            asyncio.create_task(self.begin_program(page))
         else:
             self.label5.show()
             self.addbutton.show()
@@ -632,43 +662,45 @@ class MainWindow(QMainWindow):
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
         WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
-        asyncio.create_task(self.check_mod_exists_main(check_task=async_check(read_query), page=page))
+        asyncio.create_task(self.check_mod_exists_main(check_task=async_check(pool, read_query), page=page))
 
 
     #create pages, button to switch between pages, button to save
-    def begin_program(self,page):
+    async def begin_program(self,page):
         self.label5.hide()
         self.addbutton.hide()
-        hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
-        global hex_length, y_offset, num_non_signal, x_offset
-        if self.modname.replace("-","")[4] == "L":
-            hex_length = 38
-        elif self.modname.replace("-","")[4] == "H":
-            hex_length = 25
-            y_offset += 40
-            x_offset+=add_x_offset
 
-        #load position files
-        if self.modname.replace("-","")[5] == "5":
-            num_non_signal = 10
-        elif self.modname.replace("-","")[5] == "L" or self.modname.replace("-","")[5] == "R":
-            num_non_signal = 8
-        fname = f'./geometries/{hexaboard_type}_hex_positions.csv'
-        with open(fname, 'r') as file:
-            #read in all the pad positions
-            self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
-            self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
+        if page != "encapspage":
+            hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
+            global hex_length, y_offset, num_non_signal, x_offset
+            if self.modname.replace("-","")[4] == "L":
+                hex_length = 38
+            elif self.modname.replace("-","")[4] == "H":
+                hex_length = 25
+                y_offset += 40
+                x_offset+=add_x_offset
 
-        fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
-        with open(fname, 'r') as file:
-           self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
+            #load position files
+            if self.modname.replace("-","")[5] == "5":
+                num_non_signal = 10
+            elif self.modname.replace("-","")[5] == "L" or self.modname.replace("-","")[5] == "R":
+                num_non_signal = 8
+            fname = f'./geometries/{hexaboard_type}_hex_positions.csv'
+            with open(fname, 'r') as file:
+                #read in all the pad positions
+                self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
+                self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
 
-        #load pad to channel mappings
-        fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
-        with open(fname, 'r') as file:
-            #read in all the channels and what pad they're connected to (not used but possibly useful in the future)
-            self.df_pad_to_channel = pd.read_csv(file, skiprows = 1, names = ['padnumber', 'ASIC','Channel','Channeltype','Channelpos'])
-            self.df_pad_to_channel = self.df_pad_to_channel.set_index("padnumber")
+            fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
+            with open(fname, 'r') as file:
+                self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
+
+            #load pad to channel mappings
+            fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
+            with open(fname, 'r') as file:
+                #read in all the channels and what pad they're connected to (not used but possibly useful in the future)
+                self.df_pad_to_channel = pd.read_csv(file, skiprows = 1, names = ['padnumber', 'ASIC','Channel','Channeltype','Channelpos'])
+                self.df_pad_to_channel = self.df_pad_to_channel.set_index("padnumber")
 
         self.modid.hide()
         #self.combobox.hide()
@@ -687,7 +719,7 @@ class MainWindow(QMainWindow):
             self.label3.setGeometry(int(w_width/2), 0, 160, 25)
             self.label3.show()
         else:
-            info_dict = read_from_db(self.modname, self.df_pad_map, self.df_backside_mbites_pos)
+            info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
             if page == "frontpage":
                 frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict)
                 self.widget.addWidget(frontpage)
@@ -704,42 +736,47 @@ class MainWindow(QMainWindow):
         self.label = QLabel("Last Saved: Unsaved since opened", self)
         self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
         self.label.show()
-        save_button = SaveButton(self.widget, self.modname, self.label, 90, 25, "Save", self)
-        save_button.clicked.connect(lambda: self.save_button_helper(self.widget, save_button))
-        save_button.setGeometry(w_width-save_button.width-10, 0, save_button.width, save_button.height)
-        save_button.show()
 
         homebutton = HomePageButton("Home page", 75, 25, self)
         homebutton.setGeometry(0, 0, homebutton.width, homebutton.height)
         homebutton.clicked.connect(lambda: self.home_button_helper(self.widget))
         homebutton.show()
 
-    def home_button_helper(self, widget):
-        self.save(widget)
-        self.show_start()
+        save_button = SaveButton(self.widget, self.modname, self.label, 90, 25, "Save", self)
+        save_button.clicked.connect(lambda: self.save_button_helper(self.widget, save_button))
+        save_button.setGeometry(homebutton.width+10, 0, save_button.width, save_button.height)
+        # save_button.setGeometry(w_width-save_button.width-10, 0, save_button.width, save_button.height)
+        save_button.show()
+
+    @asyncSlot()
+    async def home_button_helper(self, widget):
+        asyncio.create_task(self.save(widget))
+        await self.show_start()
     
-    def save_button_helper(self, widget, save_button):
-        saved = self.save(widget)
+    @asyncSlot()
+    async def save_button_helper(self, widget, save_button):
+        saved = await self.save(widget)
         if (saved): save_button.updateAboveLabel()
 
     
-    def save(self, widget):
+    async def save(self, widget):
         saved = True
         page = widget.currentWidget()
         if page.pageid == "frontpage":
-            upload_front_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
-            upload_bond_pull_test(self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
+            await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
         elif page.pageid == "backpage":
-            upload_back_wirebond(self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
+            await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
             enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            saved = upload_encaps(page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
         return saved
 
-    def add_new_to_db_helper(self):
-        add_new_to_db(self.modid.text())
+    @asyncSlot()
+    async def add_new_to_db_helper(self):
+        await add_new_to_db(pool, self.modid.text())
         self.label5.setText("Added as blank hexaboard to database")
 
     def paintEvent(self, event):
@@ -749,7 +786,7 @@ class MainWindow(QMainWindow):
         painter.setPen(pen)
         painter.drawLine(QPoint(0,25),QPoint(w_width,25))
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     font = QFont("Calibri", text_font_size)
     font.setWeight(text_font_size)
@@ -761,3 +798,6 @@ if __name__ == "__main__":
     mainWindow.show()
     with loop:
         sys.exit(loop.run_forever())
+
+if __name__ == "__main__":
+    main()
