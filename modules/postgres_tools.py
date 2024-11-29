@@ -73,7 +73,7 @@ async def add_new_to_db(pool, modname):
 async def find_to_revisit(pool,):
     bad_modules = {}
     #get module numbers
-    read_query = f"""SELECT module_name
+    read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name
         FROM module_info;"""
     records = await fetch_PostgreSQL(pool, read_query)
     all_modules = [dict(record) for record in records]
@@ -218,7 +218,7 @@ async def read_front_db(pool, modname, df_pad_map):
     #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if front_wirebond_info['wedge_id'] == None or front_wirebond_info['wedge_id'] == '':
         old_w_i = {'wedge_id':"","spool_batch":""}
-        read_query = f"""SELECT REPLACE(module_name, '-',''), wedge_id
+        read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name, wedge_id
         FROM front_wirebond
         ORDER BY frwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
@@ -228,7 +228,7 @@ async def read_front_db(pool, modname, df_pad_map):
         front_wirebond_info['wedge_id'] = old_w_i['wedge_id']
 
     if front_wirebond_info['spool_batch'] == None or front_wirebond_info['spool_batch'] == '':
-        read_query = f"""SELECT REPLACE(module_name, '-',''), spool_batch
+        read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name, spool_batch
         FROM front_wirebond
         ORDER BY frwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
@@ -299,7 +299,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if back_wirebond_info['wedge_id'] == None or back_wirebond_info['wedge_id'] == '':
         old_w_i = {"wedge_id":"", "spool_batch":""}
-        read_query = f"""SELECT REPLACE(module_name, '-',''), wedge_id
+        read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name, wedge_id
         FROM back_wirebond
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
@@ -309,7 +309,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         back_wirebond_info['wedge_id'] = old_w_i['wedge_id']
 
     if back_wirebond_info['spool_batch'] == None or back_wirebond_info['spool_batch'] == '':
-        read_query = f"""SELECT REPLACE(module_name, '-',''), spool_batch
+        read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name, spool_batch
         FROM back_wirebond
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
@@ -529,7 +529,7 @@ async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pul
 
     db_table_name = 'bond_pull_test'
     try:
-        await upload_PostgreSQL(pool, db_table_name, db_upload) ## python 3.7
+        await upload_PostgreSQL(pool, db_table_name, db_upload) 
     except Exception as e:
         print(f"Failed to upload data: {e}")
 
@@ -575,7 +575,7 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
         else:
             db_table_name = "back_encap"
         try:
-            await upload_PostgreSQL(pool, db_table_name, db_upload) ## python 3.7
+            await upload_PostgreSQL(pool, db_table_name, db_upload) 
         except Exception as e:
             print(f"Failed to upload data: {e}")     # if we did actually save it return true
         return True 
