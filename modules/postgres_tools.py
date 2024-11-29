@@ -25,8 +25,11 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
         table_exists = await conn.fetchval(table_exists_query, schema_name, table_name)  
         if table_exists:
             query = get_query_write(table_name, db_upload_data.keys())
-            await conn.execute(query, *db_upload_data.values())
-            print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
+            try:
+                await conn.execute(query, *db_upload_data.values())
+                print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
+            except Exception as e:
+                print(e, f"for query {query}.")
         else:
             print(f'Table {table_name} does not exist in the database.')
 
@@ -41,54 +44,77 @@ async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_nam
     async with pool.acquire() as conn: 
         query = get_query_update(table_name, list(db_upload_data.keys()), name_col)
         params = list(db_upload_data.values()) + [part_name]
-        await conn.execute(query, *params)
-        print(f'Data for {part_name} updated into {table_name} table.')
+        try:
+            await conn.execute(query, *params)
+            print(f'Data for {part_name} updated into {table_name} table.')
+        except Exception as e:
+            print(e, f"for query {query}.")
 
 # Read query
 async def fetch_PostgreSQL(pool, query):
-    async with pool.acquire() as conn:  # Acquire a connection from the pool
-        value = await conn.fetch(query)
-    return value
+    try:
+        async with pool.acquire() as conn:  # Acquire a connection from the pool
+            value = await conn.fetch(query)
+        return value
+    except Exception as e:
+        print(e, f"for query {query}.")
+
 
 async def add_new_to_db(pool, modname):
-    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
-    records = await fetch_PostgreSQL(pool, read_query)
-    check = [dict(record) for record in records][0]
-    if not check['exists']:
-        db_upload = {
-            'module_name' : modname
-        }
+    if len(str(modname)) != 0:
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+            FROM module_assembly
+            WHERE REPLACE(module_name, '-','') ='{modname}');"""
+        records = await fetch_PostgreSQL(pool, read_query)
+        check = [dict(record) for record in records][0]
+        if not check['exists']:
+            db_upload = {'module_name' : modname}
+            db_table_name = 'module_info'
+            try:
+                db_upload = {'module_name' : modname}
+                db_table_name = 'module_info'
+                await upload_PostgreSQL(pool, db_table_name, db_upload) 
+                print(f"Uploaded {modname} to {db_table_name} since it doesn't exist.")
+                read_query = f"""SELECT module_no
+                    FROM module_info
+                    WHERE REPLACE(module_name, '-','') = '{modname}';"""
+                records = await fetch_PostgreSQL(pool, read_query)
+                module_no = [dict(record) for record in records][0]["module_no"]
+                db_upload = {'module_name' : modname, 'module_no' : module_no}
+                db_table_name = 'module_assembly'
+                await upload_PostgreSQL(pool, db_table_name, db_upload) 
+                print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
 
-        db_table_name = 'module_info'
-        try:
-            await upload_PostgreSQL(pool, db_table_name, db_upload) 
-        except Exception as e:
-            print(f"Failed to upload data: {e}")
+                try:
+                    db_upload = {'module_no' : module_no, 'hxb_name' : 'hxb_name_unknown'}
+                    db_table_name = 'hex_pedestal_test'
+                    await upload_PostgreSQL(pool, db_table_name, db_upload)
+                    print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
+                    return True
+                except asyncpg.exceptions.InsufficientPrivilegeError as e:
+                    print(f"Permission error: {e}. Use pgAdmin to add module_no to 'hexaboard' and 'hxb_pedestal_test'.")
+                    return False
+                except Exception as e:
+                    print(f"Failed to upload data: {e}")
+                    return False
 
-    read_query = f"""SELECT module_no
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    
-    records = await fetch_PostgreSQL(pool, read_query)
-    module_no = [dict(record) for record in records][0]["module_no"]
+            except asyncpg.exceptions.InsufficientPrivilegeError as e:
+                print(e)
+                print(f"Use pgAdmin to add 'module_name' to 'module_info' and 'module_assembly'.")
+                print(f"Use pgAdmin to add 'module_no'   to 'hexaboard'   and 'hxb_pedestal_test'.")
+                return False
+            except Exception as e:
+                print(f"Failed to upload data: {e}")
+                return False
+    return False
 
-    db_upload = {
-        'module_no' : module_no
-    }
-
-    try:
-        await upload_PostgreSQL(pool, 'hexaboard', db_upload)
-    except Exception as e:
-        print(f"Failed to upload data: {e}")
 
 #get list of modules to revisit
 async def find_to_revisit(pool,):
     bad_modules = {}
     #get module numbers
     read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name
-        FROM module_info;"""
+        FROM module_assembly;"""
     records = await fetch_PostgreSQL(pool, read_query)
     all_modules = [dict(record) for record in records]
     for module in all_modules:
@@ -130,9 +156,18 @@ async def find_to_revisit(pool,):
 
 async def read_from_db(pool, modname, df_pad_map, df_backside_mbites_pos):
     d = {}
-    d.update(await read_front_db(pool, modname, df_pad_map))
-    d.update(await read_back_db(pool, modname, df_backside_mbites_pos))
-    d.update(await read_pull_db(pool, modname))
+    try:
+        d.update(await read_front_db(pool, modname, df_pad_map))
+    except Exception as e:
+        print(f"Error in reading frontside from db: {e}")
+    try:
+        d.update(await read_back_db(pool, modname, df_backside_mbites_pos))
+    except Exception as e:
+        print(f"Error in reading backside from db: {e}")
+    try:
+        d.update(await read_pull_db(pool, modname))
+    except Exception as e:
+        print(f"Error in reading pull from db: {e}")
     return d
 
 #read frontside wirebonder information
@@ -146,12 +181,13 @@ async def read_front_db(pool, modname, df_pad_map):
 
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
 
     #set defaults
+    ground = []
     df_front_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
     front_wirebond_info = {'technician': None, 'comment': None, 'wedge_id':'','spool_batch':'', 'wb_fr_marked_done':False}
     front_encaps_info = {'technician': None, 'comment': None}
@@ -170,19 +206,16 @@ async def read_front_db(pool, modname, df_pad_map):
                         WHERE REPLACE(module_assembly.module_name, '-','') = '{modname}'
                         ORDER BY hxb_pedestal_test.hxb_pedtest_no DESC LIMIT 1; """
         records = await fetch_PostgreSQL(pool, read_query)
-        res2 = [dict(record) for record in records][0]
-        dead = res2['list_dead_cells']
-        noisy = res2['list_noisy_cells']
-        if dead != None:
-            if noisy != None:
-                ground = np.union1d(dead, noisy)
+        if len(records) != 0:
+            res2 = [dict(record) for record in records][0]
+            dead = res2['list_dead_cells']
+            noisy = res2['list_noisy_cells']
+            print('dn', dead, noisy)
+            if dead != None:
+                ground = np.union1d(dead, noisy) if noisy != None else ground = dead                    
             else:
-                ground = dead
-        else:
-            if noisy != None:
-                ground =  noisy
-            else:
-                ground = []
+                ground = noisy if noisy != None else ground = []
+
         for index, row in df_pad_map.iterrows():
             if int(df_pad_map.loc[index]['padnumber']) in ground:
                 is_grounded = 1
@@ -251,7 +284,7 @@ async def read_front_db(pool, modname, df_pad_map):
             old_w_i = old_w_i_list[0]
         front_wirebond_info['spool_batch'] = old_w_i['spool_batch']
 
-    return {"df_front_states" : df_front_states,  "front_encaps_info":None,
+    return {"df_front_states" : df_front_states,  "front_encaps_info": None,
         "front_wirebond_info": front_wirebond_info}
 
 #read backside wirebonder information
@@ -265,7 +298,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
 
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
@@ -346,7 +379,7 @@ async def read_pull_db(pool, modname):
 
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
@@ -380,13 +413,14 @@ async def read_encaps(pool, ):
 
 
 #save front wirebonder information to database
-async def upload_front_wirebond(pool, modname,  technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
+async def upload_front_wirebond(pool, modname,  technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None):
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
     records = await fetch_PostgreSQL(pool, read_query)
+    print(modname, records)
     module_no = [dict(record) for record in records][0]["module_no"]
 
     list_grounded_cells = []
@@ -475,7 +509,7 @@ async def upload_front_wirebond2(pool, modname, cell_no, bond_count_for_cell, bo
 async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
@@ -520,7 +554,7 @@ async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pul
 
     #get module number
     read_query = f"""SELECT module_no
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
@@ -589,7 +623,7 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
 
             try:  #get module number
                 read_query = f"""SELECT module_no
-                    FROM module_info
+                    FROM module_assembly
                     WHERE REPLACE(module_name, '-','') = '{module}';"""
                 records = await fetch_PostgreSQL(pool, read_query)
                 module_no = [dict(record) for record in records][0]["module_no"]

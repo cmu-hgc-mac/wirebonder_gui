@@ -535,7 +535,7 @@ class EncapsPage(QMainWindow):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
         asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(pool, read_query), modname=modname))
 
@@ -683,7 +683,7 @@ class MainWindow(QMainWindow):
         #check if the module exists
         self.modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
+        FROM module_assembly
         WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
         asyncio.create_task(self.check_mod_exists_main(check_task=async_check(pool, read_query), page=page))
 
@@ -803,8 +803,13 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def add_new_to_db_helper(self):
-        await add_new_to_db(pool, self.modid.text())
-        self.label5.setText("Added as blank hexaboard to database")
+        if len(str(self.modid.text())) != 0:
+            return_state = await add_new_to_db(pool, self.modid.text())
+            if return_state:
+                self.label5.setText("Added as blank hexaboard to hxb_pedestal_test table")
+            else:
+                self.label5.setText("See terminal for error message.")
+        
 
     def paintEvent(self, event):
         painter = QPainter(self)
