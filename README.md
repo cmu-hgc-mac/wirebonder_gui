@@ -6,7 +6,7 @@ We recommend running this is a separate conda environment or virtual environment
 
 In `python=3.11` with `pip=23.2`, install with `pip`
 ```
-pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
 ```
 
 Navigate to the directory where you want to keep the GUI code in terminal, then clone:
@@ -101,7 +101,7 @@ We've had success with `conda` on Windows, macOS and Linux. If using `conda`, cr
 ```
 conda create -n wbgui python=3.11 pip=23.2
 conda activate wbgui
-pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
 ```
 Run `conda activate wbgui`. In the environment, run `python wirebonder_gui_database.py`.
 
@@ -113,7 +113,7 @@ wbgui\Scripts\activate  # On Windows:
 source wbgui/bin/activate # On macOS/Linux
 
 pip install --upgrade pip==23.2
-pip install pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2
+pip install pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
 ```
 
 Run one of the following to activate the environment for running the GUI.
