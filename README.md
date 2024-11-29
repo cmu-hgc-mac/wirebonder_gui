@@ -16,7 +16,7 @@ git clone https://github.com/cmu-hgc-mac/wirebonder_gui.git
 
 Create [config/conn.py](config/conn_example.py) and edit your ```institution_name``` and ```inst_code``` to your respective institution. Change ```host``` to the static IP address of your database computer. Run the code and edit the graphics configuration file.
 
-Create [config/graphics_config.py](config/graphics_configexample.py). Here you can edit the font size of the buttons and other text, as well as the window size to make it fit your computer. If the top of the hexaboard is cut off for the LD full frontside, increase ```add_y_offset```. If the left side of the hexaboard overlaps with the labels for the HD full frontside, increase ```add_x_offset```. Setting it to 40 is a good start.
+Create [config/graphics_config.py](config/graphics_config_example.py). Here you can edit the font size of the buttons and other text, as well as the window size to make it fit your computer. If the top of the hexaboard is cut off for the LD full frontside, increase ```add_y_offset```. If the left side of the hexaboard overlaps with the labels for the HD full frontside, increase ```add_x_offset```. Setting it to 40 is a good start.
 
 # Tour of the GUI!
 ## Home Page
