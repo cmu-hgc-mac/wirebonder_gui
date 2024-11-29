@@ -19,6 +19,7 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
             print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
         except Exception as e:
             print(e, f"for query {query}.")
+            
         # schema_name = 'public'
         # table_exists_query = """
         # SELECT EXISTS (
