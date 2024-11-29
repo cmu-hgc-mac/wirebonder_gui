@@ -171,7 +171,7 @@ class FrontPage(QMainWindow):
 
         reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, 
                                     self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
-            self.pull_techname, self.pull_comments, self.std, self.mean, self.widget)
+            self.pull_techname, self.pull_comments, self.std, self.mean, self.widget, pool = pool)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
         reset_button.show()
 
@@ -351,7 +351,7 @@ class BackPage(QMainWindow):
         self.wb_time.setGeometry(20, 345, 150, 25)
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
-        reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget)
+        reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget, pool = pool)
         reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
         reset_button.show()
 
@@ -756,7 +756,7 @@ class MainWindow(QMainWindow):
             self.label3.show()
 
         self.widget.show()
-        self.label = QLabel("Last Saved: Unsaved since opened", self)
+        self.label.setText("Last Saved: Unsaved since opened")
         self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
         self.label.show()
 

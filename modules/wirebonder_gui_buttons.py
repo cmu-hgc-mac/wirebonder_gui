@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QPushButton, QLabel
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
+from qasync import QEventLoop, asyncSlot
 
 from modules.postgres_tools import  (upload_front_wirebond, upload_back_wirebond, upload_encaps, 
                                      upload_bond_pull_test, read_front_db, read_back_db, read_pull_db)
@@ -321,7 +322,7 @@ class GreyButton(QPushButton):
 #erasing any changes made since then
 #for back wirebonding page
 class ResetButton(GreyButton):
-    def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, parent = None):
+    def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, parent = None, pool = None):
         super().__init__(button_text, width, height, parent)
         self.buttons = buttons
         self.module_name = module_name
@@ -330,11 +331,16 @@ class ResetButton(GreyButton):
         self.comments = comments
         self.side = side
         self.clicked.connect(self.reset)
+        self.pool = pool
 
-    def reset(self):
-        df_states = read_back_db(self.module_name, self.df_pos)["df_back_states"]
-        self.techname.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["technician"])
-        self.comments.setText(read_back_db(self.module_name, self.df_pos)["back_wirebond_info"]["comment"])
+    @asyncSlot()
+    async def reset(self):
+        df_states_dict = await read_back_db(self.pool, self.module_name, self.df_pos)
+        try:
+            df_states = df_states_dict["df_back_states"]
+            self.techname.setText(df_states_dict["back_wirebond_info"]["technician"])
+            self.comments.setText(df_states_dict["back_wirebond_info"]["comment"])
+        except Exception as e: print(e)
 
         for index in df_states.index:
             self.buttons[str(int(index))].state = df_states.loc[int(index)]['state']
@@ -347,7 +353,7 @@ class ResetButton(GreyButton):
 #for front page
 class ResetButton2(GreyButton):
     def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, pull_techname,
-                 pull_comments, std, mean, parent = None):
+                 pull_comments, std, mean, parent = None, pool = None):
         super().__init__(button_text, width, height, parent)
         self.buttons = buttons
         self.module_name = module_name
@@ -361,18 +367,24 @@ class ResetButton2(GreyButton):
         self.pull_comments = pull_comments
         self.std = std
         self.clicked.connect(self.reset)
+        self.pool = pool
 
-    def reset(self):
-        df_states = read_front_db(self.module_name, self.df_pos)["df_front_states"]
-        self.techname.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["technician"])
-        self.comments.setText(read_front_db(self.module_name, self.df_pos)["front_wirebond_info"]["comment"])
+    @asyncSlot()
+    async def reset(self):
+        df_states_dict = await read_front_db(self.pool, self.module_name, self.df_pos) ##["df_front_states"]
+        try:
+            df_states = df_states_dict["df_front_states"]
+            self.techname.setText(df_states_dict["front_wirebond_info"]["technician"])
+            self.comments.setText(df_states_dict["front_wirebond_info"]["comment"])
+        except Exception as e: print(e)
 
         for index in df_states.index:
             self.buttons[str(int(index))].state = df_states.loc[int(index)]['state']
             self.buttons[str(int(index))].grounded = df_states.loc[int(index)]['grounded']
             self.buttons[str(int(index))].update()
 
-        info = read_pull_db(self.module_name)["pull_info"]
+        pull_info_dict = await read_pull_db(self.pool, self.module_name)
+        info = pull_info_dict["pull_info"]
         self.pull_techname.setText(info["technician"])
         self.pull_comments.setText(info["comment"])
         self.std.setText(str(info["std_pull_strg_g"]))
