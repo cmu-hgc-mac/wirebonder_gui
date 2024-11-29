@@ -7,8 +7,8 @@ from datetime import datetime
 # Write query
 def get_query_write(table_name, column_names):
     pre_query = f""" INSERT INTO {table_name} ({', '.join(column_names)}) VALUES """
-    data_placeholder = ', '.join(['${}'.format(i) for i in range(1, len(column_names)+1)])
-    query = f"""{pre_query} {'({})'.format(data_placeholder)}"""
+    data_placeholder = ', '.join([f"${i+1}" for i in range(len(column_names))])
+    query = f"""{pre_query} ({data_placeholder});"""
     return query
 
 async def upload_PostgreSQL(pool, table_name, db_upload_data):
@@ -29,6 +29,20 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
             print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
         else:
             print(f'Table {table_name} does not exist in the database.')
+
+
+def get_query_update(table_name, column_names, name_col):
+    data_placeholder = ', '.join([f"{col} = ${i+1}" for i, col in enumerate(column_names)])
+    pre_query = f""" UPDATE {table_name} SET {data_placeholder} WHERE """
+    query = f""" {pre_query} {name_col} = ${1+len(column_names)}; """
+    return query
+
+async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_name):
+    async with pool.acquire() as conn: 
+        query = get_query_update(table_name, list(db_upload_data.keys()), name_col)
+        params = list(db_upload_data.values()) + [part_name]
+        await conn.execute(query, *params)
+        print(f'Data for {part_name} updated into {table_name} table.')
 
 # Read query
 async def fetch_PostgreSQL(pool, query):
@@ -538,45 +552,77 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
     #if this page is empty, don't save it (causes error with inputting date and time)
     #this tests if encapsulation page is empty
     #and returns false, since we didn't actually save it
-    if (enc == ":00" or cure_start == " :00" or cure_end == " :00"):
+    
+    date_format = "%Y/%m/%d %H:%M:%S"
+
+    if (enc != " :00" and cure_start != " :00"): 
+        enc_time = datetime.strptime(enc, date_format).time()
+        enc_date = datetime.strptime(enc, date_format).date()
+        cure_start = datetime.strptime(cure_start, date_format)
+        if cure_end != " :00":
+            cure_end = datetime.strptime(cure_end, date_format)
+    elif cure_end != " :00":
+        cure_end = datetime.strptime(cure_end, date_format)
+        if enc != " :00" and cure_start == " :00": 
+            print('Returning false since time not provided.')
+            return False
+    else:
         print('Returning false since time not provided.')
         return False
-    date_format = "%Y/%m/%d %H:%M:%S"
-    enc_time = datetime.strptime(enc, date_format).time()
-    enc_date = datetime.strptime(enc, date_format).date()
-    cure_start = datetime.strptime(cure_start, date_format)
-    cure_end = datetime.strptime(cure_end, date_format)
-    
-    for module in modules:
-        db_upload = {
-            'module_name' : module,
-            'date_encap' : enc_date,
-            'time_encap' : enc_time,
-            'technician' : technician,
-            'comment' : comment,
-            'cure_start': cure_start,
-            'cure_end': cure_end,
-            'temp_c': temperature,
-            'rel_hum': rel_hum,
-            'epoxy_batch': epoxy_batch,
-        }
-        try:  #get module number
-            read_query = f"""SELECT module_no
-                FROM module_info
-                WHERE REPLACE(module_name, '-','') = '{module}';"""
-            records = await fetch_PostgreSQL(pool, read_query)
-            module_no = [dict(record) for record in records][0]["module_no"]
-            db_upload.update({'module_no' : int(module_no),})
-        except:
-            print('Module number for encapsulated module not found.')
 
-        if modules[module] == "frontside":
-            db_table_name = "front_encap"
+    for module in modules:
+        
+        if (enc != " :00" and cure_start != " :00"): 
+            db_upload = {
+                'module_name' : module,
+                'date_encap' : enc_date,
+                'time_encap' : enc_time,
+                'technician' : technician,
+                'comment' : comment,
+                'cure_start': cure_start,
+                'temp_c': temperature,
+                'rel_hum': rel_hum,
+                'epoxy_batch': epoxy_batch,
+                }
+            if cure_end != " :00":
+                db_upload.update({'cure_end': cure_end,})
+
+            try:  #get module number
+                read_query = f"""SELECT module_no
+                    FROM module_info
+                    WHERE REPLACE(module_name, '-','') = '{module}';"""
+                records = await fetch_PostgreSQL(pool, read_query)
+                module_no = [dict(record) for record in records][0]["module_no"]
+                db_upload.update({'module_no' : int(module_no),})
+            except:
+                print('Module number for encapsulated module not found.')
+
+            db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
+
+            try:
+                await upload_PostgreSQL(pool, db_table_name, db_upload) 
+            except Exception as e:
+                print(f"Failed to upload data: {e}") 
+
+        elif cure_end != " :00": # and enc == " :00" and cure_start == " :00":
+            db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
+
+            try:  #get module number
+                read_query = f"""SELECT comment
+                    FROM {db_table_name}
+                    WHERE REPLACE(module_name, '-','') = '{module}';"""
+                records = await fetch_PostgreSQL(pool, read_query)
+                comment_old = [dict(record) for record in records][0]["comment"]
+
+                db_upload = {
+                    'cure_end': cure_end,
+                    'comment': f"{comment_old}; {comment}", }
+                
+                await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
+            except Exception as e:
+                print(f"Failed to update data: {e}") 
         else:
-            db_table_name = "back_encap"
-        try:
-            await upload_PostgreSQL(pool, db_table_name, db_upload) 
-        except Exception as e:
-            print(f"Failed to upload data: {e}")     # if we did actually save it return true
-        return True 
+            print("Something happened. Data didn't save")
+            return False
+    return True 
         #print(modname, 'uploaded!')

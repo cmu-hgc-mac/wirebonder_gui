@@ -408,6 +408,10 @@ class EncapsPage(QMainWindow):
             label = QLabel(f"")
             self.vbox.addWidget(label)
 
+        self.timestatlabel = QLabel(self) #"Module type:",self)
+        self.timestatlabel.setGeometry(10, 5, 700, 25)
+        self.timestatlabel.show()
+
         lab2 = QLabel("Encapsulation Technician CERN ID:", self)
         lab2.setGeometry(300,20+20, 400, 25)
         self.techname = QLineEdit(self)
@@ -482,10 +486,7 @@ class EncapsPage(QMainWindow):
         label.setGeometry(500,255+30-5, 150, 25)
         self.rel_hum = QLineEdit(self)
         self.rel_hum.setGeometry(500,280+30-5, 150, 25)
-
-        self.timestatlabel = QLabel("Enter either <b>encap+start</b> time or <b>cure end</b> time.", self) #"Module type:",self)
-        self.timestatlabel.setGeometry(10, 5, 700, 25)
-        self.timestatlabel.show()
+        
         #self.combobox = QComboBox(self)
         #inst_code = conn.inst_code
         #mod_list = mod_type_mac.module_type[inst_code]
@@ -734,9 +735,9 @@ class MainWindow(QMainWindow):
         self.namelabel.hide()
 
         if page == "encapspage":
-            encapspage = EncapsPage(self)
-            self.widget.addWidget(encapspage)
-            self.widget.setCurrentWidget(encapspage)
+            self.encapspage = EncapsPage(self)
+            self.widget.addWidget(self.encapspage)
+            self.widget.setCurrentWidget(self.encapspage)
             self.label3.setText("Encapsulation")
             self.label3.setGeometry(int(w_width/2), 0, 160, 25)
             self.label3.show()
@@ -794,6 +795,10 @@ class MainWindow(QMainWindow):
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
             saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+            if not saved:
+                self.encapspage.timestatlabel.setText("Provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time.")
+            else:
+                self.encapspage.timestatlabel.setText("")
         return saved
 
     @asyncSlot()
