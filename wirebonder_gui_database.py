@@ -668,6 +668,7 @@ class MainWindow(QMainWindow):
         self.widget.hide()
         self.modid.setText('')
         self.modid.show()
+        self.hxbid.setText('')
         #self.combobox.show()
         self.label2.show()
         self.label3.setText("Wirebonding and Encapsulation")
