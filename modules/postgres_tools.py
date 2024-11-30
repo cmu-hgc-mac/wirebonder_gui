@@ -94,7 +94,7 @@ async def add_new_to_db(pool, modname):
 
                 try:
                     db_upload = {'module_no' : module_no, 'hxb_name' : 'hxb_name_unknown'}
-                    db_table_name = 'hex_pedestal_test'
+                    db_table_name = 'hexaboard'
                     await upload_PostgreSQL(pool, db_table_name, db_upload)
                     print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
                     return True
@@ -219,15 +219,12 @@ async def read_front_db(pool, modname, df_pad_map):
             noisy = res2['list_noisy_cells']
             print('dn', dead, noisy)
             if dead != None:
-                ground = np.union1d(dead, noisy) if noisy != None else ground = dead                    
+                ground = np.union1d(dead, noisy) if noisy != None else dead                    
             else:
-                ground = noisy if noisy != None else ground = []
+                ground = noisy if noisy != None else []
 
         for index, row in df_pad_map.iterrows():
-            if int(df_pad_map.loc[index]['padnumber']) in ground:
-                is_grounded = 1
-            else:
-                is_grounded = 0
+            is_grounded = 1 if int(df_pad_map.loc[index]['padnumber']) in ground else 0
             df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {"state": 0,"grounded":is_grounded}
     else:
         #read from front_wirebond
