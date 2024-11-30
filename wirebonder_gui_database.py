@@ -709,7 +709,7 @@ class MainWindow(QMainWindow):
             if combined_check['in_assembly'] or combined_check['in_wirebond']:
                 asyncio.create_task(self.begin_program(page))
             else:
-                self.label5.setText("Information not found,\nPlease enter valid module serial number or")
+                self.label5.setText("Information not found,\nPlease enter valid module ID or")
                 self.label5.show()
                 self.hxbid.show()
                 self.labelhxb.show()
@@ -717,7 +717,7 @@ class MainWindow(QMainWindow):
         elif page == "encapspage":
             asyncio.create_task(self.begin_program(page))
         else:
-            self.label5.setText("Information not found,\nPlease enter valid module serial number or")
+            self.label5.setText("Information not found,\nPlease enter valid module ID or")
             self.label5.show()
             self.hxbid.show()
             self.labelhxb.show()
