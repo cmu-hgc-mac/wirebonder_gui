@@ -87,16 +87,20 @@ async def add_new_to_db(pool, modname):
                     WHERE REPLACE(module_name, '-','') = '{modname}';"""
                 records = await fetch_PostgreSQL(pool, read_query)
                 module_no = [dict(record) for record in records][0]["module_no"]
-                db_upload = {'module_name' : modname, 'module_no' : module_no}
+                db_upload = {'module_name' : modname, 'module_no' : module_no, 'hxb_name' : 'hxb_name_unknown'}
                 db_table_name = 'module_assembly'
                 await upload_PostgreSQL(pool, db_table_name, db_upload) 
-                print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
+                print(f"Uploaded {modname} with module_no {module_no} and hxb 'hxb_name_unknown' to {db_table_name} since it doesn't exist.")
 
                 try:
-                    db_upload = {'module_no' : module_no, 'hxb_name' : 'hxb_name_unknown'}
-                    db_table_name = 'hexaboard'
+                    # db_upload = {'module_no' : module_no, 'hxb_name' : 'hxb_name_unknown'}
+                    # db_table_name = 'hexaboard'
+                    # await upload_PostgreSQL(pool, db_table_name, db_upload)
+                    # print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
+                    db_upload = {'hxb_name' : 'hxb_name_unknown'}
+                    db_table_name = 'hxb_pedestal_test'
                     await upload_PostgreSQL(pool, db_table_name, db_upload)
-                    print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
+                    print(f"Uploaded 'hxb_name_unknown' to {db_table_name} since it doesn't exist.")
                     return True
                 except asyncpg.exceptions.InsufficientPrivilegeError as e:
                     print(f"Permission error: {e}. Use pgAdmin to add module_no to 'hexaboard' and 'hxb_pedestal_test'.")
@@ -217,7 +221,6 @@ async def read_front_db(pool, modname, df_pad_map):
             res2 = [dict(record) for record in records][0]
             dead = res2['list_dead_cells']
             noisy = res2['list_noisy_cells']
-            print('dn', dead, noisy)
             if dead != None:
                 ground = np.union1d(dead, noisy) if noisy != None else dead                    
             else:
