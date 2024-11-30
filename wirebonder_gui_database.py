@@ -544,7 +544,7 @@ class EncapsPage(QMainWindow):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_assembly
+        FROM module_info
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
         asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(pool, read_query), modname=modname))
 
@@ -588,6 +588,13 @@ class MainWindow(QMainWindow):
         self.modid = QLineEdit(self)
         self.modid.setGeometry(int(w_width/2-75), 425, 150, 25)
 
+        self.labelhxb = QLabel("Hexaboard ID:",self)
+        self.labelhxb.setGeometry(self.label2.geometry().left() + self.label2.geometry().width() + 10, 400, 150, 25)
+        self.labelhxb.hide()
+        self.hxbid = QLineEdit(self)
+        self.hxbid.setGeometry(self.modid.geometry().left() + self.modid.geometry().width() + 10, 425, 150, 25)
+        self.hxbid.hide()
+
         self.load_button = GreyButton("Load front", 75, 25, self)
         self.load_button.setGeometry(int(w_width/2-75), 470, 75, 25)
         #when button clicked, try to load module information
@@ -617,12 +624,11 @@ class MainWindow(QMainWindow):
         self.scrolllabel = ScrollLabel(self)
         self.scrolllabel.setGeometry(int(w_width/2-75), 580, 300, 100)
         self.scrolllabel.setText("Waiting for modules...")
-        # self.label5 = QLabel("Information not found,\nPlease enter valid module serial number or",self)
         self.label5 = QLabel("",self)
         self.label5.setGeometry(int(w_width/2-75), 490, 300, 50)
-        self.addbutton = GreyButton("Add as blank module",100,25,self)
+        self.addbutton = GreyButton("Add blank module and hexaboard",250,25,self)
         self.addbutton.hide()
-        self.addbutton.setGeometry(int(w_width/2-75), 540, 100, 50)
+        self.addbutton.setGeometry(int(w_width/2-75), 540, 270, 50)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
         self.homebutton = HomePageButton("Home page", 75, 25, self)
         self.save_button = SaveButton(self.widget, "", "", 90, 25, "Save", self)
@@ -644,7 +650,10 @@ class MainWindow(QMainWindow):
     async def cleanup_and_close(self, event):
         if self.opened_once == True:
             saved = await self.save(self.widget)
-        await close_pool() 
+            if saved:
+                await close_pool()        
+        else:
+            await close_pool() 
         print("Async cleanup finished, now closing the window.")
         event.accept(); sys.exit()
     
@@ -669,6 +678,8 @@ class MainWindow(QMainWindow):
         self.namelabel.show()
         self.label.hide()
         self.label5.hide()
+        self.hxbid.hide()
+        self.labelhxb.hide()
         self.addbutton.hide()
         self.homebutton.hide()
         self.save_button.hide()
@@ -689,7 +700,7 @@ class MainWindow(QMainWindow):
         if check['exists']:
             combined_query = f"""
             SELECT 
-                EXISTS(SELECT 1 FROM module_assembly WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_assembly,
+                EXISTS(SELECT 1 FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_assembly,
                 EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_wirebond;
             """
             combined_check = await async_check(pool, combined_query)
@@ -697,20 +708,25 @@ class MainWindow(QMainWindow):
             if combined_check['in_assembly'] or combined_check['in_wirebond']:
                 asyncio.create_task(self.begin_program(page))
             else:
+                self.label5.setText("Information not found,\nPlease enter valid module serial number or")
                 self.label5.show()
+                self.hxbid.show()
+                self.labelhxb.show()
                 self.addbutton.show()
         elif page == "encapspage":
             asyncio.create_task(self.begin_program(page))
         else:
+            self.label5.setText("Information not found,\nPlease enter valid module serial number or")
             self.label5.show()
+            self.hxbid.show()
+            self.labelhxb.show()
             self.addbutton.show()
 
     def load(self, page):
-        self.label5.setText("Information not found,\nPlease enter valid module serial number or")
         #check if the module exists
         self.modname = (self.modid.text()).replace("-","")
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_assembly
+        FROM module_info
         WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
         asyncio.create_task(self.check_mod_exists_main(check_task=async_check(pool, read_query), page=page))
 
@@ -720,6 +736,8 @@ class MainWindow(QMainWindow):
         self.label5.hide()
         self.addbutton.hide()
         self.opened_once = True
+        self.hxbid.hide()
+        self.labelhxb.hide()
 
         if page != "encapspage":
             hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
@@ -814,10 +832,10 @@ class MainWindow(QMainWindow):
         page = widget.currentWidget()
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
-            await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
-            await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            saved = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
+            saved = saved and await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
         elif page.pageid == "backpage":
-            await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
+            saved = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
             enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
@@ -832,7 +850,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def add_new_to_db_helper(self):
         if len(str(self.modid.text())) != 0:
-            return_state = await add_new_to_db(pool, self.modid.text())
+            return_state = await add_new_to_db(pool, self.modid.text(), self.hxbid.text())
             if return_state:
                 self.label5.setText("Added as blank hexaboard to hxb_pedestal_test table")
             else:
