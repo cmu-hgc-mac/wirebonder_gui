@@ -636,6 +636,7 @@ class MainWindow(QMainWindow):
         self.save_button.hide()
         self.init_and_show()
         self.opened_once = False
+        self.bad_modules = None
     
     @asyncSlot()
     async def init_and_show(self):
@@ -651,19 +652,18 @@ class MainWindow(QMainWindow):
         if self.opened_once == True:
             saved = await self.save(self.widget)
             if saved:
-                await close_pool()        
+                await close_pool()
         else:
-            await close_pool() 
-        print("Async cleanup finished, now closing the window.")
-        event.accept(); sys.exit()
+            while self.bad_modules is not None: ### Gracious handling of connection pool
+                await close_pool(); break
+        if pool is None:
+            print(f"Async cleanup finished, now closing the window.")
+            event.accept(); sys.exit()
     
-    async def cleanup_async(self):
-        print("Closing pool...")
-        await close_pool()
-
     #showing home page
     @asyncSlot()
     async def show_start(self):
+        self.bad_modules = None
         self.opened_once = False
         self.widget.hide()
         self.modid.setText('')
@@ -685,12 +685,12 @@ class MainWindow(QMainWindow):
         self.homebutton.hide()
         self.save_button.hide()
         string = 'Incomplete or unstarted modules:\n'
-        bad_modules = await find_to_revisit(pool)
-        for module in bad_modules:
+        self.bad_modules = await find_to_revisit(pool)
+        for module in self.bad_modules:
             mod_str = module + ' '
-            if not bad_modules[module][0]: #true = frontside done
+            if not self.bad_modules[module][0]: #true = frontside done
                 mod_str = mod_str + "fr "
-            if not bad_modules[module][1]: # true = backside done
+            if not self.bad_modules[module][1]: # true = backside done
                 mod_str = mod_str + " bk"
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
