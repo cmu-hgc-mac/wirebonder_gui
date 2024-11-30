@@ -11,6 +11,31 @@ def get_query_write(table_name, column_names):
     query = f"""{pre_query} ({data_placeholder});"""
     return query
 
+def check_valid_module(modname):
+    """ Example of module ID:  320MLF2CXCM0001 """
+    try:
+        modname = modname.replace('-','').upper()
+        if modname[0:3] != "320":
+            return False
+        if modname[3:5] not in ["ML", "MH"]:
+            return False
+        if modname[5] not in ['F','T','B','L','R','5']:
+            return False
+        if modname[6] not in ['1','2','3']:
+            return False
+        if modname[7] not in ['T','W','P','C']:
+            return False
+        if modname[8] not in ['X','C','2','4']:
+            return False
+        if modname[9:11] not in ['CM','IH','NT','SB','TI','TT']:
+            return False
+        if not modname[-4:].isnumeric():
+            return False
+        return True
+    except Exception as e: 
+        print(e); return False
+    
+
 async def upload_PostgreSQL(pool, table_name, db_upload_data):
     async with pool.acquire() as conn: 
         query = get_query_write(table_name, db_upload_data.keys())

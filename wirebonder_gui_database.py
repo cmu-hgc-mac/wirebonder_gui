@@ -9,7 +9,7 @@ from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
 
 
-from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, 
+from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
 from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, 
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
@@ -850,12 +850,14 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def add_new_to_db_helper(self):
-        if len(str(self.modid.text())) != 0:
-            return_state = await add_new_to_db(pool, self.modid.text(), self.hxbid.text())
+        if check_valid_module(modname = self.modid.text()):
+            return_state = await add_new_to_db(pool, self.modid.text().upper(), self.hxbid.text().upper())
             if return_state:
                 self.label5.setText("Added as blank module to module_info table")
             else:
                 self.label5.setText("See terminal for error message.")
+        else:
+            self.label5.setText("Not a valid module ID.\nSee postgres_tools/check_valid_module().")
         
     def paintEvent(self, event):
         painter = QPainter(self)
