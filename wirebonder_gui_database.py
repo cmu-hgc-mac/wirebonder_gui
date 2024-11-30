@@ -136,12 +136,12 @@ class FrontPage(QMainWindow):
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
-        label5 = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
+        labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
                         Needs to be grounded<br>Black fill: Grounded",self.widget)
-        label5.setWordWrap(True)
-        label5.setTextFormat(Qt.RichText)
-        label5.setGeometry(20,90, 170,150)
+        labellegend.setWordWrap(True)
+        labellegend.setTextFormat(Qt.RichText)
+        labellegend.setGeometry(20,90, 170,150)
         self.marked_done = QCheckBox("Frontside complete", self.widget)
         self.marked_done.setGeometry(20,245,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
@@ -625,7 +625,7 @@ class MainWindow(QMainWindow):
         self.scrolllabel.setGeometry(int(w_width/2-75), 580, 300, 100)
         self.scrolllabel.setText("Waiting for modules...")
         self.label5 = QLabel("",self)
-        self.label5.setGeometry(int(w_width/2-75), 490, 300, 50)
+        self.label5.setGeometry(int(w_width/2-75), 490, 350, 50)
         self.addbutton = GreyButton("Add blank module and/or hexaboard",260,25,self)
         self.addbutton.hide()
         self.addbutton.setGeometry(int(w_width/2-75), 540, 270, 50)
@@ -853,9 +853,9 @@ class MainWindow(QMainWindow):
         if check_valid_module(modname = self.modid.text()):
             return_state = await add_new_to_db(pool, self.modid.text().upper(), self.hxbid.text().upper())
             if return_state:
-                self.label5.setText("Added as blank module to module_info table")
+                self.label5.setText(f"{self.modid.text()}\nnow in module_info table.")
             else:
-                self.label5.setText("See terminal for error message.")
+                self.label5.setText("See terminal for message.")
         else:
             self.label5.setText("Not a valid module ID.\nSee postgres_tools/check_valid_module().")
         

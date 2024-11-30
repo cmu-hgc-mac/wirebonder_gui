@@ -107,39 +107,6 @@ async def add_new_to_db(pool, modname, hxbname = None):
                 print(f"Uploading {modname}, {hxbname} to {db_table_name} since it doesn't exist...")
                 await upload_PostgreSQL(pool, db_table_name, db_upload) 
                 return True
-                
-                # read_query = f"""SELECT module_no FROM module_info WHERE REPLACE(module_name, '-','') = '{modname}';"""
-                # records = await fetch_PostgreSQL(pool, read_query)
-                # module_no = [dict(record) for record in records][0]["module_no"]
-                
-                # db_upload = {'module_name' : modname, 'module_no' : module_no, 'hxb_name' : hxbname}
-                # db_table_name = 'module_assembly'
-                # print(f"Uploaded {modname}, {hxbname} with module_no {module_no} and hxb {hxbname} to {db_table_name} since it doesn't exist...")
-                # await upload_PostgreSQL(pool, db_table_name, db_upload) 
-                
-                # try:
-                #     # db_upload = {'module_no' : module_no, 'hxb_name' : hxbname}
-                #     # db_table_name = 'hexaboard'
-                #     # await upload_PostgreSQL(pool, db_table_name, db_upload)
-                #     # print(f"Uploaded {modname} with module_no {module_no} to {db_table_name} since it doesn't exist.")
-                #     read_query = f"""SELECT EXISTS(SELECT REPLACE(hxb_name, '-','') FROM hxb_pedestal_test
-                #                 WHERE REPLACE(hxb_name, '-','') ='{hxbname}');"""
-                #     records = await fetch_PostgreSQL(pool, read_query)
-                #     check = [dict(record) for record in records][0]
-                #     if not check['exists']:
-                #         db_upload = {'hxb_name' : hxbname}
-                #         db_table_name = 'hxb_pedestal_test'
-                #         print(f"Uploading '{hxbname}' to {db_table_name} since it doesn't exist...")
-                #         await upload_PostgreSQL(pool, db_table_name, db_upload)
-                #         return True
-                # except asyncpg.exceptions.InsufficientPrivilegeError as e:
-                #     print(f"Either change user in config/conn.py to `editor`  (OR) ")
-                #     print(f"Permission error: {e}. Use pgAdmin to add module_no to 'hexaboard' and 'hxb_pedestal_test'.")
-                #     return False
-                # except Exception as e:
-                #     print(f"Failed to upload data: {e}")
-                #     return False
-
             except asyncpg.exceptions.InsufficientPrivilegeError as e:
                 print(e)
                 print(f"Either change user in config/conn.py to `editor`  (OR) ")
@@ -149,6 +116,7 @@ async def add_new_to_db(pool, modname, hxbname = None):
             except Exception as e:
                 print(f"Failed to upload data: {e}")
                 return False
+        return True
     return False
 
 
