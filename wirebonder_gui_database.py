@@ -6,6 +6,8 @@ from PyQt5.QtCore import Qt,  QPoint, QTimer
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 from qasync import QEventLoop, asyncSlot
+from PyQt5.QtGui import QCloseEvent
+
 
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, 
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
@@ -34,6 +36,13 @@ async def init_pool():
         max_size=50   # maximum number of connections in the pool
         )
     print('Connection pool initialized!')
+
+async def close_pool():
+    global pool
+    if pool:
+        await pool.close()
+        print("Connection pool closed.")
+        pool = None
 
 async def async_check(pool, read_query):
     try:
@@ -620,15 +629,33 @@ class MainWindow(QMainWindow):
         self.homebutton.hide()
         self.save_button.hide()
         self.init_and_show()
+        self.opened_once = False
     
     @asyncSlot()
     async def init_and_show(self):
         await init_pool()
         self.show_start()
+            
+    def closeEvent(self,  event: QCloseEvent):
+        print("Window closing...")
+        event.ignore() 
+        asyncio.ensure_future(self.cleanup_and_close(event))
+
+    async def cleanup_and_close(self, event):
+        if self.opened_once == True:
+            saved = await self.save(self.widget)
+        await close_pool() 
+        print("Async cleanup finished, now closing the window.")
+        event.accept(); sys.exit()
+    
+    async def cleanup_async(self):
+        print("Closing pool...")
+        await close_pool()
 
     #showing home page
     @asyncSlot()
     async def show_start(self):
+        self.opened_once = False
         self.widget.hide()
         self.modid.setText('')
         self.modid.show()
@@ -692,6 +719,7 @@ class MainWindow(QMainWindow):
     async def begin_program(self,page):
         self.label5.hide()
         self.addbutton.hide()
+        self.opened_once = True
 
         if page != "encapspage":
             hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
@@ -781,10 +809,10 @@ class MainWindow(QMainWindow):
         saved = await self.save(widget)
         if (saved): save_button.updateAboveLabel()
 
-    
     async def save(self, widget):
         saved = True
         page = widget.currentWidget()
+        print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
             await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
             await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
@@ -810,7 +838,6 @@ class MainWindow(QMainWindow):
             else:
                 self.label5.setText("See terminal for error message.")
         
-
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -825,6 +852,7 @@ def main():
     QApplication.setFont(font, "QLabel")
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
+    loop.run_until_complete(init_pool())
     mainWindow = MainWindow()
     mainWindow.setGeometry(0, 0, w_width, w_height)
     mainWindow.show()
