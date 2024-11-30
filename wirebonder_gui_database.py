@@ -626,7 +626,7 @@ class MainWindow(QMainWindow):
         self.scrolllabel.setText("Waiting for modules...")
         self.label5 = QLabel("",self)
         self.label5.setGeometry(int(w_width/2-75), 490, 300, 50)
-        self.addbutton = GreyButton("Add blank module and hexaboard",250,25,self)
+        self.addbutton = GreyButton("Add blank module and/or hexaboard",260,25,self)
         self.addbutton.hide()
         self.addbutton.setGeometry(int(w_width/2-75), 540, 270, 50)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
@@ -852,7 +852,7 @@ class MainWindow(QMainWindow):
         if len(str(self.modid.text())) != 0:
             return_state = await add_new_to_db(pool, self.modid.text(), self.hxbid.text())
             if return_state:
-                self.label5.setText("Added as blank hexaboard to hxb_pedestal_test table")
+                self.label5.setText("Added as blank module to module_info table")
             else:
                 self.label5.setText("See terminal for error message.")
         
