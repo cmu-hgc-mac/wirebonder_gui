@@ -41,7 +41,8 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
         query = get_query_write(table_name, db_upload_data.keys())
         try:
             await conn.execute(query, *db_upload_data.values())
-            print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
+            if 'module_name' in list(db_upload_data.keys()):
+                print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
         except Exception as e:
             print(e, f"for query {query}.")
             
@@ -553,7 +554,7 @@ async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spo
 #save pull test information to database
 async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pull_time):
 
-    if (technician == ""): return
+    # if (technician == ""): return False
 
     #get module number
     read_query = f"""SELECT module_no

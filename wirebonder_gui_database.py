@@ -831,7 +831,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def home_button_helper(self, widget):
         saved = await self.save(widget)
-        if (saved): 
+        if saved: 
             await self.show_start()
         # asyncio.create_task(self.save(widget))
         # await self.show_start()
@@ -847,7 +847,8 @@ class MainWindow(QMainWindow):
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
             saved = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
-            saved = saved and await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            savedp = await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            saved = saved and savedp
         elif page.pageid == "backpage":
             saved = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
         elif page.pageid == "encapspage":
