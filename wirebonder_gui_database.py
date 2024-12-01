@@ -567,16 +567,25 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         #first, display place to input module name
+        space = 7
+        left_align = int(w_width/2-150)
         labelll = QLabel("<b>Multi-module Encapsulation:</b>", self)
-        labelll.setGeometry(int(w_width/2-75), 250, 300, 25)
+        labelll.setGeometry(left_align, int(w_height/10), 300, 25)
+
+        self.load_button4 = GreyButton("Encapsulation", 75, 25, self)
+        self.load_button4.setGeometry(left_align, space + labelll.geometry().top() + labelll.geometry().height(), 75, 25)
+        self.load_button4.clicked.connect(lambda: self.load("encapspage"))
+
         labelline = QLabel("<b>-------------------------------------------------------</b>", self)
-        labelline.setGeometry(int(w_width/2-75), 310, 500, 25)
+        labelline.setGeometry(left_align, 10 + self.load_button4.geometry().top() + self.load_button4.geometry().height(), 500, 25)
+        
         labell = QLabel("<b>Wirebonding:</b>", self)
-        labell.setGeometry(int(w_width/2-75), 370, 150, 25)
+        labell.setGeometry(left_align, 3 + space + labelline.geometry().top() + labelline.geometry().height() , 150, 25)
+        
         self.label = QLabel(self) #"Module type:",self)
         self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
         self.label.hide()
-        # self.label.setGeometry(int(w_width/2-75), 350, 150, 25)
+        # self.label.setGeometry(left_align, 350, 150, 25)
         # commented out to move from dropdown to just a textbox entry system
         #self.combobox = QComboBox(self)
         #inst_code = conn.inst_code
@@ -584,27 +593,24 @@ class MainWindow(QMainWindow):
         #self.combobox.addItems(mod_list)
         #self.combobox.setGeometry(int(w_width/2-80), 375, 150, 25)
         self.label2 = QLabel("Module ID:",self)
-        self.label2.setGeometry(int(w_width/2-75), 400, 150, 25)
+        self.label2.setGeometry(left_align, space + labell.geometry().top() + labell.geometry().height(), 150, 25)
         self.modid = QLineEdit(self)
-        self.modid.setGeometry(int(w_width/2-75), 425, 150, 25)
+        self.modid.setGeometry(left_align, space + self.label2.geometry().top() + self.label2.geometry().height(), 150, 25)
 
         self.labelhxb = QLabel("Hexaboard ID:",self)
-        self.labelhxb.setGeometry(self.label2.geometry().left() + self.label2.geometry().width() + 10, 400, 150, 25)
+        self.labelhxb.setGeometry(self.label2.geometry().left() + self.label2.geometry().width() + 10, self.label2.geometry().top(), 150, 25)
         self.labelhxb.hide()
         self.hxbid = QLineEdit(self)
-        self.hxbid.setGeometry(self.modid.geometry().left() + self.modid.geometry().width() + 10, 425, 150, 25)
+        self.hxbid.setGeometry(self.modid.geometry().left() + self.modid.geometry().width() + 10, self.modid.geometry().top() , 150, 25)
         self.hxbid.hide()
 
         self.load_button = GreyButton("Load front", 75, 25, self)
-        self.load_button.setGeometry(int(w_width/2-75), 470, 75, 25)
-        #when button clicked, try to load module information
+        self.load_button.setGeometry(left_align, space + self.modid.geometry().top() + self.modid.geometry().height(), 75, 25)
         self.load_button.clicked.connect(lambda: self.load("frontpage"))
+        
         self.load_button2 = GreyButton("Load back", 75, 25, self)
-        self.load_button2.setGeometry(int(w_width/2+20), 470, 75, 25)
+        self.load_button2.setGeometry(30 + self.load_button.geometry().left() + self.load_button.geometry().width(), self.load_button.geometry().top(), 75, 25)
         self.load_button2.clicked.connect(lambda: self.load("backpage"))
-        self.load_button4 = GreyButton("Encapsulation", 75, 25, self)
-        self.load_button4.setGeometry(int(w_width/2-75), 280, 75, 25)
-        self.load_button4.clicked.connect(lambda: self.load("encapspage"))
 
         self.df_pad_map = pd.DataFrame()
         self.df_backside_mbites_pos = pd.DataFrame()
@@ -621,15 +627,17 @@ class MainWindow(QMainWindow):
         self.widget.setGeometry(0, 25, w_width, w_height)
         self.label3 = QLabel(self)
         self.modname = ''
-        self.scrolllabel = ScrollLabel(self)
-        self.scrolllabel.setGeometry(int(w_width/2-75), 580, 300, 100)
-        self.scrolllabel.setText("Waiting for modules...")
+
         self.label5 = QLabel("",self)
-        self.label5.setGeometry(int(w_width/2-75), 490, 350, 50)
+        self.label5.setGeometry(left_align, space + self.load_button.geometry().top() + self.load_button.geometry().height(), 350, 50)
         self.addbutton = GreyButton("Add blank module and/or hexaboard",260,25,self)
         self.addbutton.hide()
-        self.addbutton.setGeometry(int(w_width/2-75), 540, 270, 50)
+        self.addbutton.setGeometry(left_align, space + self.label5.geometry().top() + self.label5.geometry().height(), 270, 50)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
+        self.scrolllabel = ScrollLabel(self)
+        self.scrolllabel.setGeometry(left_align, space + self.addbutton.geometry().top() + self.addbutton.geometry().height(), 300, 300)
+        self.scrolllabel.setText("Waiting for modules...")
+
         self.homebutton = HomePageButton("Home page", 75, 25, self)
         self.save_button = SaveButton(self.widget, "", "", 90, 25, "Save", self)
         self.homebutton.hide()
@@ -663,6 +671,7 @@ class MainWindow(QMainWindow):
     #showing home page
     @asyncSlot()
     async def show_start(self):
+        print("Currently on MainWindow")
         self.bad_modules = None
         self.opened_once = False
         self.widget.hide()
@@ -820,8 +829,11 @@ class MainWindow(QMainWindow):
 
     @asyncSlot()
     async def home_button_helper(self, widget):
-        asyncio.create_task(self.save(widget))
-        await self.show_start()
+        saved = await self.save(widget)
+        if (saved): 
+            await self.show_start()
+        # asyncio.create_task(self.save(widget))
+        # await self.show_start()
     
     @asyncSlot()
     async def save_button_helper(self, widget, save_button):
@@ -841,11 +853,14 @@ class MainWindow(QMainWindow):
             enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
             cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
             cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
-            saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
-            if not saved:
-                self.encapspage.timestatlabel.setText("Provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time.")
-            else:
-                self.encapspage.timestatlabel.setText("")
+            if len(page.modules) != 0:
+                saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+                if not saved:
+                    self.encapspage.timestatlabel.setText("Provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time\n(or) remove modules.")
+                else:
+                    self.encapspage.timestatlabel.setText("")
+            else: 
+                return True
         return saved
 
     @asyncSlot()
