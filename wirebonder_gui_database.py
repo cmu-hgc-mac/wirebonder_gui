@@ -661,6 +661,8 @@ class MainWindow(QMainWindow):
                 while self.bad_modules is not None: ### Gracious handling of connection pool
                     await close_pool(); break
         else:
+            self.label5.setText("Closing db conn; wait & try again.")
+            self.label5.show()
             while self.bad_modules is not None: ### Gracious handling of connection pool
                 await close_pool(); break
         if pool is None:
@@ -888,8 +890,10 @@ def main():
     if autosize:
         from PyQt5.QtWidgets import QDesktopWidget
         screen = QDesktopWidget().screenGeometry()
-        add_y_offset = w_width - screen.width()
-        add_x_offset = w_height - screen.height()
+        if w_width > screen.width():
+            add_y_offset = w_width - screen.width()
+        if w_height > int(screen.height()):
+            add_x_offset = w_height - screen.height()
         w_width = screen.width()
         w_height = screen.height()
         del screen, QDesktopWidget
