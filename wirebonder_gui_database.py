@@ -16,7 +16,7 @@ from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, Gr
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
-from config.conn import host, database, user, password
+from config.conn import host, database, user, password, autosize
 
 pool = None
 scaling_factor = 90
@@ -868,6 +868,16 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    global scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
+    if autosize:
+        from PyQt5.QtWidgets import QDesktopWidget
+        screen = QDesktopWidget().screenGeometry()
+        add_y_offset = w_width - screen.width()
+        add_x_offset = w_height - screen.height()
+        w_width = screen.width()
+        w_height = screen.height()
+        del screen, QDesktopWidget
+
     font = QFont("Calibri", text_font_size)
     font.setWeight(text_font_size)
     QApplication.setFont(font, "QLabel")
