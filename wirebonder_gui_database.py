@@ -658,7 +658,9 @@ class MainWindow(QMainWindow):
         if self.opened_once == True:
             saved = await self.save(self.widget)
             if saved:
-                await close_pool()
+                self.label.setText("Closing db conn, wait & try again.")
+                while self.bad_modules is not None: ### Gracious handling of connection pool
+                    await close_pool(); break
         else:
             while self.bad_modules is not None: ### Gracious handling of connection pool
                 await close_pool(); break
@@ -670,6 +672,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def show_start(self):
         print("Currently on MainWindow")
+        self.scrolllabel.setText("Waiting for modules...")
         self.bad_modules = None
         self.opened_once = False
         self.widget.hide()
