@@ -21,8 +21,7 @@ from config.conn import host, database, user, password, autosize
 pool = None
 scaling_factor = 90
 hex_length = 0
-y_offset = add_y_offset
-x_offset = 0
+x_offset, y_offset = 0, 0
 num_non_signal = 12
 
 async def init_pool():
@@ -885,7 +884,7 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    global scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size
+    global scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size, y_offset, x_offset
     if autosize:
         from PyQt5.QtWidgets import QDesktopWidget
         screen = QDesktopWidget().screenGeometry()
@@ -894,7 +893,9 @@ def main():
         w_width = screen.width()
         w_height = screen.height()
         del screen, QDesktopWidget
-
+    
+    y_offset = add_y_offset
+    x_offset = 0
     font = QFont("Calibri", text_font_size)
     font.setWeight(text_font_size)
     QApplication.setFont(font, "QLabel")
