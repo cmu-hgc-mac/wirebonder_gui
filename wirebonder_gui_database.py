@@ -77,6 +77,7 @@ class FrontPage(QMainWindow):
         self.info_dict = info_dict
         self.df_pad_to_channel = df_pad_to_channel
 
+        self.fwb_lastsave = self.info_dict["front_wirebond_info"]
         self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
@@ -847,7 +848,7 @@ class MainWindow(QMainWindow):
         page = widget.currentWidget()
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
-            saved = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons)
+            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave)
             savedp = await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
             saved = saved and savedp
         elif page.pageid == "backpage":

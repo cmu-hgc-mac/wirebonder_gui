@@ -232,22 +232,27 @@ async def read_front_db(pool, modname, df_pad_map):
             df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {"state": 0,"grounded":is_grounded}
     else:
         #read from front_wirebond
-        read_query = f"""SELECT cell_no, bond_count_for_cell, bond_type, technician, comment, module_no
-            FROM front_wirebond
-            WHERE REPLACE(module_name, '-','') = '{modname}'
-            ORDER BY frwirebond_no DESC LIMIT 1;"""
+        # read_query = f"""SELECT cell_no, bond_count_for_cell, bond_type, technician, comment, module_no
+        #     FROM front_wirebond
+        #     WHERE REPLACE(module_name, '-','') = '{modname}'
+        #     ORDER BY frwirebond_no DESC LIMIT 1;"""
 
         #I don't know why, but this doesn't work unless it's inside a list
         #so get the dictionary from inside the list
-        records = await fetch_PostgreSQL(pool, read_query)
-        front_res = [dict(record) for record in records][0]
+        # records = await fetch_PostgreSQL(pool, read_query)
+        # front_res = [dict(record) for record in records][0]
 
-        read_query = f"""SELECT technician, wedge_id, spool_batch, comment, wb_fr_marked_done
+        read_query = f"""SELECT technician, wedge_id, spool_batch, comment, wb_fr_marked_done,
+        cell_no, bond_count_for_cell, bond_type, module_no,
+        list_grounded_cells, list_unbonded_cells, cell_no, bond_count_for_cell, bond_type
         FROM front_wirebond
         WHERE REPLACE(module_name, '-','') = '{modname}'
         ORDER BY frwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
-        front_wirebond_info = [dict(record) for record in records][0]
+        front_wirebond_return = [dict(record) for record in records][0]
+
+        front_res = {tkey: front_wirebond_return[tkey]  for tkey in ['cell_no', 'bond_count_for_cell', 'bond_type', 'technician', 'comment', 'module_no']}
+        front_wirebond_info = {tkey: front_wirebond_return[tkey]  for tkey in ['wedge_id', 'spool_batch', 'wb_fr_marked_done', 'technician', 'comment','list_grounded_cells', 'list_unbonded_cells', 'cell_no', 'bond_count_for_cell', 'bond_type']}
 
         for index, row in df_pad_map.iterrows():
             if int(df_pad_map.loc[index]['padnumber']) in front_res['cell_no']:
@@ -314,20 +319,24 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         for index, row in df_backside_mbites_pos.iterrows():
             df_back_states.loc[df_backside_mbites_pos.loc[index]['padnumber']] = {"state": 0,"grounded":0}
     else:
-        read_query = f"""SELECT mbite_no, bond_count_for_mbite
+        # read_query = f"""SELECT mbite_no, bond_count_for_mbite
+        # FROM back_wirebond
+        # WHERE REPLACE(module_name, '-','') = '{modname}'
+        # ORDER BY bkwirebond_no DESC LIMIT 1;"""
+        # records = await fetch_PostgreSQL(pool, read_query)
+        # back_wirebond_states = [dict(record) for record in records][0]
+
+        read_query = f"""SELECT wedge_id, spool_batch, technician, comment, wb_bk_marked_done, mbite_no, bond_count_for_mbite
         FROM back_wirebond
         WHERE REPLACE(module_name, '-','') = '{modname}'
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
         records = await fetch_PostgreSQL(pool, read_query)
-        back_wirebond_states = [dict(record) for record in records][0]
+        back_wirebond_return = [dict(record) for record in records][0]
 
-        read_query = f"""SELECT wedge_id, spool_batch, technician, comment, wb_bk_marked_done
-        FROM back_wirebond
-        WHERE REPLACE(module_name, '-','') = '{modname}'
-        ORDER BY bkwirebond_no DESC LIMIT 1;"""
-        records = await fetch_PostgreSQL(pool, read_query)
-        back_wirebond_info = [dict(record) for record in records][0]
+        back_wirebond_states = {tkey: back_wirebond_return[tkey]  for tkey in ['mbite_no', 'bond_count_for_mbite']}
+        back_wirebond_info = {tkey: back_wirebond_return[tkey]  for tkey in ['wedge_id', 'spool_batch', 'wb_bk_marked_done', 'technician', 'comment']}
 
+        
         '''
         read_query = f"""SELECT  comment, technician
             FROM back_encap
@@ -411,14 +420,13 @@ async def read_encaps(pool, ):
 
 
 #save front wirebonder information to database
-async def upload_front_wirebond(pool, modname,  technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None):
+async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None):
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
     records = await fetch_PostgreSQL(pool, read_query)
-    print(modname, records)
     module_no = [dict(record) for record in records][0]["module_no"]
 
     list_grounded_cells = []
@@ -464,48 +472,21 @@ async def upload_front_wirebond(pool, modname,  technician, comment, wedge_id, s
         'wb_fr_marked_done': marked_done
     }
 
-    db_table_name = 'front_wirebond'
-    try:
-        await upload_PostgreSQL(pool, db_table_name, db_upload)
-        return True
-    except Exception as e:
-        print(f"Failed to upload data: {e}")
-        return False
-
-# #save front wirebond information to database with different input
-# async def upload_front_wirebond2(pool, modname, cell_no, bond_count_for_cell, bond_type):
-#     read_query = f"""SELECT technician, wedge_id, spool_batch, comment, list_grounded_cells, \
-#                     list_unbonded_cells, date_bond, time_bond, module_no, wb_fr_marked_done
-#     FROM front_wirebond
-#     WHERE REPLACE(module_name, '-','') = '{modname}'
-#     ORDER BY frwirebond_no DESC LIMIT 1;"""
-#     records = await fetch_PostgreSQL(pool, read_query)
-#     info = [dict(record) for record in records][0]
-
-#     db_upload = {
-#         'module_name' : modname,
-#         'list_grounded_cells' : info['list_grounded_cells'],
-#         'list_unbonded_cells' : info['list_unbonded_cells'],
-#         'cell_no' : cell_no,
-#         'bond_count_for_cell' : bond_count_for_cell,
-#         'bond_type' : bond_type,
-#         'date_bond' : info['date_bond'],
-#         'time_bond' : info['time_bond'],
-#         'technician' : info['technician'],
-#         'comment' : info['comment'],
-#         'wedge_id' : info['wedge_id'],
-#         'spool_batch': info['spool_batch'],
-#         'module_no' : int(info['module_no']),
-#         'wb_fr_marked_done': info['wb_fr_marked_done']
-#     }
-
-#     db_table_name = 'front_wirebond'
-#     try:
-#         await upload_PostgreSQL(pool, db_table_name, db_upload)
-#         return True
-#     except Exception as e:
-#         print(f"Failed to upload data: {e}")
-#         return False
+    # checkcols = ['list_grounded_cells', 'list_unbonded_cells', 'cell_no', 'bond_count_for_cell', 'bond_type', 'wedge_id' ,'spool_batch']
+    lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
+    dict_unchanged = lastsave_fwb_new == lastsave_fwb
+    if dict_unchanged:
+        print(f"Data for {modname} unchanged. No new entry saved.")
+        return True, lastsave_fwb
+    else:
+        db_table_name = 'front_wirebond'
+        try:
+            await upload_PostgreSQL(pool, db_table_name, db_upload)
+            lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
+            return True, lastsave_fwb_new
+        except Exception as e:
+            print(f"Failed to upload data: {e}")
+            return False, lastsave_fwb
 
 #save back wirebonder information to database
 async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
@@ -647,7 +628,7 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
         elif cure_end != " :00": # and enc == " :00" and cure_start == " :00":
             db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
 
-            try:  #get module number
+            try:  
                 read_query = f"""SELECT comment
                     FROM {db_table_name}
                     WHERE REPLACE(module_name, '-','') = '{module}';"""
