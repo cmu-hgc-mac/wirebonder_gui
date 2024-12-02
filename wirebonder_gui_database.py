@@ -531,7 +531,7 @@ class EncapsPage(QMainWindow):
         result = await read_encaps(pool)  
         self.epoxy_batch.setText(result["epoxy_batch"])
 
-    async def check_mod_exists_encap(self, check_task, modname):
+    async def check_mod_exists_encap(self,modname):
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM module_info
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
@@ -546,7 +546,10 @@ class EncapsPage(QMainWindow):
     def add(self):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
-        asyncio.create_task(self.check_mod_exists_encap(modname=modname))
+        try:
+            asyncio.create_task(self.check_mod_exists_encap(modname=modname))
+        except Exception as e:
+            print(e)
 
     def remove(self):
         modname = (self.modid.text()).replace("-","")
@@ -733,7 +736,10 @@ class MainWindow(QMainWindow):
     def load(self, page):
         #check if the module exists
         self.modname = (self.modid.text()).replace("-","")
-        asyncio.create_task(self.check_mod_exists_main(page=page))
+        try:
+            asyncio.create_task(self.check_mod_exists_main(page=page))
+        except Exception as e:
+            print(e)
 
     #create pages, button to switch between pages, button to save
     async def begin_program(self,page):
@@ -845,9 +851,9 @@ class MainWindow(QMainWindow):
         elif page.pageid == "backpage":
             saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave)
         elif page.pageid == "encapspage":
-            enc_full = f"{page.enc_date.text()} {page.enc_time.text()} :00"
-            cure_start_full = f"{page.start_date.text()} {page.start_time.text()} :00"
-            cure_end_full = f"{page.end_date.text()} {page.end_time.text()} :00"
+            enc_full = f"{page.enc_date.text()} {page.enc_time.text()}:00"
+            cure_start_full = f"{page.start_date.text()} {page.start_time.text()}:00"
+            cure_end_full = f"{page.end_date.text()} {page.end_time.text()}:00"
             if len(page.modules) != 0:
                 saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
