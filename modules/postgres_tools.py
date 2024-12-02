@@ -231,12 +231,6 @@ async def read_front_db(pool, modname, df_pad_map):
             is_grounded = 1 if int(df_pad_map.loc[index]['padnumber']) in ground else 0
             df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {"state": 0,"grounded":is_grounded}
     else:
-        #read from front_wirebond
-        # read_query = f"""SELECT cell_no, bond_count_for_cell, bond_type, technician, comment, module_no
-        #     FROM front_wirebond
-        #     WHERE REPLACE(module_name, '-','') = '{modname}'
-        #     ORDER BY frwirebond_no DESC LIMIT 1;"""
-
         #I don't know why, but this doesn't work unless it's inside a list
         #so get the dictionary from inside the list
         # records = await fetch_PostgreSQL(pool, read_query)
@@ -309,7 +303,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
 
     #set defaults
     df_back_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
-    back_wirebond_info = {'technician': '', 'comment': '', 'wedge_id':'','spool_batch':'', "wb_bk_marked_done":False}
+    back_wirebond_info = {'technician': None, 'comment': None, 'wedge_id':'','spool_batch':'', "wb_bk_marked_done":False}
     back_encaps_info = {'technician': '', 'comment': ''}
 
     #test if front_wirebond has been filled in at all
@@ -319,13 +313,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         for index, row in df_backside_mbites_pos.iterrows():
             df_back_states.loc[df_backside_mbites_pos.loc[index]['padnumber']] = {"state": 0,"grounded":0}
     else:
-        # read_query = f"""SELECT mbite_no, bond_count_for_mbite
-        # FROM back_wirebond
-        # WHERE REPLACE(module_name, '-','') = '{modname}'
-        # ORDER BY bkwirebond_no DESC LIMIT 1;"""
-        # records = await fetch_PostgreSQL(pool, read_query)
-        # back_wirebond_states = [dict(record) for record in records][0]
-
+        
         read_query = f"""SELECT wedge_id, spool_batch, technician, comment, wb_bk_marked_done, mbite_no, bond_count_for_mbite
         FROM back_wirebond
         WHERE REPLACE(module_name, '-','') = '{modname}'
@@ -334,16 +322,8 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         back_wirebond_return = [dict(record) for record in records][0]
 
         back_wirebond_states = {tkey: back_wirebond_return[tkey]  for tkey in ['mbite_no', 'bond_count_for_mbite']}
-        back_wirebond_info = {tkey: back_wirebond_return[tkey]  for tkey in ['wedge_id', 'spool_batch', 'wb_bk_marked_done', 'technician', 'comment']}
+        back_wirebond_info = {tkey: back_wirebond_return[tkey]  for tkey in ['wedge_id', 'spool_batch', 'wb_bk_marked_done', 'technician', 'comment', 'mbite_no', 'bond_count_for_mbite']}
 
-        
-        '''
-        read_query = f"""SELECT  comment, technician
-            FROM back_encap
-            WHERE module_name = '{modname}'
-            ORDER BY bkencap_no DESC LIMIT 1;"""
-        back_encaps_info = [dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))][0]
-        '''
         for index, row in df_backside_mbites_pos.iterrows():
             if int(df_backside_mbites_pos.loc[index]['padnumber']) in back_wirebond_states["mbite_no"]:
                 state = 3-back_wirebond_states['bond_count_for_mbite'][back_wirebond_states['mbite_no'].index(df_backside_mbites_pos.loc[index]['padnumber'])]
@@ -385,14 +365,8 @@ async def read_pull_db(pool, modname):
     records = await fetch_PostgreSQL(pool, read_query)
     check = [dict(record) for record in records][0]
 
-    # #get module number
-    # read_query = f"""SELECT module_no FROM module_info
-    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    # records = await fetch_PostgreSQL(pool, read_query)
-    # module_no = [dict(record) for record in records][0]["module_no"]
-
     #set defaults
-    pull_info = {'avg_pull_strg_g': 0, 'std_pull_strg_g': 0, 'technician': '', 'comment': ''}
+    pull_info = {'avg_pull_strg_g': 0, 'std_pull_strg_g': 0, 'technician': None, 'comment': None}
     #test if front_wirebond has been filled in at all
     #if so, it's an old module and read from database
     #if not, it's a new module andleave as default
@@ -428,6 +402,9 @@ async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, sp
     #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
+
+    technician = None if len(technician) == 0 else technician
+    comment    = None if len(comment)    == 0 else comment
 
     list_grounded_cells = []
     list_unbonded_cells = []
@@ -476,7 +453,7 @@ async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, sp
     lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
     dict_unchanged = lastsave_fwb_new == lastsave_fwb
     if dict_unchanged:
-        print(f"Data for {modname} unchanged. No new entry saved.")
+        print(f"Data for {modname} unchanged. No new entry saved for front wirebond.")
         return True, lastsave_fwb
     else:
         db_table_name = 'front_wirebond'
@@ -489,13 +466,17 @@ async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, sp
             return False, lastsave_fwb
 
 #save back wirebonder information to database
-async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons):
+async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons, lastsave_bwb = None):
     #get module number
     read_query = f"""SELECT module_no
         FROM module_info
         WHERE REPLACE(module_name, '-','') = '{modname}';"""
     records = await fetch_PostgreSQL(pool, read_query)
     module_no = [dict(record) for record in records][0]["module_no"]
+
+
+    technician = None if len(technician) == 0 else technician
+    comment    = None if len(comment)    == 0 else comment
 
     cell_no = []
     bond_count_for_cell = []
@@ -524,18 +505,25 @@ async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spo
         'wb_bk_marked_done': marked_done
     }
 
-    db_table_name = 'back_wirebond'
-    try:
-        await upload_PostgreSQL(pool, db_table_name, db_upload)
-        return True
-    except Exception as e:
-        print(f"Failed to upload data: {e}")
-        return False
+    lastsave_bwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_bwb.keys())}
+    
+    dict_unchanged = lastsave_bwb_new == lastsave_bwb
+    if dict_unchanged:
+        print(f"Data for {modname} unchanged. No new entry saved for back wirebond.")
+        return True, lastsave_bwb
+    else:
+        db_table_name = 'back_wirebond'
+        try:
+            await upload_PostgreSQL(pool, db_table_name, db_upload)
+            return True, lastsave_bwb_new
+        except Exception as e:
+            print(f"Failed to upload data: {e}")
+            return False, lastsave_bwb
 
 #save pull test information to database
-async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pull_time):
-
-    # if (technician == ""): return False
+async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pull_time, lastsave_fpi = None):
+    technician = None if len(technician) == 0 else technician
+    comment    = None if len(comment)    == 0 else comment
 
     #get module number
     read_query = f"""SELECT module_no
@@ -560,13 +548,19 @@ async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pul
         'module_no' : int(module_no)
     }
 
-    db_table_name = 'bond_pull_test'
-    try:
-        await upload_PostgreSQL(pool, db_table_name, db_upload) 
-        return True
-    except Exception as e:
-        print(f"Failed to upload data: {e}")
-        return False
+    lastsave_fpi_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fpi.keys())}
+    dict_unchanged = lastsave_fpi_new == lastsave_fpi
+    if dict_unchanged:
+        print(f"Data for {modname} unchanged. No new entry saved for bond pull test.")
+        return True, lastsave_fpi
+    else:
+        db_table_name = 'bond_pull_test'
+        try:
+            await upload_PostgreSQL(pool, db_table_name, db_upload) 
+            return True, lastsave_fpi_new
+        except Exception as e:
+            print(f"Failed to upload data: {e}")
+            return False, lastsave_fpi
 
 #save pull test information to database
 async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):

@@ -78,6 +78,7 @@ class FrontPage(QMainWindow):
         self.df_pad_to_channel = df_pad_to_channel
 
         self.fwb_lastsave = self.info_dict["front_wirebond_info"]
+        self.fpi_lastsave = self.info_dict["pull_info"]
         self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
@@ -301,7 +302,8 @@ class BackPage(QMainWindow):
         self.df_backside_mbites_pos = df_backside_mbites_pos
         self.info_dict = info_dict
         self.df_pad_to_channel = df_pad_to_channel
-
+        
+        self.bwb_lastsave = self.info_dict["back_wirebond_info"]
         self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
@@ -849,14 +851,14 @@ class MainWindow(QMainWindow):
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
             saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave)
-            savedp = await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text())
+            savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave)
             saved = saved and savedp
         elif page.pageid == "backpage":
-            saved = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons)
+            saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave)
         elif page.pageid == "encapspage":
-            enc_full = page.enc_date.text() + " " + page.enc_time.text() + ":00"
-            cure_start_full = page.start_date.text() + " " + page.start_time.text() + ":00"
-            cure_end_full = page.end_date.text() + " " + page.end_time.text() + ":00"
+            enc_full = f"{page.enc_date.text()} {page.enc_time.text()} :00"
+            cure_start_full = f"{page.start_date.text()} {page.start_time.text()} :00"
+            cure_end_full = f"{page.end_date.text()} {page.end_time.text()} :00"
             if len(page.modules) != 0:
                 saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
