@@ -361,14 +361,14 @@ async def read_encaps(pool, ):
 
 
 #save front wirebonder information to database
-async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None):
+async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None):
     #get module number
-    read_query = f"""SELECT module_no
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
-    records = await fetch_PostgreSQL(pool, read_query)
-    module_no = [dict(record) for record in records][0]["module_no"]
+    # read_query = f"""SELECT module_no
+    #     FROM module_info
+    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
+    # #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
+    # records = await fetch_PostgreSQL(pool, read_query)
+    # module_no = [dict(record) for record in records][0]["module_no"]
 
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
@@ -433,13 +433,13 @@ async def upload_front_wirebond(pool, modname, technician, comment, wedge_id, sp
             return False, lastsave_fwb
 
 #save back wirebonder information to database
-async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons, lastsave_bwb = None):
+async def upload_back_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons, lastsave_bwb = None):
     #get module number
-    read_query = f"""SELECT module_no
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    records = await fetch_PostgreSQL(pool, read_query)
-    module_no = [dict(record) for record in records][0]["module_no"]
+    # read_query = f"""SELECT module_no
+    #     FROM module_info
+    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
+    # records = await fetch_PostgreSQL(pool, read_query)
+    # module_no = [dict(record) for record in records][0]["module_no"]
 
 
     technician = None if len(technician) == 0 else technician
@@ -488,16 +488,16 @@ async def upload_back_wirebond(pool, modname, technician, comment, wedge_id, spo
             return False, lastsave_bwb
 
 #save pull test information to database
-async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pull_time, lastsave_fpi = None):
+async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, comment, pull_time, lastsave_fpi = None):
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
 
-    #get module number
-    read_query = f"""SELECT module_no
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    records = await fetch_PostgreSQL(pool, read_query)
-    module_no = [dict(record) for record in records][0]["module_no"]
+    # #get module number
+    # read_query = f"""SELECT module_no
+    #     FROM module_info
+    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
+    # records = await fetch_PostgreSQL(pool, read_query)
+    # module_no = [dict(record) for record in records][0]["module_no"]
 
     date_time = datetime.strptime(pull_time, "%Y/%m/%d %H:%M:%S")
 
@@ -530,7 +530,7 @@ async def upload_bond_pull_test(pool, modname, avg, sd, technician, comment, pul
             return False, lastsave_fpi
 
 #save pull test information to database
-async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
+async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
     #if this page is empty, don't save it (causes error with inputting date and time)
     #this tests if encapsulation page is empty
     #and returns false, since we didn't actually save it
@@ -570,12 +570,14 @@ async def upload_encaps(pool, modules, technician, enc, cure_start, cure_end, te
                 db_upload.update({'cure_end': cure_end,})
 
             try:  #get module number
-                read_query = f"""SELECT module_no
-                    FROM module_info
-                    WHERE REPLACE(module_name, '-','') = '{module}';"""
-                records = await fetch_PostgreSQL(pool, read_query)
-                module_no = [dict(record) for record in records][0]["module_no"]
-                db_upload.update({'module_no' : int(module_no),})
+                db_upload.update({'module_no' : modnos[module]})
+                # read_query = f"""SELECT module_no
+                #     FROM module_info
+                #     WHERE REPLACE(module_name, '-','') = '{module}';"""
+                # records = await fetch_PostgreSQL(pool, read_query)
+                # module_no = [dict(record) for record in records][0]["module_no"]
+                # db_upload.update({'module_no' : int(module_no),})
+
             except:
                 print('Module number for encapsulated module not found.')
 

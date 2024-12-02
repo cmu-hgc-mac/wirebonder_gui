@@ -521,6 +521,7 @@ class EncapsPage(QMainWindow):
         self.combobox2.addItems(["frontside", "backside"])
         self.combobox2.setGeometry(15, 140, 150, 25)
         self.modules = {}
+        self.modnos = {}
         self.async_epoxy_batch()
 
     def run_async_function(self):
@@ -532,12 +533,11 @@ class EncapsPage(QMainWindow):
         self.epoxy_batch.setText(result["epoxy_batch"])
 
     async def check_mod_exists_encap(self,modname):
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
+        read_query = f"""SELECT( SELECT module_no FROM module_info WHERE REPLACE(module_name, '-','') = '{modname}' LIMIT 1) as in_info;"""
         check = await async_check(pool, read_query)
-        if check['exists']:
+        if check['in_info'] is not None:
             self.modules[modname] = self.combobox2.currentText()
+            self.modnos[modname] = check['in_info']
             string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
             self.scrolllabel.setText(string)
         else:
@@ -555,6 +555,7 @@ class EncapsPage(QMainWindow):
         modname = (self.modid.text()).replace("-","")
         if modname in self.modules and self.modules[modname] == self.combobox2.currentText():
             del self.modules[modname]
+            del self.modnos[modname]
         string = ""
         for module in self.modules:
             string = string + module +' ' + self.modules[module] + "\n"
@@ -630,6 +631,7 @@ class MainWindow(QMainWindow):
         self.widget.setGeometry(0, 25, w_width, w_height)
         self.label3 = QLabel(self)
         self.modname = ''
+        self.modno = 0
 
         self.label5 = QLabel("",self)
         self.label5.setGeometry(left_align, space + self.load_button.geometry().top() + self.load_button.geometry().height(), 350, 50)
@@ -679,6 +681,7 @@ class MainWindow(QMainWindow):
     @asyncSlot()
     async def show_start(self):
         print("Currently on MainWindow")
+        self.modno = 0
         self.scrolllabel.setText("Waiting for modules...")
         self.bad_modules = None
         self.opened_once = False
@@ -716,15 +719,14 @@ class MainWindow(QMainWindow):
         if page == "encapspage":
             asyncio.create_task(self.begin_program(page))
         else:
-            combined_query = f"""
-            SELECT 
-                EXISTS(SELECT 1 FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_info,
-                EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_fr_wirebond,
-                EXISTS(SELECT 1 FROM back_wirebond  WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_bk_wirebond;
-            """
+            combined_query = f""" SELECT 
+            (SELECT module_no FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}' LIMIT 1) AS in_info,
+            (SELECT module_no FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}' LIMIT 1) AS in_fr_wirebond,
+            (SELECT module_no FROM back_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}' LIMIT 1) AS in_bk_wirebond; """
             combined_check = await async_check(pool, combined_query)
-
-            if combined_check['in_info'] or combined_check['in_fr_wirebond'] or combined_check['in_bk_wirebond']:
+            if combined_check['in_info'] is not None: #or combined_check['in_fr_wirebond'] or combined_check['in_bk_wirebond']:
+                self.modno = combined_check['in_info']
+                print(f"Loading {self.modname} with module_no {self.modno}...")
                 asyncio.create_task(self.begin_program(page))
             else:
                 self.label5.setText("Information not found,\nPlease enter valid module ID or")
@@ -845,17 +847,17 @@ class MainWindow(QMainWindow):
         page = widget.currentWidget()
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
-            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave)
-            savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave)
+            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave)
+            savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, self.modno, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave)
             saved = saved and savedp
         elif page.pageid == "backpage":
-            saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave)
+            saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave)
         elif page.pageid == "encapspage":
             enc_full = f"{page.enc_date.text()} {page.enc_time.text()}:00"
             cure_start_full = f"{page.start_date.text()} {page.start_time.text()}:00"
             cure_end_full = f"{page.end_date.text()} {page.end_time.text()}:00"
             if len(page.modules) != 0:
-                saved = await upload_encaps(pool, page.modules, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+                saved = await upload_encaps(pool, page.modules, page.modnos, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
                     self.encapspage.timestatlabel.setText("Provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time\n(or) remove modules.")
                 else:
