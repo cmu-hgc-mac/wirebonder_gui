@@ -37,10 +37,10 @@ def check_valid_module(modname):
     
 
 async def upload_PostgreSQL(pool, table_name, db_upload_data):
-    async with pool.acquire() as conn: 
+    async with pool.acquire() as connection: 
         query = get_query_write(table_name, db_upload_data.keys())
         try:
-            await conn.execute(query, *db_upload_data.values())
+            await connection.execute(query, *db_upload_data.values())
             if 'module_name' in list(db_upload_data.keys()):
                 print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
         except Exception as e:
@@ -53,11 +53,11 @@ def get_query_update(table_name, column_names, name_col):
     return query
 
 async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_name):
-    async with pool.acquire() as conn: 
+    async with pool.acquire() as connection: 
         query = get_query_update(table_name, list(db_upload_data.keys()), name_col)
         params = list(db_upload_data.values()) + [part_name]
         try:
-            await conn.execute(query, *params)
+            await connection.execute(query, *params)
             print(f'Data for {part_name} updated into {table_name} table.')
         except Exception as e:
             print(e, f"for query {query}.")
@@ -65,8 +65,8 @@ async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_nam
 # Read query
 async def fetch_PostgreSQL(pool, query):
     try:
-        async with pool.acquire() as conn:  # Acquire a connection from the pool
-            value = await conn.fetch(query)
+        async with pool.acquire() as connection:  # Acquire a connection from the pool
+            value = await connection.fetch(query)
         return value
     except Exception as e:
         print(e, f"for query {query}.")
