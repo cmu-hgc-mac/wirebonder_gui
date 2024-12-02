@@ -46,27 +46,6 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
         except Exception as e:
             print(e, f"for query {query}.")
             
-        # schema_name = 'public'
-        # table_exists_query = """
-        # SELECT EXISTS (
-        #     SELECT 1
-        #     FROM information_schema.tables
-        #     WHERE table_schema = $1
-        #     AND table_name = $2
-        # );
-        # """
-        # table_exists = await conn.fetchval(table_exists_query, schema_name, table_name)  
-        # if table_exists:
-        #     query = get_query_write(table_name, db_upload_data.keys())
-        #     try:
-        #         await conn.execute(query, *db_upload_data.values())
-        #         print(f'Data for {db_upload_data["module_name"]} written into {table_name} table.')
-        #     except Exception as e:
-        #         print(e, f"for query {query}.")
-        # else:
-        #     print(f'Table {table_name} does not exist in the database.')
-
-
 def get_query_update(table_name, column_names, name_col):
     data_placeholder = ', '.join([f"{col} = ${i+1}" for i, col in enumerate(column_names)])
     pre_query = f""" UPDATE {table_name} SET {data_placeholder} WHERE """
@@ -190,12 +169,6 @@ async def read_front_db(pool, modname, df_pad_map):
     records = await fetch_PostgreSQL(pool, read_query)
     check = [dict(record) for record in records][0]
 
-    # #get module number
-    # read_query = f"""SELECT module_no FROM module_info
-    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    # records = await fetch_PostgreSQL(pool, read_query)
-    # module_no = [dict(record) for record in records][0]["module_no"]
-
     #set defaults
     ground = []
     df_front_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
@@ -294,12 +267,6 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         WHERE REPLACE(module_name, '-','') ='{modname}');"""
     records = await fetch_PostgreSQL(pool, read_query)
     check = [dict(record) for record in records][0]
-
-    # #get module number
-    # read_query = f"""SELECT module_no FROM module_info
-    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    # records = await fetch_PostgreSQL(pool, read_query)
-    # module_no = [dict(record) for record in records][0]["module_no"]
 
     #set defaults
     df_back_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')

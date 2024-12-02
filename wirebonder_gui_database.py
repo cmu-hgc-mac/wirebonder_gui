@@ -532,7 +532,10 @@ class EncapsPage(QMainWindow):
         self.epoxy_batch.setText(result["epoxy_batch"])
 
     async def check_mod_exists_encap(self, check_task, modname):
-        check = await check_task
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+        FROM module_info
+        WHERE REPLACE(module_name, '-','') ='{modname}');"""
+        check = await async_check(pool, read_query)
         if check['exists']:
             self.modules[modname] = self.combobox2.currentText()
             string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
@@ -543,10 +546,7 @@ class EncapsPage(QMainWindow):
     def add(self):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
-        asyncio.create_task(self.check_mod_exists_encap(check_task=async_check(pool, read_query), modname=modname))
+        asyncio.create_task(self.check_mod_exists_encap(modname=modname))
 
     def remove(self):
         modname = (self.modid.text()).replace("-","")
@@ -630,9 +630,9 @@ class MainWindow(QMainWindow):
 
         self.label5 = QLabel("",self)
         self.label5.setGeometry(left_align, space + self.load_button.geometry().top() + self.load_button.geometry().height(), 350, 50)
-        self.addbutton = GreyButton("Add blank module and/or hexaboard",260,25,self)
+        self.addbutton = GreyButton("Add module and/or hexaboard",230,25,self)
         self.addbutton.hide()
-        self.addbutton.setGeometry(left_align, space + self.label5.geometry().top() + self.label5.geometry().height(), 270, 50)
+        self.addbutton.setGeometry(left_align, space + self.label5.geometry().top() + self.label5.geometry().height(), 270, 70)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
         self.scrolllabel = ScrollLabel(self)
         self.scrolllabel.setGeometry(left_align, space + self.addbutton.geometry().top() + self.addbutton.geometry().height(), 300, 300)
@@ -709,18 +709,19 @@ class MainWindow(QMainWindow):
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
         
-    async def check_mod_exists_main(self, check_task, page):
-        check = await check_task
-        print(check_task)
-        if check['exists']:
+    async def check_mod_exists_main(self, page):
+        if page == "encapspage":
+            asyncio.create_task(self.begin_program(page))
+        else:
             combined_query = f"""
             SELECT 
-                EXISTS(SELECT 1 FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_assembly,
-                EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_wirebond;
+                EXISTS(SELECT 1 FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_info,
+                EXISTS(SELECT 1 FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_fr_wirebond,
+                EXISTS(SELECT 1 FROM back_wirebond  WHERE REPLACE(module_name, '-','') = '{self.modname}') AS in_bk_wirebond;
             """
             combined_check = await async_check(pool, combined_query)
 
-            if combined_check['in_assembly'] or combined_check['in_wirebond']:
+            if combined_check['in_info'] or combined_check['in_fr_wirebond'] or combined_check['in_bk_wirebond']:
                 asyncio.create_task(self.begin_program(page))
             else:
                 self.label5.setText("Information not found,\nPlease enter valid module ID or")
@@ -728,23 +729,11 @@ class MainWindow(QMainWindow):
                 self.hxbid.show()
                 self.labelhxb.show()
                 self.addbutton.show()
-        elif page == "encapspage":
-            asyncio.create_task(self.begin_program(page))
-        else:
-            self.label5.setText("Information not found,\nPlease enter valid module ID or")
-            self.label5.show()
-            self.hxbid.show()
-            self.labelhxb.show()
-            self.addbutton.show()
 
     def load(self, page):
         #check if the module exists
         self.modname = (self.modid.text()).replace("-","")
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM module_info
-        WHERE REPLACE(module_name, '-','') ='{self.modname}');"""
-        asyncio.create_task(self.check_mod_exists_main(check_task=async_check(pool, read_query), page=page))
-
+        asyncio.create_task(self.check_mod_exists_main(page=page))
 
     #create pages, button to switch between pages, button to save
     async def begin_program(self,page):
