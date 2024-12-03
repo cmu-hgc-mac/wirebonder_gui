@@ -675,7 +675,11 @@ class MainWindow(QMainWindow):
                 await close_pool(); break
         if pool is None:
             print(f"Async cleanup finished, now closing the window.")
-            event.accept(); sys.exit()
+            try:
+                event.accept(); 
+            except:
+                pass
+            sys.exit()
     
     #showing home page
     @asyncSlot()
