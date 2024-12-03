@@ -103,45 +103,25 @@ async def add_new_to_db(pool, modname, hxbname = None):
 #get list of modules to revisit
 async def find_to_revisit(pool,):
     bad_modules = {}
-    #get module numbers
-    read_query = f"""SELECT REPLACE(module_name, '-','') AS module_name FROM module_info;"""
+
+    read_query = f"""WITH 
+            latest_fr_wb AS (SELECT DISTINCT ON (module_no) * FROM front_wirebond ORDER BY module_no DESC, (date_bond + time_bond) DESC),
+            latest_bk_wb AS (SELECT DISTINCT ON (module_no) * FROM back_wirebond ORDER BY module_no DESC, (date_bond + time_bond) DESC)
+            SELECT mi.module_name, fw.wb_fr_marked_done, bw.wb_bk_marked_done
+            FROM module_info mi
+            LEFT JOIN latest_fr_wb fw ON mi.module_no = fw.module_no
+            LEFT JOIN latest_bk_wb bw ON mi.module_no = bw.module_no
+            WHERE (fw.wb_fr_marked_done = false OR fw.wb_fr_marked_done IS NULL)
+            OR (bw.wb_bk_marked_done = false OR bw.wb_bk_marked_done IS NULL)"""
+
     records = await fetch_PostgreSQL(pool, read_query)
-    all_modules = [dict(record) for record in records]
-    for module in all_modules:
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','') FROM front_wirebond
-        WHERE REPLACE(module_name, '-','') ='{module['module_name']}');"""
-
-        records = await fetch_PostgreSQL(pool, read_query)
-        check1 = [dict(record) for record in records][0]
-        front_res = {"wb_fr_marked_done": False}
-        #check if the module is in front wirebonding tables
-        if check1['exists']:
-            read_query = f"""SELECT wb_fr_marked_done
-            FROM front_wirebond
-            WHERE REPLACE(module_name, '-','') = '{module['module_name']}'
-            ORDER BY frwirebond_no DESC LIMIT 1;"""
-            records = await fetch_PostgreSQL(pool, read_query)
-            front_res = [dict(record) for record in records][0]
-
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM back_wirebond
-        WHERE REPLACE(module_name, '-','') ='{module['module_name']}');"""
-        records = await fetch_PostgreSQL(pool, read_query)
-        check2 = [dict(record) for record in records][0]
-        #check if the module is in front wirebonding tables
-        back_res = {"wb_bk_marked_done": False}
-        if check2['exists']:
-            read_query = f"""SELECT wb_bk_marked_done
-            FROM back_wirebond
-            WHERE REPLACE(module_name, '-','') = '{module['module_name']}'
-            ORDER BY bkwirebond_no DESC LIMIT 1;"""
-            records = await fetch_PostgreSQL(pool, read_query)
-            back_res = [dict(record) for record in records][0]
-
-        if check1['exists'] or check2['exists']:
-            if not (front_res["wb_fr_marked_done"] and back_res["wb_bk_marked_done"]):
-                bad_modules[module['module_name']] = [front_res["wb_fr_marked_done"], back_res["wb_bk_marked_done"]]
-
+    if records is not None:
+        check = [dict(record) for record in records]
+        for mod in check:
+            mod["wb_fr_marked_done"] = False if mod["wb_fr_marked_done"] is None else mod["wb_fr_marked_done"]
+            mod["wb_bk_marked_done"] = False if mod["wb_bk_marked_done"] is None else mod["wb_bk_marked_done"]                
+            bad_modules[mod['module_name']] = [mod["wb_fr_marked_done"], mod["wb_bk_marked_done"]]
+            
     return(bad_modules)
 
 async def read_from_db(pool, modname, df_pad_map, df_backside_mbites_pos):
