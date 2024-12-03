@@ -888,6 +888,7 @@ def main():
     app = QApplication(sys.argv)
     global scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size, y_offset, x_offset
     if autosize:
+        print("Autosizing window...")
         from PyQt5.QtWidgets import QDesktopWidget
         screen = QDesktopWidget().screenGeometry()
         if w_width > screen.width():
