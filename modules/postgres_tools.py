@@ -372,6 +372,8 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
 
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
+    technician = None if technician == 'None' else technician
+    comment    = None if comment    == 'None' else comment
 
     list_grounded_cells = []
     list_unbonded_cells = []
@@ -444,6 +446,8 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
 
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
+    technician = None if technician == 'None' else technician
+    comment    = None if comment    == 'None' else comment
 
     cell_no = []
     bond_count_for_cell = []
@@ -491,6 +495,8 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
 async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, comment, pull_time, lastsave_fpi = None):
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
+    technician = None if technician == 'None' else technician
+    comment    = None if comment    == 'None' else comment
 
     # #get module number
     # read_query = f"""SELECT module_no
