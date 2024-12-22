@@ -1,4 +1,4 @@
-import asyncio, asyncpg, sys
+import asyncio, asyncpg, sys, math
 import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
@@ -50,6 +50,16 @@ async def async_check(pool, read_query):
     except Exception as e:
         print(f"Error in async_check: {e}")
         return {}
+    
+def rotate_point(x, y, angle_deg, getx = None, gety = None):
+    radians = math.radians(angle_deg)
+    x_rotated = x * math.cos(radians) - y * math.sin(radians)
+    y_rotated = x * math.sin(radians) + y * math.cos(radians)
+    if getx:
+        return x_rotated
+    if gety:
+        return y_rotated
+    return x_rotated, y_rotated
 
 #hexaboard/"requirements" page
 class FrontPage(QMainWindow):
@@ -88,6 +98,7 @@ class FrontPage(QMainWindow):
                               3: len(self.df_front_states[self.df_front_states['state'] == 3])}
         self.state_counter_labels = {}
         self.state_button_labels = {}
+        self.rotate_by_angle = 0
 
         #make label of state counter
         for state in self.state_counter:
@@ -139,7 +150,7 @@ class FrontPage(QMainWindow):
 
         labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
-                        Needs to be grounded<br>Black fill: Grounded",self.widget)
+                        Needs to be grounded (R-click)<br>Black fill: Grounded (R-clk)",self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
         labellegend.setGeometry(20,90, 170,150)
@@ -658,6 +669,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
+        self.rotate_by_angle = 180 #*0
     
     @asyncSlot()
     async def init_and_show(self):
@@ -783,6 +795,9 @@ class MainWindow(QMainWindow):
                 #read in all the pad positions
                 self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
                 self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
+            
+            for p in self.df_pad_map['xposition'].keys():
+                self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
 
             fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
             with open(fname, 'r') as file:
@@ -907,8 +922,8 @@ def main():
             add_y_offset = w_width - screen.width()
         if w_height > int(screen.height()):
             add_x_offset = w_height - screen.height()
-        # w_width = screen.width()
-        # w_height = screen.height()
+        w_width = screen.width()
+        w_height = screen.height()
         del screen, QDesktopWidget
     
     y_offset = add_y_offset
