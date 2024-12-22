@@ -139,7 +139,7 @@ class FrontPage(QMainWindow):
 
         labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
-                        Needs to be grounded<br>Black fill: Grounded",self.widget)
+                        Needs to be grounded (R-click)<br>Black fill: Grounded (R-clk)",self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
         labellegend.setGeometry(20,90, 170,150)
