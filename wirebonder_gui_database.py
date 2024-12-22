@@ -568,7 +568,6 @@ class EncapsPage(QMainWindow):
         self.modules = {}
         self.modnos = {}
         self.scrolllabel.setText("")
-        print("Encapsulation list cleared.")
 
     def set_to_now(self,date, time):
         now = datetime.now()
