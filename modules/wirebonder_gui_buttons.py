@@ -254,6 +254,7 @@ class WedgeButton(QPushButton):
 
         painter.setPen(pen)
 
+        # temp_trans = {0:3, 1:4, 2:5, 3:0, 4:1, 5:2}
         start_angle = ((210-self.channel_pos*60)*16)%(360*16)
         span_angle  = 120*16
         if self.channel_pos != 6:
