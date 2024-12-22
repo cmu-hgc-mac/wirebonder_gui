@@ -506,9 +506,9 @@ class EncapsPage(QMainWindow):
         self.modid = QLineEdit(self)
         self.modid.setGeometry(20, 100, 150, 25)
         self.scrolllabel = ScrollLabel(self)
-        self.scrolllabel.setGeometry(20, 250, 250, 150)
+        self.scrolllabel.setGeometry(20, 300, 250, 150)
         self.problemlabel = QLabel("This module isn't available.", self)
-        self.problemlabel.setGeometry(20,220, 200, 25)
+        self.problemlabel.setGeometry(20,260, 200, 25)
         self.problemlabel.hide()
 
         addbutton = GreyButton("Add", 75, 25, self)
@@ -517,6 +517,9 @@ class EncapsPage(QMainWindow):
         removebutton = GreyButton("Remove", 75, 25, self)
         removebutton.setGeometry(125, 180, 75, 25)
         removebutton.clicked.connect(self.remove)
+        addbutton = GreyButton("Clear All", 90, 25, self)
+        addbutton.setGeometry(20, 220, 100, 25)
+        addbutton.clicked.connect(self.clearall)
         self.combobox2 = QComboBox(self)
         self.combobox2.addItems(["frontside", "backside"])
         self.combobox2.setGeometry(15, 140, 150, 25)
@@ -560,6 +563,12 @@ class EncapsPage(QMainWindow):
         for module in self.modules:
             string = string + module +' ' + self.modules[module] + "\n"
         self.scrolllabel.setText(string)
+    
+    def clearall(self):
+        self.modules = {}
+        self.modnos = {}
+        self.scrolllabel.setText("")
+        print("Encapsulation list cleared.")
 
     def set_to_now(self,date, time):
         now = datetime.now()
@@ -637,7 +646,7 @@ class MainWindow(QMainWindow):
         self.label5.setGeometry(left_align, space + self.load_button.geometry().top() + self.load_button.geometry().height(), 350, 50)
         self.addbutton = GreyButton("Add module and/or hexaboard",230,25,self)
         self.addbutton.hide()
-        self.addbutton.setGeometry(left_align, space + self.label5.geometry().top() + self.label5.geometry().height(), 270, 70)
+        self.addbutton.setGeometry(left_align, space + self.label5.geometry().top() + self.label5.geometry().height(), 300, 70)
         self.addbutton.clicked.connect(self.add_new_to_db_helper)
         self.scrolllabel = ScrollLabel(self)
         self.scrolllabel.setGeometry(left_align, space + self.addbutton.geometry().top() + self.addbutton.geometry().height(), 300, 300)
