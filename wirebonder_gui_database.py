@@ -1,4 +1,4 @@
-import asyncio, asyncpg, sys, math
+import asyncio, asyncpg, sys
 import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
@@ -8,10 +8,9 @@ from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
 
-
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
-from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, 
+from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, rotate_point,
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
@@ -50,20 +49,10 @@ async def async_check(pool, read_query):
     except Exception as e:
         print(f"Error in async_check: {e}")
         return {}
-    
-def rotate_point(x, y, angle_deg, getx = None, gety = None):
-    radians = math.radians(angle_deg)
-    x_rotated = x * math.cos(radians) - y * math.sin(radians)
-    y_rotated = x * math.sin(radians) + y * math.cos(radians)
-    if getx:
-        return x_rotated
-    if gety:
-        return y_rotated
-    return x_rotated, y_rotated
 
 #hexaboard/"requirements" page
 class FrontPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0):
         super().__init__()
 
         self.pageid = "frontpage"
@@ -74,7 +63,7 @@ class FrontPage(QMainWindow):
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setCentralWidget(self.scroll)
-
+        self.rotate_by_angle = rotate_by_angle
         self.widget = QWidget()
         self.scroll.setWidget(self.widget)
         self.widget.resize(scroll_width, scroll_height);
@@ -98,7 +87,6 @@ class FrontPage(QMainWindow):
                               3: len(self.df_front_states[self.df_front_states['state'] == 3])}
         self.state_counter_labels = {}
         self.state_button_labels = {}
-        self.rotate_by_angle = 0
 
         #make label of state counter
         for state in self.state_counter:
@@ -224,16 +212,16 @@ class FrontPage(QMainWindow):
                         #move label position if button would cover it based on channelpos
                         pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                              self.state_button_labels, row2['state'], row2['grounded'], hex_length,
-                                             str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                             str(padnumber), list(rotate_point(0,-20, self.rotate_by_angle)), str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                     else:
                         pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                              self.state_button_labels, row2['state'],row2['grounded'], hex_length,
-                                             str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                             str(padnumber), list(rotate_point(0,20, self.rotate_by_angle)), str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                     pad.lower()
                 else: #if there is no calibration channel, the label can be in the middle of the pad
                     pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 #set pad position
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset ),
@@ -242,20 +230,20 @@ class FrontPage(QMainWindow):
             elif row1['Channeltype'] == 2 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
-                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget)
+                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3)), int(pad.radius*2), int(pad.radius*2))
                 #add manually to list of buttons
@@ -669,7 +657,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-        self.rotate_by_angle = 180 #*0
+        self.rotate_by_angle =45 #*0
     
     @asyncSlot()
     async def init_and_show(self):
@@ -829,7 +817,7 @@ class MainWindow(QMainWindow):
         else:
             info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
             if page == "frontpage":
-                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict)
+                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = self.rotate_by_angle)
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
