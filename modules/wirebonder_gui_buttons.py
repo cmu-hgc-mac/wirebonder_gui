@@ -103,6 +103,7 @@ class HexWithButtons(Hex):
                  state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None, rotate_by_angle = 0):
         super().__init__(radius, cell_id, label_pos, color,parent, rotate_by_angle)
         self.channel_id = channel_id
+        self.rotate_by_angle = rotate_by_angle
         self.rotate_by_angle_rad = math.radians(rotate_by_angle)
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = rotate_channel_pos(channel_pos, self.rotate_by_angle)
@@ -144,6 +145,7 @@ class HalfHexWithButtons(Hex):
                  state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0):
         super().__init__(radius, cell_id, label_pos, color, parent,rotate_by_angle)
         self.channel_id = channel_id
+        self.rotate_by_angle = rotate_by_angle
         self.rotate_by_angle_rad = math.radians(rotate_by_angle)
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = rotate_channel_pos(channel_pos, rotate_by_angle)
