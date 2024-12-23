@@ -138,7 +138,7 @@ class FrontPage(QMainWindow):
 
         labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
-                        Needs to be grounded (R-click)<br>Black fill: Grounded (R-clk)",self.widget)
+                        Needs to be grounded (R-click)<br>Black fill: Grounded(R-clk)",self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
         labellegend.setGeometry(20,90, 170,150)
@@ -237,7 +237,7 @@ class FrontPage(QMainWindow):
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
@@ -657,7 +657,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-        self.rotate_by_angle =45 #*0
+        self.rotate_by_angle = 0 #*0
     
     @asyncSlot()
     async def init_and_show(self):
