@@ -137,10 +137,10 @@ class HexWithButtons(Hex):
         self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
             int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
         self.button2.raise_()
-        pen = QPen(Qt.red)  # Use a bright color for debugging
-        pen.setWidth(2)
-        painter.setPen(pen)
-        painter.drawRect(self.button2.geometry())
+        # pen = QPen(Qt.red)  # Use a bright color for debugging
+        # pen.setWidth(2)
+        # painter.setPen(pen)
+        # painter.drawRect(self.button2.geometry())
         self.button2.show()
 
 #normal half cell class (doesn't include calibration channels) with channel buttons
@@ -168,16 +168,9 @@ class HalfHexWithButtons(Hex):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) + self.radius , self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius , self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius) for x in range(0,4) ]
         elif self.channeltype == 3:            
-            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(5*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius)]
-
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius) for x in range(3,7) ]
 
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
@@ -185,24 +178,18 @@ class HalfHexWithButtons(Hex):
         painter.setPen(pen)
         painter.setBrush(QColor(self.color))
         painter.drawPolygon(polygon)
-            
-        required_width = max([p.x() for p in vertices]) 
-        required_height = max([p.y() for p in vertices])
-        self.setGeometry(self.x(), self.y(), int(required_width)-2, int(required_height)-2)
-        self.update()
         self.button2.show()
         
-
         #based on position number of channel, calculate position of button within pad and find
         #angle from center of cell to vertex identified by channel_pos
         angle = 3*np.pi/2 + self.channel_pos*np.pi/3
         self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
             int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
         self.button2.raise_()
-        pen = QPen(Qt.red)  # Use a bright color for debugging
-        pen.setWidth(2)
-        painter.setPen(pen)
-        painter.drawRect(self.button2.geometry())
+        # pen = QPen(Qt.red)  # Use a bright color for debugging
+        # pen.setWidth(2)
+        # painter.setPen(pen)
+        # painter.drawRect(self.button2.geometry())
         self.button2.show()
         
         # Draw label
