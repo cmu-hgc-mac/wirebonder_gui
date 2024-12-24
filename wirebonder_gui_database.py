@@ -225,7 +225,7 @@ class FrontPage(QMainWindow):
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 #set pad position
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset ),
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             #create half hexagon cells
             elif row1['Channeltype'] == 2 and index > -1:
@@ -304,7 +304,7 @@ class BackPage(QMainWindow):
         self.df_pad_to_channel = df_pad_to_channel
         
         self.bwb_lastsave = self.info_dict["back_wirebond_info"]
-        self.df_front_states = self.info_dict["df_front_states"]
+        #self.df_front_states = self.info_dict["df_front_states"]
         self.df_back_states = self.info_dict["df_back_states"]
         #set state counter
         self.state_counter = {0: len(self.df_back_states[self.df_back_states['state'] == 0]), 
@@ -367,18 +367,23 @@ class BackPage(QMainWindow):
         reset_button.show()
 
         pads = []
+        y_flip = 1; x_flip = 1
+        if (self.modname[5] == "F" and self.modname[4] == "H"):
+            y_flip = -1
+        if (self.modname[5] == "R" and self.modname[4] == "L"):
+            x_flip = -1
 
         #make all the cells
         for index,row0 in self.df_pad_map.iterrows():
             padnumber = int(row0['padnumber'])
             #normal cells without buttons
             if self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 0 and index > -1:
-                pad = Hex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+                pad = Hex(hex_length, "", [0,0],'#d1d1d1', self.widget)
+                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor*x_flip) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
             #half hexagons
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3 and index > -1:
-                pad = HalfHex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+                pad = HalfHex(hex_length, "", [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget)
+                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor*x_flip) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
             pads.append(pad)
 
         for index,row in self.df_backside_mbites_pos.iterrows():
@@ -386,14 +391,22 @@ class BackPage(QMainWindow):
             #want these to be circular so pass channel_pos = 6
             pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, self.df_back_states.loc[padnumber]['state'], self.df_back_states.loc[padnumber]['grounded'],
                 str(padnumber), 6, str(padnumber), [0,0], 13, self.widget)
-            pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
+            if (self.modname[5] == "F" and self.modname[4] == "H"):
+                pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor*x_flip + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+            else:
+                pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor*x_flip + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
+            
             self.buttons[str(padnumber)] = pad
 
         pad2 = GreyCircle(13, 0, 0, self.widget)
         pad2.setGeometry(int(scroll_width/2 +pad.radius*2 + x_offset),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
         diff = 4*((w_height/2+y_offset) - (df_pad_map.loc[0]["yposition"]*-1*scaling_factor + w_height/2 + y_offset) )/5
         pad3 = GreyCircle(13, 0, 0, self.widget)
-        pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset - diff), int(pad.radius*2), int(pad.radius*2))
+        if (self.modname[5] == "R" and self.modname[4] == "L"):
+            pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset+diff),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
+        else:
+            pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset-diff*y_flip), int(pad.radius*2), int(pad.radius*2))
+
 
 
 class EncapsPage(QMainWindow):
