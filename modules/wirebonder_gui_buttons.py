@@ -32,6 +32,7 @@ class Hex(QWidget):
         self.label_pos = label_pos
         self.radius = radius
         self.color = color
+        self.rotate_by_angle = rotate_by_angle
         self.rotate_by_angle_rad = math.radians(rotate_by_angle)
 
     #draw cell
@@ -39,8 +40,8 @@ class Hex(QWidget):
         #draw pad
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 - self.rotate_by_angle_rad) + self.radius, 
-                            self.radius * np.sin(x*np.pi/3 - self.rotate_by_angle_rad) + self.radius) for x in range (0,6)]
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle_rad) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle_rad) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -63,7 +64,8 @@ class HalfHex(QWidget):
         self.radius = radius
         self.color = color
         self.channeltype = channeltype
-        self.rotate_by_angle_rad = rotate_by_angle
+        self.rotate_by_angle = rotate_by_angle
+        self.rotate_by_angle_rad = math.radians(rotate_by_angle)
 
     #draw cell
     def paintEvent(self, event):
@@ -71,15 +73,10 @@ class HalfHex(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) + self.radius-3, self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius -3, self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius) for x in range(0,4) ]
         elif self.channeltype == 3:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) + self.radius+3, self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius+3, self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
-                QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(5*np.pi/3 + np.pi/2) -self.rotate_by_angle_rad + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius) for x in range(3,7) ]
+
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -90,10 +87,11 @@ class HalfHex(QWidget):
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
+        x_offset, y_offset = 0, 0
         if self.channeltype == 2:
-            x_offset, y_offset = rotate_point(-12, 0, self.rotate_by_angle)
+            x_offset, y_offset = rotate_point(-12, 0, -self.rotate_by_angle)
         elif self.channeltype == 3:
-            x_offset, y_offset = rotate_point(12, 0, self.rotate_by_angle)
+            x_offset, y_offset = rotate_point(12, 0, -self.rotate_by_angle)
         label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1]+y_offset, self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
@@ -105,6 +103,7 @@ class HexWithButtons(Hex):
         self.channel_id = channel_id
         self.rotate_by_angle = rotate_by_angle
         self.rotate_by_angle_rad = math.radians(rotate_by_angle)
+        self.label_pos = list(rotate_point(label_pos[0],label_pos[1], rotate_by_angle))
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = rotate_channel_pos(channel_pos, self.rotate_by_angle)
         #make button that is associated with this cell, store it in button dict
@@ -137,6 +136,11 @@ class HexWithButtons(Hex):
         angle = 3*np.pi/2 + self.channel_pos*np.pi/3
         self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
             int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
+        self.button2.raise_()
+        pen = QPen(Qt.red)  # Use a bright color for debugging
+        pen.setWidth(2)
+        painter.setPen(pen)
+        painter.drawRect(self.button2.geometry())
         self.button2.show()
 
 #normal half cell class (doesn't include calibration channels) with channel buttons
@@ -174,7 +178,7 @@ class HalfHexWithButtons(Hex):
                 QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(4*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
                 QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(5*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius)]
 
-                
+
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         pen = QPen(QColor("black"))
@@ -184,8 +188,10 @@ class HalfHexWithButtons(Hex):
             
         required_width = max([p.x() for p in vertices]) 
         required_height = max([p.y() for p in vertices])
-        self.setGeometry(self.x(), self.y(), int(required_width), int(required_height))
+        self.setGeometry(self.x(), self.y(), int(required_width)-2, int(required_height)-2)
         self.update()
+        self.button2.show()
+        
 
         #based on position number of channel, calculate position of button within pad and find
         #angle from center of cell to vertex identified by channel_pos
@@ -193,13 +199,17 @@ class HalfHexWithButtons(Hex):
         self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
             int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
         self.button2.raise_()
-        self.button2.show()
-
-        # Draw label
-        painter.setFont(font)
-        pen = QPen(Qt.black)
+        pen = QPen(Qt.red)  # Use a bright color for debugging
+        pen.setWidth(2)
         painter.setPen(pen)
-        x_offset, y_offset = 0, 0
+        painter.drawRect(self.button2.geometry())
+        self.button2.show()
+        
+        # Draw label
+        # painter.setFont(font)
+        # pen = QPen(Qt.black)
+        # painter.setPen(pen)
+        # x_offset, y_offset = 0, 0
         # if int(self.channel_pos) == 1:
         #     x_offset, y_offset = rotate_point(self.radius/2, self.radius/2, self.rotate_by_angle)
         # elif int(self.channel_pos) == 5:
