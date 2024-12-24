@@ -145,10 +145,12 @@ class HalfHexWithButtons(Hex):
                  state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0):
         super().__init__(radius, cell_id, label_pos, color, parent,rotate_by_angle)
         self.channel_id = channel_id
+        self.cell_id = cell_id
         self.rotate_by_angle = rotate_by_angle
         self.rotate_by_angle_rad = math.radians(rotate_by_angle)
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = rotate_channel_pos(channel_pos, rotate_by_angle)
+        # self.label_pos = label_pos
         self.label_pos = list(rotate_point(label_pos[0],label_pos[1], rotate_by_angle))
         self.channeltype = channeltype
         #make button that is associated with this cell, store it in button dict
@@ -162,16 +164,10 @@ class HalfHexWithButtons(Hex):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
+            vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) + self.radius , self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
                 QPointF(self.radius * np.cos(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
                 QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
                 QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius , self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius)]
-            # polygon = QPolygonF(vertices)
-            # pen = QPen(QColor(self.color))
-            # painter.setPen(pen)
-            # painter.setBrush(QColor("blue"))
-            # painter.drawPolygon(polygon)
-
         elif self.channeltype == 3:            
             vertices = [QPointF(self.radius * np.cos(np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(np.pi/2 -self.rotate_by_angle_rad) + self.radius),
                 QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) +self.radius, self.radius * np.sin(3*np.pi/3 + np.pi/2 -self.rotate_by_angle_rad) + self.radius),
@@ -181,42 +177,39 @@ class HalfHexWithButtons(Hex):
                 
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
+        pen = QPen(QColor("black"))
         painter.setPen(pen)
         painter.setBrush(QColor(self.color))
         painter.drawPolygon(polygon)
             
-        required_width = max([p.x() for p in vertices]) #+ 10  # Add margin
-        required_height = max([p.y() for p in vertices]) #+ 10
+        required_width = max([p.x() for p in vertices]) 
+        required_height = max([p.y() for p in vertices])
         self.setGeometry(self.x(), self.y(), int(required_width), int(required_height))
-        # print(f"Widget width: {self.width()}, height: {self.height()}")
         self.update()
 
         #based on position number of channel, calculate position of button within pad and find
         #angle from center of cell to vertex identified by channel_pos
         angle = 3*np.pi/2 + self.channel_pos*np.pi/3
-        if self.channeltype == 2:
-            self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
-                int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
-            self.button2.show()
-        else:
-            self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
-                int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
-            self.button2.show()
+        self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
+            int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
+        self.button2.raise_()
+        self.button2.show()
+
         # Draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
         x_offset, y_offset = 0, 0
-        if self.channeltype == 2:
-            x_offset, y_offset = rotate_point(-12, 0, self.rotate_by_angle)
-        elif self.channeltype == 3:
-            x_offset, y_offset = rotate_point( 12, 0, self.rotate_by_angle)
-        if self.channel_pos == 1 or self.channel_pos == 5:
-            x_offset, y_offset = rotate_point(0, 9, self.rotate_by_angle)
-        elif self.channel_pos == 2 or self.channel_pos == 4:
-            x_offset, y_offset = rotate_point(0, -9, self.rotate_by_angle)
-        label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1] + y_offset, self.width()+2, self.height())  # Adjust label position relative to button
-        painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
+        # if int(self.channel_pos) == 1:
+        #     x_offset, y_offset = rotate_point(self.radius/2, self.radius/2, self.rotate_by_angle)
+        # elif int(self.channel_pos) == 5:
+        #     x_offset, y_offset = rotate_point(0, self.radius/2, self.rotate_by_angle)
+        # elif int(self.channel_pos) == 2:
+        #     x_offset, y_offset = rotate_point(self.radius/2, -self.radius/2, self.rotate_by_angle)
+        # elif int(self.channel_pos) == 4:
+        #     x_offset, y_offset = rotate_point(0, self.radius/2, self.rotate_by_angle)
+        # label_rect = QRectF(self.label_pos[0] + x_offset, self.label_pos[1] + y_offset, self.width()+2, self.height())  # Adjust label position relative to button
+        # painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
 #these are the clickable buttons that represent channels
 class WedgeButton(QPushButton):
