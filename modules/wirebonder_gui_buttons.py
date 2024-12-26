@@ -118,6 +118,11 @@ class HexWithButtons(Hex):
         #draw pad
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        # rot_point = [list(rotate_point( (self.radius) * np.cos(x*np.pi/3 + np.pi/2),
+        #                             (self.radius) * np.sin(x*np.pi/3 + np.pi/2 ),
+        #                             -self.rotate_by_angle)) for x in range(0,6)]
+        # vertices = [QPointF(rot_point[x][0]+self.radius, rot_point[x][1]+self.radius) for x in range(0,6)]
+        
         vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
                             self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
@@ -160,17 +165,21 @@ class HalfHexWithButtons(Hex):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius-3, self.radius * np.sin(np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
+            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius-3*0, self.radius * np.sin(np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range(0,4)]
         elif self.channeltype == 3:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2) + 3, self.radius * np.sin(np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) +3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) , self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2), self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
+            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + 3*0, self.radius * np.sin(np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) +3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) , self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2), self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) , 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range(3,7)]
         polygon = QPolygonF(vertices)
-        pen = QPen(QColor(self.color))
+        pen = QPen(QColor(Qt.black))
         painter.setPen(pen)
         painter.setBrush(QColor(self.color))
         painter.drawPolygon(polygon)

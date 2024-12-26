@@ -212,16 +212,16 @@ class FrontPage(QMainWindow):
                         #move label position if button would cover it based on channelpos
                         pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                              self.state_button_labels, row2['state'], row2['grounded'], hex_length,
-                                             str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                             str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                     else:
                         pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                              self.state_button_labels, row2['state'],row2['grounded'], hex_length,
-                                             str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                             str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                     pad.lower()
                 else: #if there is no calibration channel, the label can be in the middle of the pad
                     pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 #set pad position
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset ),
@@ -243,7 +243,7 @@ class FrontPage(QMainWindow):
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
-                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget)
+                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3)), int(pad.radius*2), int(pad.radius*2))
                 #add manually to list of buttons
@@ -374,19 +374,20 @@ class BackPage(QMainWindow):
             padnumber = int(row0['padnumber'])
             #normal cells without buttons
             if self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 0 and index > -1:
-                pad = Hex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.widget)
+                pad = Hex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.widget, rotate_by_angle=-self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
             #half hexagons
-            elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3 and index > -1:
-                pad = HalfHex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget)
+            elif (self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3) and index > -1:
+                pad = HalfHex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget, rotate_by_angle=-self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+
             pads.append(pad)
 
         for index,row in self.df_backside_mbites_pos.iterrows():
             padnumber = int(row['padnumber'])
             #want these to be circular so pass channel_pos = 6
             pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, self.df_back_states.loc[padnumber]['state'], self.df_back_states.loc[padnumber]['grounded'],
-                str(padnumber), 6, str(padnumber), [0,0], 13, self.widget)
+                str(padnumber), 6, str(padnumber), [0,0], 13, self.widget, rotate_by_angle=self.rotate_by_angle)
             pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
             self.buttons[str(padnumber)] = pad
 
