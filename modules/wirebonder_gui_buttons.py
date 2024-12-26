@@ -12,9 +12,8 @@ from config.graphics_config import button_font_size
 font = QFont("Calibri", button_font_size)
 
 def rotate_point(x, y, angle_deg, getx = None, gety = None):
-    radians = math.radians(angle_deg)
-    x_rotated = x * math.cos(radians) - y * math.sin(radians)
-    y_rotated = x * math.sin(radians) + y * math.cos(radians)
+    x_rotated = x * math.cos(angle_deg) - y * math.sin(angle_deg)
+    y_rotated = x * math.sin(angle_deg) + y * math.cos(angle_deg)
     if getx:
         return x_rotated
     if gety:
@@ -22,7 +21,7 @@ def rotate_point(x, y, angle_deg, getx = None, gety = None):
     return x_rotated, y_rotated
 
 def rotate_channel_pos(pos_in, rotate_by_angle = 0):  ## counterclockwise to clockwise rotation of spokes
-    return (pos_in+((360-rotate_by_angle)/60))%6 
+    return (pos_in+((360-math.degrees(rotate_by_angle))/60))%6 
 
 #normal cell class (doesn't include calibration channels)
 class Hex(QWidget):
@@ -33,15 +32,14 @@ class Hex(QWidget):
         self.radius = radius
         self.color = color
         self.rotate_by_angle = rotate_by_angle
-        self.rotate_by_angle_rad = math.radians(rotate_by_angle)
 
     #draw cell
     def paintEvent(self, event):
         #draw pad
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
-                            self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -73,17 +71,21 @@ class HalfHex(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius-3, self.radius * np.sin(np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
+            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius-3, self.radius * np.sin(np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius, 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius) for x in range(0,4) ]
         elif self.channeltype == 3:
-            vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius+3, self.radius * np.sin(np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius+3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
-                QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
+            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius+3, self.radius * np.sin(np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius+3, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
+            #     QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius, 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius) for x in range(3,7) ]
         polygon = QPolygonF(vertices)
-        pen = QPen(QColor(self.color))
+        pen = QPen(QColor(Qt.black))
         painter.setPen(pen)
         painter.setBrush(QColor(self.color))
         painter.drawPolygon(polygon)
@@ -106,11 +108,13 @@ class HexWithButtons(Hex):
                  state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None, rotate_by_angle = 0):
         super().__init__(radius, cell_id, label_pos, color,parent, rotate_by_angle)
         self.channel_id = channel_id
+        self.rotate_by_angle = rotate_by_angle
+        self.label_pos = list(rotate_point(label_pos[0],label_pos[1], rotate_by_angle))
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
-        self.channel_pos = channel_pos
+        self.channel_pos = rotate_channel_pos(channel_pos, self.rotate_by_angle)
         #make button that is associated with this cell, store it in button dict
         self.button2 = WedgeButton(state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, self.channel_pos, ' ',
-            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2)], self.radius/1.5, self)
+            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle)], self.radius/1.5, self)
         buttons[cell_id] = self.button2
 
     #draw cell
@@ -123,8 +127,8 @@ class HexWithButtons(Hex):
         #                             -self.rotate_by_angle)) for x in range(0,6)]
         # vertices = [QPointF(rot_point[x][0]+self.radius, rot_point[x][1]+self.radius) for x in range(0,6)]
         
-        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
-                            self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range (0,6)]
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius) for x in range (0,6)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(self.color))
         painter.setPen(pen)
@@ -151,14 +155,18 @@ class HalfHexWithButtons(Hex):
                  state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0):
         super().__init__(radius, cell_id, label_pos, color, parent,rotate_by_angle)
         self.channel_id = channel_id
+        self.rotate_by_angle = rotate_by_angle
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
-        self.channel_pos = channel_pos
+        self.channel_pos = rotate_channel_pos(channel_pos, rotate_by_angle)
+        # self.label_pos = label_pos
+        self.label_pos = list(rotate_point(label_pos[0],label_pos[1], rotate_by_angle))
         self.channeltype = channeltype
         #make button that is associated with this cell, store it in button dict
         self.button2 = WedgeButton(state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, self.channel_pos, ' ',
-            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2)], self.radius/1.5, self)
+            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle),
+             self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle)], self.radius/1.5, self)
         buttons[cell_id] = self.button2
-
+        
     #draw cell
     def paintEvent(self, event):
         #draw pad
@@ -169,15 +177,16 @@ class HalfHexWithButtons(Hex):
             #     QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
-            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) + self.radius, 
-                                self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range(0,4)]
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range(0,4)]
         elif self.channeltype == 3:
             # vertices = [QPointF(self.radius * np.cos(np.pi/2) + 3*0, self.radius * np.sin(np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) +3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) , self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2), self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
-            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2) , 
-                                self.radius * np.sin(x*np.pi/3 + np.pi/2) + self.radius) for x in range(3,7)]
+            xoff, yoff = rotate_point(self.radius, self.radius, -self.rotate_by_angle)
+            vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
+                                self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range(3,7)]
         polygon = QPolygonF(vertices)
         pen = QPen(QColor(Qt.black))
         painter.setPen(pen)
@@ -192,8 +201,10 @@ class HalfHexWithButtons(Hex):
                 int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
             self.button2.show()
         else:
-            self.button2.setGeometry(int(- self.button2.radius + self.radius*np.cos(angle)),
-                int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
+            xoff, yoff = rotate_point(self.radius, self.radius, -self.rotate_by_angle)
+            xoff, yoff = self.radius ,0
+            self.button2.setGeometry(int(xoff -self.button2.radius + self.radius*np.cos(angle)),
+                int(self.radius + yoff - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
             self.button2.show()
         # Draw label
         painter.setFont(font)
@@ -201,14 +212,14 @@ class HalfHexWithButtons(Hex):
         painter.setPen(pen)
         x_offset = 0
         y_offset = 0
-        if self.channeltype == 2:
-            x_offset = -12
-        elif self.channeltype == 3:
-            x_offset = 12
-        if self.channel_pos == 1 or self.channel_pos == 5:
-            y_offset = 9
-        elif self.channel_pos == 2 or self.channel_pos == 4:
-            y_offset = -9
+        # if self.channeltype == 2:
+        #     x_offset = -12
+        # elif self.channeltype == 3:
+        #     x_offset = 12
+        # if self.channel_pos == 1 or self.channel_pos == 5:
+        #     y_offset = 9
+        # elif self.channel_pos == 2 or self.channel_pos == 4:
+        #     y_offset = -9
         label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1] + y_offset, self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 

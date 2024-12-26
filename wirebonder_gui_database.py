@@ -1,9 +1,9 @@
-import asyncio, asyncpg, sys
+import asyncio, asyncpg, sys, math
 import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt,  QPoint, QTimer
-from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
+from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont, QBrush
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
@@ -229,16 +229,24 @@ class FrontPage(QMainWindow):
             #create half hexagon cells
             elif row1['Channeltype'] == 2 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0*hex_length/2,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0*hex_length/2,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
+                xoff, yoff = rotate_point(pad.radius,0, rotate_by_angle)
+                xoff, yoff = 0,0
+                # xoff, yoff = rotate_point( float( scroll_width/2 + x_offset + pad.radius) ,
+                #                           float( y_offset+ w_height/2),
+                #                               rotate_by_angle)
+                # pad.setGeometry(int(row0["xposition"]*scaling_factor + xoff), int(row0["yposition"]*-1*scaling_factor +yoff), int(pad.radius*2), int(pad.radius*2))
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset + xoff  ),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2) + yoff ), int(pad.radius*2), int(pad.radius))
+
+                
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
@@ -660,7 +668,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-        self.rotate_by_angle = 10 #*0
+        self.rotate_by_angle = math.radians(60) #*0
 
     @asyncSlot()
     async def init_and_show(self):
