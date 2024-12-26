@@ -5,20 +5,35 @@ from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 from qasync import QEventLoop, asyncSlot
-
+import math
 from modules.postgres_tools import  (upload_front_wirebond, upload_back_wirebond, upload_encaps, 
                                      upload_bond_pull_test, read_front_db, read_back_db, read_pull_db)
 from config.graphics_config import button_font_size
 font = QFont("Calibri", button_font_size)
 
+def rotate_point(x, y, angle_deg, getx = None, gety = None):
+    radians = math.radians(angle_deg)
+    x_rotated = x * math.cos(radians) - y * math.sin(radians)
+    y_rotated = x * math.sin(radians) + y * math.cos(radians)
+    if getx:
+        return x_rotated
+    if gety:
+        return y_rotated
+    return x_rotated, y_rotated
+
+def rotate_channel_pos(pos_in, rotate_by_angle = 0):  ## counterclockwise to clockwise rotation of spokes
+    return (pos_in+((360-rotate_by_angle)/60))%6 
+
 #normal cell class (doesn't include calibration channels)
 class Hex(QWidget):
-    def __init__(self, radius, cell_id, label_pos, color, parent=None):
+    def __init__(self, radius, cell_id, label_pos, color, parent=None, rotate_by_angle = 0):
         super().__init__(parent)
         self.cell_id = cell_id
         self.label_pos = label_pos
         self.radius = radius
         self.color = color
+        self.rotate_by_angle = rotate_by_angle
+        self.rotate_by_angle_rad = math.radians(rotate_by_angle)
 
     #draw cell
     def paintEvent(self, event):
@@ -42,13 +57,15 @@ class Hex(QWidget):
 
 #normal cell class (doesn't include calibration channels)
 class HalfHex(QWidget):
-    def __init__(self, radius, cell_id, label_pos, color, channeltype,parent=None):
+    def __init__(self, radius, cell_id, label_pos, color, channeltype, parent=None, rotate_by_angle = 0):
         super().__init__(parent)
         self.cell_id = cell_id
         self.label_pos = label_pos
         self.radius = radius
         self.color = color
         self.channeltype = channeltype
+        self.rotate_by_angle = rotate_by_angle
+        self.rotate_by_angle_rad = math.radians(rotate_by_angle)
 
     #draw cell
     def paintEvent(self, event):
@@ -86,8 +103,8 @@ class HalfHex(QWidget):
 #normal cell class (doesn't include calibration channels) with channel buttons
 class HexWithButtons(Hex):
     def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
-                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None):
-        super().__init__(radius, cell_id, label_pos, color,parent)
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None, rotate_by_angle = 0):
+        super().__init__(radius, cell_id, label_pos, color,parent, rotate_by_angle)
         self.channel_id = channel_id
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = channel_pos
@@ -126,8 +143,8 @@ class HexWithButtons(Hex):
 #normal half cell class (doesn't include calibration channels) with channel buttons
 class HalfHexWithButtons(Hex):
     def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
-                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None):
-        super().__init__(radius, cell_id, label_pos, color,parent)
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0):
+        super().__init__(radius, cell_id, label_pos, color, parent,rotate_by_angle)
         self.channel_id = channel_id
         #channel positions start at 0 at the top of the hexagon and are numbered clockwise
         self.channel_pos = channel_pos
@@ -189,7 +206,7 @@ class HalfHexWithButtons(Hex):
 #these are the clickable buttons that represent channels
 class WedgeButton(QPushButton):
     def __init__(self, state_counter, state_counter_labels, state_button_labels, state,
-                 grounded, channel_id, channel_pos, label, label_pos, radius, parent=None):
+                 grounded, channel_id, channel_pos, label, label_pos, radius, parent=None, rotate_by_angle = 0):
         super().__init__(parent)
         self.state_counter = state_counter
         self.state_counter_labels = state_counter_labels
@@ -202,6 +219,7 @@ class WedgeButton(QPushButton):
         self.radius = radius
         self.grounded = grounded
         self.clicked.connect(self.changeState)
+        self.rotate_by_angle = rotate_by_angle
 
     def mousePressEvent(self, QMouseEvent):
         #left click- change color/state
@@ -254,7 +272,7 @@ class WedgeButton(QPushButton):
 
         painter.setPen(pen)
 
-        start_angle = ((210-self.channel_pos*60)*16)%(360*16)
+        start_angle = int(np.round(((210-self.channel_pos*60)*16)%(360*16)))
         span_angle  = 120*16
         if self.channel_pos != 6:
             painter.drawPie(0,0,int(2*self.radius),int(2*self.radius), start_angle, span_angle)
@@ -292,11 +310,12 @@ class GreyCircle(QWidget):
 
 #base class for generic grey buttons
 class GreyButton(QPushButton):
-    def __init__(self, button_text, width, height, parent = None):
+    def __init__(self, button_text, width, height, parent = None, rotate_by_angle = 0):
         super().__init__(parent)
         self.width = width
         self.height = height
         self.button_text = button_text
+        self.rotate_by_angle = rotate_by_angle
 
     #draw button
     def paintEvent(self, event):

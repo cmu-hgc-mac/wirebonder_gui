@@ -8,10 +8,9 @@ from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
 
-
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
-from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, 
+from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, rotate_point,
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
 import config.conn as conn
@@ -53,7 +52,7 @@ async def async_check(pool, read_query):
 
 #hexaboard/"requirements" page
 class FrontPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0):
         super().__init__()
 
         self.pageid = "frontpage"
@@ -64,7 +63,7 @@ class FrontPage(QMainWindow):
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setCentralWidget(self.scroll)
-
+        self.rotate_by_angle = rotate_by_angle
         self.widget = QWidget()
         self.scroll.setWidget(self.widget)
         self.widget.resize(scroll_width, scroll_height);
@@ -268,6 +267,7 @@ class FrontPage(QMainWindow):
                 self.buttons[str(padnumber)] = pad
             #add to list of pads
             pads.append(pad)
+            
 
         #this brings pads in position 3 to the front to remove problematic overlap in clicking areas
         for pad in pads:
@@ -280,10 +280,11 @@ class FrontPage(QMainWindow):
 
 #hexaboard/"requirements" page
 class BackPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0):
         super().__init__()
         self.pageid = "backpage"
         self.setGeometry(0, 0, w_height, w_height)
+        self.rotate_by_angle = rotate_by_angle
 
         self.scroll = QScrollArea()
 
@@ -658,7 +659,8 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-    
+        self.rotate_by_angle = 10 #*0
+
     @asyncSlot()
     async def init_and_show(self):
         await init_pool()
@@ -783,10 +785,20 @@ class MainWindow(QMainWindow):
                 #read in all the pad positions
                 self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
                 self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
+            
+            if page == "frontpage":
+                for p in self.df_pad_map['xposition'].keys():
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
+            elif page == "backpage":
+                for p in self.df_pad_map['xposition'].keys():
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = 360-self.rotate_by_angle)
 
             fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
             with open(fname, 'r') as file:
                 self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
+            if page == "backpage":
+                for p in self.df_backside_mbites_pos['xposition'].keys():
+                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = 360-self.rotate_by_angle)
 
             #load pad to channel mappings
             fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
@@ -814,11 +826,11 @@ class MainWindow(QMainWindow):
         else:
             info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
             if page == "frontpage":
-                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict)
+                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = self.rotate_by_angle)
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
-                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict)
+                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict, rotate_by_angle = 360-self.rotate_by_angle)
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
@@ -907,8 +919,8 @@ def main():
             add_y_offset = w_width - screen.width()
         if w_height > int(screen.height()):
             add_x_offset = w_height - screen.height()
-        # w_width = screen.width()
-        # w_height = screen.height()
+        w_width = screen.width()
+        w_height = screen.height()
         del screen, QDesktopWidget
     
     y_offset = add_y_offset
