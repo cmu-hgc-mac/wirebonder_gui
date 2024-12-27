@@ -13,6 +13,7 @@ from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps,
 from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, rotate_point,
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
+from geometries.hxb_orientation import hxb_orientation
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size, autosize
 from config.conn import host, database, user, password
@@ -273,12 +274,12 @@ class FrontPage(QMainWindow):
 
 #hexaboard/"requirements" page
 class BackPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0, load_pin_padnum = [0,1]):
         super().__init__()
         self.pageid = "backpage"
         self.setGeometry(0, 0, w_height, w_height)
         self.rotate_by_angle = rotate_by_angle
-
+        self.load_pin_padnum = load_pin_padnum
         self.scroll = QScrollArea()
 
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -384,11 +385,15 @@ class BackPage(QMainWindow):
             pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
             self.buttons[str(padnumber)] = pad
 
-        # pad2 = GreyCircle(13, 0, 0, self.widget)
-        # pad2.setGeometry(int(scroll_width/2 +pad.radius*2 + x_offset),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
-        # diff = 4*((w_height/2+y_offset) - (df_pad_map.loc[0]["yposition"]*-1*scaling_factor + w_height/2 + y_offset) )/5
-        # pad3 = GreyCircle(13, 0, 0, self.widget)
-        # pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset - diff), int(pad.radius*2), int(pad.radius*2))
+        for lp in range(len(self.load_pin_padnum)):
+            xpos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'xposition'])
+            ypos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'yposition'])
+            if len(xpos) != 0 :
+                xoff, yoff = rotate_point(hex_length/2, hex_length/2, self.rotate_by_angle)
+                pad2 = GreyCircle(13, 0, 0, self.widget)
+                pad2.setGeometry(int(float(xpos[0]*-1*scaling_factor) + scroll_width/2 +x_offset + xoff),
+                                int(float(ypos[0]*-1*scaling_factor + w_height/2 + y_offset) + yoff), int(pad.radius*2), int(pad.radius*2))
+        
 
 
 class EncapsPage(QMainWindow):
@@ -653,7 +658,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-        self.rotate_by_angle = math.radians(90) #*0
+        self.rotate_by_angle = math.radians(0) #*0
 
     @asyncSlot()
     async def init_and_show(self):
@@ -769,6 +774,7 @@ class MainWindow(QMainWindow):
                 y_offset += 40
                 x_offset+=add_x_offset
 
+            self.rotate_by_angle = math.radians(hxb_orientation[hexaboard_type]['rot_ang'])
             #load position files
             if self.modname.replace("-","")[5] == "5":
                 num_non_signal = 10
@@ -824,7 +830,8 @@ class MainWindow(QMainWindow):
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
-                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict, rotate_by_angle = -self.rotate_by_angle)
+                load_pin_padnum = hxb_orientation[hexaboard_type]['load_pin']
+                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = -self.rotate_by_angle, load_pin_padnum = load_pin_padnum)
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
