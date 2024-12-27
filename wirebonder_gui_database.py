@@ -204,13 +204,13 @@ class FrontPage(QMainWindow):
             #create half hexagon cells
             elif row1['Channeltype'] == 2 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0*hex_length/2,0],
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0*hex_length/2,0],
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
@@ -384,11 +384,11 @@ class BackPage(QMainWindow):
             pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
             self.buttons[str(padnumber)] = pad
 
-        pad2 = GreyCircle(13, 0, 0, self.widget)
-        pad2.setGeometry(int(scroll_width/2 +pad.radius*2 + x_offset),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
-        diff = 4*((w_height/2+y_offset) - (df_pad_map.loc[0]["yposition"]*-1*scaling_factor + w_height/2 + y_offset) )/5
-        pad3 = GreyCircle(13, 0, 0, self.widget)
-        pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset - diff), int(pad.radius*2), int(pad.radius*2))
+        # pad2 = GreyCircle(13, 0, 0, self.widget)
+        # pad2.setGeometry(int(scroll_width/2 +pad.radius*2 + x_offset),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
+        # diff = 4*((w_height/2+y_offset) - (df_pad_map.loc[0]["yposition"]*-1*scaling_factor + w_height/2 + y_offset) )/5
+        # pad3 = GreyCircle(13, 0, 0, self.widget)
+        # pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset - diff), int(pad.radius*2), int(pad.radius*2))
 
 
 class EncapsPage(QMainWindow):
@@ -653,7 +653,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-        self.rotate_by_angle = math.radians(60) #*0
+        self.rotate_by_angle = math.radians(90) #*0
 
     @asyncSlot()
     async def init_and_show(self):
@@ -779,26 +779,20 @@ class MainWindow(QMainWindow):
                 #read in all the pad positions
                 self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
                 self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
-            
-            
-            print(self.df_pad_map["padnumber"])
-            print(fname)
 
-            print(self.df_pad_map["padnumber"])
-            print(fname)
             if page == "frontpage":
                 for p in self.df_pad_map['xposition'].keys():
                     self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
             elif page == "backpage":
                 for p in self.df_pad_map['xposition'].keys():
-                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = 360-self.rotate_by_angle)
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
 
             fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
             with open(fname, 'r') as file:
                 self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
             if page == "backpage":
                 for p in self.df_backside_mbites_pos['xposition'].keys():
-                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = 360-self.rotate_by_angle)
+                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
 
             #load pad to channel mappings
             fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
@@ -830,7 +824,7 @@ class MainWindow(QMainWindow):
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
-                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict, rotate_by_angle = 360-self.rotate_by_angle)
+                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict, rotate_by_angle = -self.rotate_by_angle)
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)

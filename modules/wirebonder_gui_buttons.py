@@ -205,17 +205,9 @@ class HalfHexWithButtons(Hex):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         if self.channeltype == 2:
-            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + self.radius-3*0, self.radius * np.sin(np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(np.pi/3 + np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(2*np.pi/3 + np.pi/2) + self.radius, self.radius * np.sin(2*np.pi/3 + np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) + self.radius -3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius)]
             vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
                                 self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range(0,4)]
         elif self.channeltype == 3:
-            # vertices = [QPointF(self.radius * np.cos(np.pi/2) + 3*0, self.radius * np.sin(np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) +3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) , self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
-            #     QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2), self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
             vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
                                 self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range(3,7)]
         polygon = QPolygonF(vertices)
@@ -234,16 +226,17 @@ class HalfHexWithButtons(Hex):
         painter.setFont(font)
         pen = QPen(Qt.black)
         painter.setPen(pen)
-        x_offset = 0
-        y_offset = 0
-        # if self.channeltype == 2:
-        #     x_offset = -12
-        # elif self.channeltype == 3:
-        #     x_offset = 12
-        # if self.channel_pos == 1 or self.channel_pos == 5:
-        #     y_offset = 9
-        # elif self.channel_pos == 2 or self.channel_pos == 4:
-        #     y_offset = -9
+        
+        x_offset, y_offset = 0,0
+        if self.channeltype == 2:
+            x_offset = -self.button2.radius/2
+        elif self.channeltype == 3:
+            x_offset = self.button2.radius/2
+        if self.channel_pos == 1 or self.channel_pos == 5:
+            y_offset = self.button2.radius/2
+        elif self.channel_pos == 2 or self.channel_pos == 4:
+            y_offset = -self.button2.radius/2
+        x_offset, y_offset = rotate_point(x_offset, y_offset, -self.rotate_by_angle)
         label_rect = QRectF(self.label_pos[0]+x_offset, self.label_pos[1] + y_offset, self.width()+2, self.height())  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.cell_id)
 
