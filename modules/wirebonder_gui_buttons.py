@@ -227,16 +227,9 @@ class HalfHexWithButtons(Hex):
         #based on position number of channel, calculate position of button within pad and find
         #angle from center of cell to vertex identified by channel_pos
         angle = 3*np.pi/2 + self.channel_pos*np.pi/3
-        if self.channeltype == 2:
-            self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
-                int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
-            self.button2.show()
-        else:
-            xoff, yoff = rotate_point(self.radius, self.radius, -self.rotate_by_angle)
-            xoff, yoff = self.radius ,0
-            self.button2.setGeometry(int(xoff -self.button2.radius + self.radius*np.cos(angle)),
-                int(self.radius + yoff - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
-            self.button2.show()
+        self.button2.setGeometry(int(self.radius - self.button2.radius + self.radius*np.cos(angle)),
+            int(self.radius - self.button2.radius + self.radius*np.sin(angle)),int(self.button2.radius*2),int(self.button2.radius*2))
+        self.button2.show()
         # Draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
@@ -281,8 +274,20 @@ class WedgeButton(QPushButton):
             start_angle = 210 - self.channel_pos * 60
             end_angle = start_angle + 120
             start_radian, end_radian = np.deg2rad(start_angle), np.deg2rad(end_angle)
+            path.moveTo(center)
+            for angle in np.linspace(start_radian, end_radian, num=100):  # Smooth arc
+                x = self.radius + self.radius * np.cos(angle)
+                y = self.radius - self.radius * np.sin(angle)  # Negative because Qt uses inverted Y-axis
+                path.lineTo(QPointF(x, y))
+            path.lineTo(center)  # Close the wedge
         else:
             start_radian, end_radian = np.deg2rad(0), np.deg2rad(360)
+            path.moveTo(center)
+            for angle in np.linspace(start_radian, end_radian, num=100):  # Smooth arc
+                x = self.radius + self.radius * np.cos(angle)
+                y = self.radius - self.radius * np.sin(angle)  # Negative because Qt uses inverted Y-axis
+                path.lineTo(QPointF(x, y))
+            path.lineTo(center)  # Close the wedge
         
         path.moveTo(center)
         for angle in np.linspace(start_radian, end_radian, num=100):  # Smooth arc
