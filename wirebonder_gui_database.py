@@ -925,8 +925,8 @@ def main():
             add_y_offset = w_width - screen.width()
         if w_height > int(screen.height()):
             add_x_offset = w_height - screen.height()
-        w_width = screen.width()
-        w_height = screen.height()
+        # w_width = screen.width()
+        # w_height = screen.height()
         del screen, QDesktopWidget
     
     y_offset = add_y_offset
