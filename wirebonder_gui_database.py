@@ -1,19 +1,19 @@
-import asyncio, asyncpg, sys
+import asyncio, asyncpg, sys, math
 import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt,  QPoint, QTimer
-from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont
+from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont, QBrush
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
-
-
+import numpy as np
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
-from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, 
+from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, rotate_point,
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
+from geometries.hxb_orientation import hxb_orientation
 import config.conn as conn
 from config.graphics_config import scroll_width, scroll_height, w_width, w_height, add_x_offset, add_y_offset, text_font_size, autosize
 from config.conn import host, database, user, password
@@ -53,7 +53,7 @@ async def async_check(pool, read_query):
 
 #hexaboard/"requirements" page
 class FrontPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0):
         super().__init__()
 
         self.pageid = "frontpage"
@@ -64,7 +64,7 @@ class FrontPage(QMainWindow):
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setCentralWidget(self.scroll)
-
+        self.rotate_by_angle = rotate_by_angle
         self.widget = QWidget()
         self.scroll.setWidget(self.widget)
         self.widget.resize(scroll_width, scroll_height);
@@ -194,59 +194,52 @@ class FrontPage(QMainWindow):
             #row of the dataframe that gives the pad ID, channel state, and whether or not it's grounded
             row2 = self.df_front_states.loc[padnumber]
             if row1['Channeltype'] == 0 and index > -1:
-                pad_after = False
-                pad_before = False
-                #tests for calibration channel before or after current cell
-                if (index < (len(self.df_pad_map) - num_non_signal-1)):
-                    padnumafter = df_pad_map.loc[index+1]['padnumber']
-                    pad_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and 
-                                 self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
-                        and self.df_pad_to_channel.loc[padnumafter]['Channeltype'] == 1)
-                if index > 0:
-                    padnumbefore = df_pad_map.loc[index-1]['padnumber']
-                    pad_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and 
-                                  self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
-                        and self.df_pad_to_channel.loc[padnumbefore]['Channeltype'] == 1)
-                #create cells
-                if pad_after or pad_before:
-                    if row1['Channelpos'] == 0 or row1['Channelpos'] == 1 or row1['Channelpos'] == 5:
-                        #move label position if button would cover it based on channelpos
-                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                             self.state_button_labels, row2['state'], row2['grounded'], hex_length,
-                                             str(padnumber), [0,18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
-                    else:
-                        pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                             self.state_button_labels, row2['state'],row2['grounded'], hex_length,
-                                             str(padnumber), [0,-18], str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
-                    pad.lower()
-                else: #if there is no calibration channel, the label can be in the middle of the pad
-                    pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget)
+                pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
+                                        self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
+                                        str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 #set pad position
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
+                pad.raise_()
             #create half hexagon cells
             elif row1['Channeltype'] == 2 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
-                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [-hex_length/2,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +pad.radius + x_offset),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius), int(pad.radius*2))
+                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
+
+                
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
+                hex_before, hex_after = False, False
+                hexnumafter = df_pad_map.loc[index+1]['padnumber']
+                hex_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and 
+                                 self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
+                        and self.df_pad_to_channel.loc[hexnumafter]['Channeltype'] == 0)
+                hexnumbefore = df_pad_map.loc[index-1]['padnumber']
+                hex_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and 
+                                  self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
+                        and self.df_pad_to_channel.loc[hexnumbefore]['Channeltype'] == 0)
+                if hex_after:
+                    hexchanpos = self.df_pad_to_channel.loc[hexnumafter]['Channelpos']
+                elif hex_before:
+                    hexchanpos = self.df_pad_to_channel.loc[hexnumbefore]['Channelpos']
+
+                angoff = (((hexchanpos+3)%6) * np.pi/3 ) - np.pi/2 - self.rotate_by_angle
+                xoff, yoff = pad.radius*np.cos(angoff)/2, pad.radius*np.sin(angoff)/2
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
-                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3)), int(pad.radius*2), int(pad.radius*2))
+                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset + xoff),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3) + yoff), int(pad.radius*2), int(pad.radius*2))
                 #add manually to list of buttons
                 self.buttons[str(padnumber)] = pad
                 pad.raise_()
@@ -268,6 +261,7 @@ class FrontPage(QMainWindow):
                 self.buttons[str(padnumber)] = pad
             #add to list of pads
             pads.append(pad)
+            
 
         #this brings pads in position 3 to the front to remove problematic overlap in clicking areas
         for pad in pads:
@@ -280,11 +274,12 @@ class FrontPage(QMainWindow):
 
 #hexaboard/"requirements" page
 class BackPage(QMainWindow):
-    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict):
+    def __init__(self, modname, df_pad_map, df_backside_mbites_pos, df_pad_to_channel, info_dict, rotate_by_angle = 0, load_pin_padnum = [0,1]):
         super().__init__()
         self.pageid = "backpage"
         self.setGeometry(0, 0, w_height, w_height)
-
+        self.rotate_by_angle = rotate_by_angle
+        self.load_pin_padnum = load_pin_padnum
         self.scroll = QScrollArea()
 
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -378,35 +373,32 @@ class BackPage(QMainWindow):
             padnumber = int(row0['padnumber'])
             #normal cells without buttons
             if self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 0 and index > -1:
-                pad = Hex(hex_length, "", [0,0],'#d1d1d1', self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor*x_flip) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+                pad = Hex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.widget, rotate_by_angle=-self.rotate_by_angle)
+                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
             #half hexagons
-            elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3 and index > -1:
-                pad = HalfHex(hex_length, "", [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget)
-                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor*x_flip) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+            elif (self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3) and index > -1:
+                pad = HalfHex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype'], self.widget, rotate_by_angle=-self.rotate_by_angle)
+                pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
+
             pads.append(pad)
 
         for index,row in self.df_backside_mbites_pos.iterrows():
             padnumber = int(row['padnumber'])
             #want these to be circular so pass channel_pos = 6
             pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, self.df_back_states.loc[padnumber]['state'], self.df_back_states.loc[padnumber]['grounded'],
-                str(padnumber), 6, str(padnumber), [0,0], 13, self.widget)
-            if (self.modname[5] == "F" and self.modname[4] == "H"):
-                pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor*x_flip + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
-            else:
-                pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor*x_flip + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor*y_flip + w_height/2 + y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
-            
+                str(padnumber), 6, str(padnumber), [0,0], 13, self.widget, rotate_by_angle=self.rotate_by_angle)
+            pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
             self.buttons[str(padnumber)] = pad
 
-        pad2 = GreyCircle(13, 0, 0, self.widget)
-        pad2.setGeometry(int(scroll_width/2 +pad.radius*2 + x_offset),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
-        diff = 4*((w_height/2+y_offset) - (df_pad_map.loc[0]["yposition"]*-1*scaling_factor + w_height/2 + y_offset) )/5
-        pad3 = GreyCircle(13, 0, 0, self.widget)
-        if (self.modname[5] == "R" and self.modname[4] == "L"):
-            pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset+diff),int(w_height/2+y_offset), int(pad.radius*2), int(pad.radius*2))
-        else:
-            pad3.setGeometry(int(scroll_width/2 +pad.radius*2+x_offset),int(w_height/2+y_offset-diff*y_flip), int(pad.radius*2), int(pad.radius*2))
-
+        for lp in range(len(self.load_pin_padnum)):
+            xpos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'xposition'])
+            ypos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'yposition'])
+            if len(xpos) != 0 :
+                xoff, yoff = rotate_point(hex_length/2, hex_length/2, self.rotate_by_angle)
+                pad2 = GreyCircle(13, 0, 0, self.widget)
+                pad2.setGeometry(int(float(xpos[0]*-1*scaling_factor) + scroll_width/2 +x_offset + xoff),
+                                int(float(ypos[0]*-1*scaling_factor + w_height/2 + y_offset) + yoff), int(pad.radius*2), int(pad.radius*2))
+        
 
 
 class EncapsPage(QMainWindow):
@@ -671,7 +663,8 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
-    
+        self.rotate_by_angle = math.radians(0) #*0
+
     @asyncSlot()
     async def init_and_show(self):
         await init_pool()
@@ -786,6 +779,7 @@ class MainWindow(QMainWindow):
                 y_offset += 40
                 x_offset+=add_x_offset
 
+            self.rotate_by_angle = math.radians(hxb_orientation[hexaboard_type]['rot_ang'])
             #load position files
             if self.modname.replace("-","")[5] == "5":
                 num_non_signal = 10
@@ -797,9 +791,19 @@ class MainWindow(QMainWindow):
                 self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
                 self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
 
+            if page == "frontpage":
+                for p in self.df_pad_map['xposition'].keys():
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
+            elif page == "backpage":
+                for p in self.df_pad_map['xposition'].keys():
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
+
             fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
             with open(fname, 'r') as file:
                 self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
+            if page == "backpage":
+                for p in self.df_backside_mbites_pos['xposition'].keys():
+                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
 
             #load pad to channel mappings
             fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
@@ -827,11 +831,12 @@ class MainWindow(QMainWindow):
         else:
             info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
             if page == "frontpage":
-                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict)
+                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = self.rotate_by_angle)
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
-                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel,info_dict)
+                load_pin_padnum = hxb_orientation[hexaboard_type]['load_pin']
+                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = -self.rotate_by_angle, load_pin_padnum = load_pin_padnum)
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
@@ -920,8 +925,8 @@ def main():
             add_y_offset = w_width - screen.width()
         if w_height > int(screen.height()):
             add_x_offset = w_height - screen.height()
-        # w_width = screen.width()
-        # w_height = screen.height()
+        w_width = screen.width()
+        w_height = screen.height()
         del screen, QDesktopWidget
     
     y_offset = add_y_offset
