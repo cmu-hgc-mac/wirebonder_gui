@@ -237,14 +237,8 @@ class FrontPage(QMainWindow):
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0*hex_length/2,0],
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
-                xoff, yoff = rotate_point(pad.radius,0, rotate_by_angle)
-                xoff, yoff = 0,0
-                # xoff, yoff = rotate_point( float( scroll_width/2 + x_offset + pad.radius) ,
-                #                           float( y_offset+ w_height/2),
-                #                               rotate_by_angle)
-                # pad.setGeometry(int(row0["xposition"]*scaling_factor + xoff), int(row0["yposition"]*-1*scaling_factor +yoff), int(pad.radius*2), int(pad.radius*2))
-                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset + xoff  ),
-                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2) + yoff ), int(pad.radius*2), int(pad.radius))
+                pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset),
+                                int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
 
                 
             #create calibration channels
@@ -795,6 +789,8 @@ class MainWindow(QMainWindow):
                 self.df_pad_map = pd.read_csv(fname, skiprows= 1, names = ['padnumber', 'xposition', 'yposition', 'type', 'optional'])
                 self.df_pad_map = self.df_pad_map[["padnumber","xposition","yposition"]]
             
+            print(self.df_pad_map["padnumber"])
+            print(fname)
             if page == "frontpage":
                 for p in self.df_pad_map['xposition'].keys():
                     self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
@@ -815,6 +811,7 @@ class MainWindow(QMainWindow):
                 #read in all the channels and what pad they're connected to (not used but possibly useful in the future)
                 self.df_pad_to_channel = pd.read_csv(file, skiprows = 1, names = ['padnumber', 'ASIC','Channel','Channeltype','Channelpos'])
                 self.df_pad_to_channel = self.df_pad_to_channel.set_index("padnumber")
+            print(fname)
 
         self.modid.hide()
         #self.combobox.hide()

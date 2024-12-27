@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QPushButton, QLabel
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
+from PyQt5.QtGui import QRegion, QPainterPath
 from qasync import QEventLoop, asyncSlot
 import math
 from modules.postgres_tools import  (upload_front_wirebond, upload_back_wirebond, upload_encaps, 
@@ -116,6 +117,18 @@ class HexWithButtons(Hex):
         self.button2 = WedgeButton(state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, self.channel_pos, ' ',
             [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle)], self.radius/1.5, self)
         buttons[cell_id] = self.button2
+        self.setMask(self.createMask())
+
+    def createMask(self):
+        """Creates a QRegion mask for the pad (rotated trapezoid)."""
+        path = QPainterPath()
+        vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius, 
+                            self.radius * np.sin(x*np.pi/3 + np.pi/2 -self.rotate_by_angle) + self.radius) for x in range (0,6)] 
+        path.moveTo(vertices[0])
+        for vertex in vertices[1:]:
+            path.lineTo(vertex)
+        path.closeSubpath()
+        return QRegion(path.toFillPolygon().toPolygon())
 
     #draw cell
     def paintEvent(self, event):
@@ -166,6 +179,25 @@ class HalfHexWithButtons(Hex):
             [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle),
              self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle)], self.radius/1.5, self)
         buttons[cell_id] = self.button2
+        self.setMask(self.createMask())
+
+    def createMask(self):
+        """Creates a QRegion mask for the pad (rotated trapezoid)."""
+        path = QPainterPath()
+        if self.channeltype == 2:
+            vertices = [QPointF(self.radius * np.cos(x * np.pi / 3 + np.pi / 2 - self.rotate_by_angle) + self.radius,
+                                self.radius * np.sin(x * np.pi / 3 + np.pi / 2 - self.rotate_by_angle) + self.radius)
+                        for x in range(0, 4)]
+        elif self.channeltype == 3:  
+            vertices = [QPointF(self.radius * np.cos(x * np.pi / 3 + np.pi / 2 - self.rotate_by_angle) + self.radius,
+                                self.radius * np.sin(x * np.pi / 3 + np.pi / 2 - self.rotate_by_angle) + self.radius)
+                        for x in range(3, 7)]
+
+        path.moveTo(vertices[0])
+        for vertex in vertices[1:]:
+            path.lineTo(vertex)
+        path.closeSubpath()
+        return QRegion(path.toFillPolygon().toPolygon())
         
     #draw cell
     def paintEvent(self, event):
@@ -184,7 +216,6 @@ class HalfHexWithButtons(Hex):
             #     QPointF(self.radius * np.cos(3*np.pi/3 + np.pi/2) +3*0, self.radius * np.sin(3*np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(4*np.pi/3 + np.pi/2) , self.radius * np.sin(4*np.pi/3 + np.pi/2) + self.radius),
             #     QPointF(self.radius * np.cos(5*np.pi/3 + np.pi/2), self.radius * np.sin(5*np.pi/3 + np.pi/2) + self.radius)]
-            xoff, yoff = rotate_point(self.radius, self.radius, -self.rotate_by_angle)
             vertices = [QPointF(self.radius * np.cos(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius, 
                                 self.radius * np.sin(x*np.pi/3 + np.pi/2 - self.rotate_by_angle) + self.radius) for x in range(3,7)]
         polygon = QPolygonF(vertices)
@@ -240,6 +271,26 @@ class WedgeButton(QPushButton):
         self.grounded = grounded
         self.clicked.connect(self.changeState)
         self.rotate_by_angle = rotate_by_angle
+        self.setMask(self.createMask())
+
+    def createMask(self):
+        """Creates a QRegion mask for the button in the shape of a wedge."""
+        path = QPainterPath()
+        center = QPointF(self.radius, self.radius)
+        if self.channel_pos != 6:
+            start_angle = 210 - self.channel_pos * 60
+            end_angle = start_angle + 120
+            start_radian, end_radian = np.deg2rad(start_angle), np.deg2rad(end_angle)
+        else:
+            start_radian, end_radian = np.deg2rad(0), np.deg2rad(360)
+        
+        path.moveTo(center)
+        for angle in np.linspace(start_radian, end_radian, num=100):  # Smooth arc
+            x = self.radius + self.radius * np.cos(angle)
+            y = self.radius - self.radius * np.sin(angle)  # Negative because Qt uses inverted Y-axis
+            path.lineTo(QPointF(x, y))
+        path.lineTo(center)  # Close the wedge
+        return QRegion(path.toFillPolygon().toPolygon())
 
     def mousePressEvent(self, QMouseEvent):
         #left click- change color/state
