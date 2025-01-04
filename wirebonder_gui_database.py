@@ -391,10 +391,10 @@ class BackPage(QMainWindow):
             self.buttons[str(padnumber)] = pad
 
         for lp in range(len(self.load_pin_padnum)):
-            xpos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'xposition'])
-            ypos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == self.load_pin_padnum[lp], 'yposition'])
+            xpos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == int(self.load_pin_padnum[lp]), 'xposition'])
+            ypos = list(self.df_pad_map.loc[self.df_pad_map['padnumber'] == int(self.load_pin_padnum[lp]), 'yposition'])
             if len(xpos) != 0 :
-                xoff, yoff = rotate_point(hex_length/2, hex_length/2, self.rotate_by_angle)
+                xoff, yoff = hex_length/2, hex_length/2
                 pad2 = GreyCircle(13, 0, 0, self.widget)
                 pad2.setGeometry(int(float(xpos[0]*-1*scaling_factor) + scroll_width/2 +x_offset + xoff),
                                 int(float(ypos[0]*-1*scaling_factor + w_height/2 + y_offset) + yoff), int(pad.radius*2), int(pad.radius*2))
@@ -722,6 +722,9 @@ class MainWindow(QMainWindow):
         self.addbutton.hide()
         self.homebutton.hide()
         self.save_button.hide()
+        global x_offset, y_offset
+        y_offset += 40
+        x_offset+=add_x_offset
         string = 'Incomplete or unstarted modules:\n'
         self.bad_modules = await find_to_revisit(pool)
         for module in self.bad_modules:
@@ -771,15 +774,13 @@ class MainWindow(QMainWindow):
 
         if page != "encapspage":
             hexaboard_type = (self.modname).replace("-","")[4] + (self.modname).replace("-","")[5]
-            global hex_length, y_offset, num_non_signal, x_offset
+            global hex_length, num_non_signal
             if self.modname.replace("-","")[4] == "L":
                 hex_length = 38
             elif self.modname.replace("-","")[4] == "H":
                 hex_length = 25
-                y_offset += 40
-                x_offset+=add_x_offset
-
-            self.rotate_by_angle = math.radians(hxb_orientation[hexaboard_type]['rot_ang'])
+            self.rotate_by_angle_fr = math.radians(hxb_orientation[hexaboard_type]['rot_ang_fr'])
+            self.rotate_by_angle_bk = math.radians(hxb_orientation[hexaboard_type]['rot_ang_bk'])
             #load position files
             if self.modname.replace("-","")[5] == "5":
                 num_non_signal = 10
@@ -793,17 +794,17 @@ class MainWindow(QMainWindow):
 
             if page == "frontpage":
                 for p in self.df_pad_map['xposition'].keys():
-                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle)
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = self.rotate_by_angle_fr)
             elif page == "backpage":
                 for p in self.df_pad_map['xposition'].keys():
-                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
+                    self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'] = rotate_point(self.df_pad_map.loc[p,'xposition'], self.df_pad_map.loc[p,'yposition'], angle_deg = -self.rotate_by_angle_bk)
 
             fname = f'./geometries/{hexaboard_type}_backside_mbites_pos.csv'
             with open(fname, 'r') as file:
                 self.df_backside_mbites_pos = pd.read_csv(file, skiprows = 1, names = ['padnumber','xposition','yposition'])
             if page == "backpage":
                 for p in self.df_backside_mbites_pos['xposition'].keys():
-                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = -self.rotate_by_angle)
+                    self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'] = rotate_point(self.df_backside_mbites_pos.loc[p,'xposition'], self.df_backside_mbites_pos.loc[p,'yposition'], angle_deg = -self.rotate_by_angle_bk)
 
             #load pad to channel mappings
             fname = f'./geometries/{hexaboard_type}_pad_to_channel_mapping.csv'
@@ -831,12 +832,12 @@ class MainWindow(QMainWindow):
         else:
             info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
             if page == "frontpage":
-                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = self.rotate_by_angle)
+                frontpage = FrontPage(self.modname, self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = self.rotate_by_angle_fr)
                 self.widget.addWidget(frontpage)
                 self.widget.setCurrentWidget(frontpage)
             elif page == "backpage":
                 load_pin_padnum = hxb_orientation[hexaboard_type]['load_pin']
-                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = -self.rotate_by_angle, load_pin_padnum = load_pin_padnum)
+                backpage = BackPage(self.modname,self.df_pad_map, self.df_backside_mbites_pos, self.df_pad_to_channel, info_dict, rotate_by_angle = -self.rotate_by_angle_bk, load_pin_padnum = load_pin_padnum)
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
