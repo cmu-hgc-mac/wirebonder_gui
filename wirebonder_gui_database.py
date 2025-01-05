@@ -105,10 +105,6 @@ class FrontPage(QMainWindow):
         nominal_button.setGeometry(200,75, nominal_button.width, nominal_button.height)
         nominal_button.show()
 
-        info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
-        info_label.setOpenExternalLinks(True)
-        info_label.setGeometry(200, 110, 100, 25)
-
         lab6 = QLabel("<b>Wirebonding Information:</b>", self.widget)
         lab6.setGeometry(20,275, 200, 25)
         lab6 = QLabel("Technician CERN ID:", self.widget)
@@ -138,12 +134,18 @@ class FrontPage(QMainWindow):
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
-        labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
-                        2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
-                        Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)",self.widget)
+        labellegend = QLabel("<b>Legend:</b><br><b>Black outline</b>: \
+                        Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)<br>Blue: nominal;  Yellow: 1 failed bond<br>Orange: \
+                        2 failed bonds; Red: 3 failed bonds<br>",
+                        self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
-        labellegend.setGeometry(20,90, 170,150)
+        labellegend.setGeometry(20,90, 300,150)
+
+        info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
+        info_label.setOpenExternalLinks(True)
+        info_label.setGeometry(200, 110, 100, 25)
+
         self.marked_done = QCheckBox("Frontside complete", self.widget)
         self.marked_done.setGeometry(20,245,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:

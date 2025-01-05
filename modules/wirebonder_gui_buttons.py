@@ -385,13 +385,17 @@ class GreyButton(QPushButton):
         self.height = height
         self.button_text = button_text
         self.rotate_by_angle = rotate_by_angle
+        self.original_color = QColor('#c2c2c2')  # Default color
+        self.clicked_color = self.original_color.darker(120)  
+        self.hover_color = self.original_color.lighter(120)  
+        self.current_color = self.original_color 
 
     #draw button
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        pen = QPen(QColor('#c2c2c2'))
-        painter.setBrush(QColor('#c2c2c2'))
+        pen = QPen(self.current_color)
+        painter.setBrush(self.current_color)
         painter.setPen(pen)
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
@@ -405,6 +409,15 @@ class GreyButton(QPushButton):
         # label_rect = QRectF(5, 5 , self.width(), self.height())  # Adjust label position relative to button
         label_rect = QRectF(0,0, self.width, self.height)  # Adjust label position relative to button
         painter.drawText(label_rect, Qt.AlignCenter, self.button_text)
+
+    def enterEvent(self, event):
+        self.current_color = self.hover_color  
+        self.update() 
+
+    def leaveEvent(self, event):
+        if not self.underMouse(): 
+            self.current_color = self.original_color  
+            self.update()  
 
 #button that resets states to the most recent saved version,
 #erasing any changes made since then
