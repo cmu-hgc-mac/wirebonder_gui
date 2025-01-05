@@ -102,11 +102,11 @@ class FrontPage(QMainWindow):
         #side bar buttons and text entry
         nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, 
                                       self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
-        nominal_button.setGeometry(scroll_width-10-nominal_button.width,75, nominal_button.width, nominal_button.height)
+        nominal_button.setGeometry(200,75, nominal_button.width, nominal_button.height)
         nominal_button.show()
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
-        info_label.setGeometry(scroll_width-40, 110, 100, 25)
+        info_label.setGeometry(200, 110, 100, 25)
 
         lab6 = QLabel("<b>Wirebonding Information:</b>", self.widget)
         lab6.setGeometry(20,275, 200, 25)
@@ -139,10 +139,10 @@ class FrontPage(QMainWindow):
 
         labellegend = QLabel("<b>Legend:</b><br>Blue: nominal <br>Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds<br>Red: 3 failed bonds<br><b>Black outline</b>: \
-                        Needs to be grounded (R-click)<br>Black fill: Grounded(R-clk)",self.widget)
+                        Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)",self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
-        labellegend.setGeometry(20,90, 170,150)
+        labellegend.setGeometry(20,90, 170*2,150)
         self.marked_done = QCheckBox("Frontside complete", self.widget)
         self.marked_done.setGeometry(20,245,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
@@ -182,7 +182,7 @@ class FrontPage(QMainWindow):
         reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, 
                                     self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
             self.pull_techname, self.pull_comments, self.std, self.mean, self.widget, pool = pool)
-        reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
+        reset_button.setGeometry(200,10, reset_button.width, reset_button.height)
         reset_button.show()
 
         pads = []
@@ -320,11 +320,11 @@ class BackPage(QMainWindow):
             self.vbox.addWidget(label)
 
         nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
-        nominal_button.setGeometry(scroll_width-10-nominal_button.width,75, nominal_button.width, nominal_button.height)
+        nominal_button.setGeometry(200, 75, nominal_button.width, nominal_button.height)
         nominal_button.show()
         info_label = QLabel("<a href=\"https://github.com/nkalliney1/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
-        info_label.setGeometry(scroll_width-40, 110, 100, 25)
+        info_label.setGeometry(200, 110, 100, 25)
 
         lab6 = QLabel("Technician CERN ID:", self.widget)
         lab6.setGeometry(20,100, 150, 25)
@@ -358,7 +358,7 @@ class BackPage(QMainWindow):
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
         reset_button = ResetButton(self.modname, "back", self.df_backside_mbites_pos, self.techname, self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50, self.widget, pool = pool)
-        reset_button.setGeometry(scroll_width-10-reset_button.width,10, reset_button.width, reset_button.height)
+        reset_button.setGeometry(200,10, reset_button.width, reset_button.height)
         reset_button.show()
 
         pads = []
@@ -600,7 +600,7 @@ class MainWindow(QMainWindow):
         labell.setGeometry(left_align, 3 + space + labelline.geometry().top() + labelline.geometry().height() , 150, 25)
         
         self.label = QLabel(self) #"Module type:",self)
-        self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
+        self.label.setGeometry(w_width-90-20-225, 0, 225+600, 25)
         self.label.hide()
         # self.label.setGeometry(left_align, 350, 150, 25)
         # commented out to move from dropdown to just a textbox entry system
@@ -657,13 +657,19 @@ class MainWindow(QMainWindow):
         self.scrolllabel.setText("Waiting for modules...")
 
         self.homebutton = HomePageButton("Home page", 75, 25, self)
+        self.homebutton.setGeometry(0, 0, self.homebutton.width, self.homebutton.height)
         self.save_button = SaveButton(self.widget, "", "", 90, 25, "Save", self)
+        self.save_button.setGeometry(self.homebutton.width+10, 0, self.save_button.width, self.save_button.height)
         self.homebutton.hide()
         self.save_button.hide()
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
         self.rotate_by_angle = math.radians(0) #*0
+
+        global x_offset, y_offset
+        y_offset += 40
+        x_offset+=add_x_offset
 
     @asyncSlot()
     async def init_and_show(self):
@@ -677,7 +683,7 @@ class MainWindow(QMainWindow):
 
     async def cleanup_and_close(self, event):
         if self.opened_once == True:
-            saved = await self.save(self.widget)
+            saved = await self.save(self.widget, home_seq=True)
             if saved:
                 self.label.setText("Closing db conn, wait & try again.")
                 while self.bad_modules is not None: ### Gracious handling of connection pool
@@ -722,9 +728,6 @@ class MainWindow(QMainWindow):
         self.addbutton.hide()
         self.homebutton.hide()
         self.save_button.hide()
-        global x_offset, y_offset
-        y_offset += 40
-        x_offset+=add_x_offset
         string = 'Incomplete or unstarted modules:\n'
         self.bad_modules = await find_to_revisit(pool)
         for module in self.bad_modules:
@@ -827,7 +830,7 @@ class MainWindow(QMainWindow):
             self.widget.addWidget(self.encapspage)
             self.widget.setCurrentWidget(self.encapspage)
             self.label3.setText("Encapsulation")
-            self.label3.setGeometry(int(w_width/2), 0, 160, 25)
+            self.label3.setGeometry(self.save_button.geometry().left()+ self.save_button.width+20, 0, 160, 25)
             self.label3.show()
         else:
             info_dict = await read_from_db(pool, self.modname, self.df_pad_map, self.df_backside_mbites_pos)
@@ -841,48 +844,47 @@ class MainWindow(QMainWindow):
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
-            self.label3.setGeometry(int(w_width/2), 0, 160, 25)
+            self.label3.setGeometry(self.save_button.geometry().left()+ self.save_button.width+20, 0, 160, 25)
             self.label3.show()
 
         self.widget.show()
         self.label.setText("Last Saved: Unsaved since opened")
-        self.label.setGeometry(w_width-90-20-225, 0, 225, 25)
+        self.label.setGeometry(self.label3.geometry().left() + self.label3.width() +100, 0, 225+1200, 25)
         self.label.show()
 
         self.homebutton = HomePageButton("Home page", 75, 25, self)
-        self.homebutton.setGeometry(0, 0, self.homebutton.width, self.homebutton.height)
-        self.homebutton.clicked.connect(lambda: self.home_button_helper(self.widget))
+        self.homebutton.clicked.connect(lambda: self.home_button_helper(self.widget, self.save_button))
         self.homebutton.show()
 
         self.save_button = SaveButton(self.widget, self.modname, self.label, 90, 25, "Save", self)
         self.save_button.clicked.connect(lambda: self.save_button_helper(self.widget, self.save_button))
         self.save_button.setGeometry(self.homebutton.width+10, 0, self.save_button.width, self.save_button.height)
-        # save_button.setGeometry(w_width-save_button.width-10, 0, save_button.width, save_button.height)
         self.save_button.show()
 
     @asyncSlot()
-    async def home_button_helper(self, widget):
-        saved = await self.save(widget)
+    async def home_button_helper(self, widget, save_button):
+        saved = await self.save(widget, home_seq=True)
         if saved: 
             await self.show_start()
         # asyncio.create_task(self.save(widget))
         # await self.show_start()
     
     @asyncSlot()
-    async def save_button_helper(self, widget, save_button):
-        saved = await self.save(widget)
-        if (saved): save_button.updateAboveLabel()
+    async def save_button_helper(self, widget, save_button, home_seq = None):
+        saved = await self.save(widget, home_seq=home_seq)
+        if saved: 
+            save_button.updateAboveLabel()
 
-    async def save(self, widget):
+    async def save(self, widget, home_seq = None):
         saved = True
         page = widget.currentWidget()
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
-            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave)
-            savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, self.modno, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave)
+            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave, home_seq=home_seq)
+            savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, self.modno, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave, home_seq=home_seq)
             saved = saved and savedp
         elif page.pageid == "backpage":
-            saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave)
+            saved, page.bwb_lastsave = await upload_back_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),page.wb_time.text(), page.buttons, lastsave_bwb = page.bwb_lastsave, home_seq=home_seq)
         elif page.pageid == "encapspage":
             enc_full = f"{page.enc_date.text()} {page.enc_time.text()}:00"
             cure_start_full = f"{page.start_date.text()} {page.start_time.text()}:00"
@@ -895,6 +897,8 @@ class MainWindow(QMainWindow):
                     self.encapspage.timestatlabel.setText("")
             else: 
                 return True
+        if not saved:
+            self.save_button.updateAboveLabel(message = 'Either save or reset current changes to exit.')
         return saved
 
     @asyncSlot()
@@ -922,15 +926,15 @@ def main():
         print("Autosizing window...")
         from PyQt5.QtWidgets import QDesktopWidget
         screen = QDesktopWidget().screenGeometry()
-        if w_width > screen.width():
-            add_y_offset = w_width - screen.width()
-        if w_height > int(screen.height()):
-            add_x_offset = w_height - screen.height()
+        # if w_width > screen.width():
+        #     add_y_offset = w_width - screen.width()
+        # if w_height > int(screen.height()):
+        #     add_x_offset = w_height - screen.height()
         # w_width = screen.width()
         # w_height = screen.height()
         del screen, QDesktopWidget
     
-    y_offset = add_y_offset
+    y_offset = 0*add_y_offset
     x_offset = 0
     font = QFont("Calibri", text_font_size)
     font.setWeight(text_font_size)

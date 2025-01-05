@@ -153,6 +153,7 @@ async def read_front_db(pool, modname, df_pad_map):
     ground = []
     df_front_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
     front_wirebond_info = {'technician': None, 'comment': None, 'wedge_id':'','spool_batch':'', 'wb_fr_marked_done':False}
+    front_wirebond_info.update({'list_grounded_cells':[], 'list_unbonded_cells':[], 'cell_no':[], 'bond_count_for_cell':[], 'bond_type':[]})
     front_encaps_info = {'technician': None, 'comment': None}
 
     #test if front_wirebond has been filled in at all
@@ -251,6 +252,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
     #set defaults
     df_back_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
     back_wirebond_info = {'technician': None, 'comment': None, 'wedge_id':'','spool_batch':'', "wb_bk_marked_done":False}
+    back_wirebond_info.update({"mbite_no":[], "bond_count_for_mbite":[]})
     back_encaps_info = {'technician': '', 'comment': ''}
 
     #test if front_wirebond has been filled in at all
@@ -341,7 +343,7 @@ async def read_encaps(pool, ):
 
 
 #save front wirebonder information to database
-async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None):
+async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None, home_seq = None):
     #get module number
     # read_query = f"""SELECT module_no
     #     FROM module_info
@@ -405,6 +407,9 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         print(f"Data for {modname} unchanged. No new entry saved for front wirebond.")
         return True, lastsave_fwb
     else:
+        if home_seq: 
+            print("Either save or reset current changes to exit.")
+            return False, lastsave_fwb
         db_table_name = 'front_wirebond'
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload)
@@ -415,7 +420,7 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
             return False, lastsave_fwb
 
 #save back wirebonder information to database
-async def upload_back_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons, lastsave_bwb = None):
+async def upload_back_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done, wb_time, buttons, lastsave_bwb = None, home_seq=None):
     #get module number
     # read_query = f"""SELECT module_no
     #     FROM module_info
@@ -457,12 +462,14 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
     }
 
     lastsave_bwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_bwb.keys())}
-    
     dict_unchanged = lastsave_bwb_new == lastsave_bwb
     if dict_unchanged:
         print(f"Data for {modname} unchanged. No new entry saved for back wirebond.")
         return True, lastsave_bwb
     else:
+        if home_seq: 
+            print("Either save or reset current changes to exit.")
+            return False, lastsave_bwb
         db_table_name = 'back_wirebond'
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload)
@@ -472,7 +479,7 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
             return False, lastsave_bwb
 
 #save pull test information to database
-async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, comment, pull_time, lastsave_fpi = None):
+async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, comment, pull_time, lastsave_fpi = None, home_seq=None):
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
     technician = None if technician == 'None' else technician
@@ -507,6 +514,9 @@ async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, c
         print(f"Data for {modname} unchanged. No new entry saved for bond pull test.")
         return True, lastsave_fpi
     else:
+        if home_seq: 
+            print("Either save or reset current changes to exit.")
+            return False, lastsave_fpi
         db_table_name = 'bond_pull_test'
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload) 

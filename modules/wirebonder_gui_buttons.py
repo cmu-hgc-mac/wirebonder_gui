@@ -555,10 +555,14 @@ class SaveButton(QPushButton):
         self.current_color = self.original_color 
 
     #update label on when last save was
-    def updateAboveLabel(self):
+    def updateAboveLabel(self, message = None):
         now = datetime.now()
-        dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
-        self.label.setText("Last Saved: " + dt_string)
+        if not message:
+            dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
+            self.label.setText("Last Saved: " + dt_string)
+        else:
+            message = f". {message}"
+            self.label.setText(f"{self.label.text().replace(message,'')}{message}")
 
     #draw button
     def paintEvent(self, event):
