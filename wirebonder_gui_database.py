@@ -138,8 +138,12 @@ class FrontPage(QMainWindow):
                         Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)<br>Blue: nominal;  Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds; Red: 3 failed bonds<br>",
                         self.widget)
+        lfont = QFont()
+        lfont.setPointSize(10)  
+        labellegend.setFont(lfont)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
+
         labellegend.setGeometry(20,90, 300,150)
 
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
