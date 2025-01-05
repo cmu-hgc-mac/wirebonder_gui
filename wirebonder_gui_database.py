@@ -104,6 +104,7 @@ class FrontPage(QMainWindow):
                                       self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
         nominal_button.setGeometry(200,75, nominal_button.width, nominal_button.height)
         nominal_button.show()
+
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
         info_label.setGeometry(200, 110, 100, 25)
@@ -142,7 +143,7 @@ class FrontPage(QMainWindow):
                         Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)",self.widget)
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
-        labellegend.setGeometry(20,90, 170*2,150)
+        labellegend.setGeometry(20,90, 170,150)
         self.marked_done = QCheckBox("Frontside complete", self.widget)
         self.marked_done.setGeometry(20,245,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
@@ -322,7 +323,7 @@ class BackPage(QMainWindow):
         nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
         nominal_button.setGeometry(200, 75, nominal_button.width, nominal_button.height)
         nominal_button.show()
-        info_label = QLabel("<a href=\"https://github.com/nkalliney1/wirebonder_gui/blob/main/README.md\">Help",self.widget)
+        info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
         info_label.setGeometry(200, 110, 100, 25)
 
@@ -585,9 +586,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         #first, display place to input module name
         space = 7
-        left_align = int(w_width/2-150)
+        left_align = int(w_width/3)
         labelll = QLabel("<b>Multi-module Encapsulation:</b>", self)
-        labelll.setGeometry(left_align, int(w_height/10), 300, 25)
+        labelll.setGeometry(left_align, int(w_height/10), 150, 25)
 
         self.load_button4 = GreyButton("Encapsulation", 75, 25, self)
         self.load_button4.setGeometry(left_align, space + labelll.geometry().top() + labelll.geometry().height(), 75, 25)
@@ -636,10 +637,10 @@ class MainWindow(QMainWindow):
         self.logolabel = QLabel(self)
         logo = QPixmap('images/CMU_Logo_Stack_Red.png').scaled(75, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.logolabel.setPixmap(logo)
-        self.logolabel.setGeometry(w_width-110, 30, 90, 75)
+        self.logolabel.setGeometry(10, 30, 90, 75)
         self.namelabel = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui\">Created by <br>Nedjma Kalliney</a>",self)
         self.namelabel.setOpenExternalLinks(True)
-        self.namelabel.setGeometry(w_width-110, 90, 110, 50)
+        self.namelabel.setGeometry(10, 90, 110, 50)
         self.widget = QStackedWidget(self)
         self.widget.setGeometry(0, 25, w_width, w_height)
         self.label3 = QLabel(self)
