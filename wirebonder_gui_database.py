@@ -588,7 +588,7 @@ class MainWindow(QMainWindow):
         space = 7
         left_align = int(w_width/3)
         labelll = QLabel("<b>Multi-module Encapsulation:</b>", self)
-        labelll.setGeometry(left_align, int(w_height/10), 150, 25)
+        labelll.setGeometry(left_align, int(w_height/10), 350, 25)
 
         self.load_button4 = GreyButton("Encapsulation", 75, 25, self)
         self.load_button4.setGeometry(left_align, space + labelll.geometry().top() + labelll.geometry().height(), 75, 25)
@@ -640,7 +640,7 @@ class MainWindow(QMainWindow):
         self.logolabel.setGeometry(10, 30, 90, 75)
         self.namelabel = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui\">Created by <br>Nedjma Kalliney</a>",self)
         self.namelabel.setOpenExternalLinks(True)
-        self.namelabel.setGeometry(10, 90, 110, 50)
+        self.namelabel.setGeometry(10, 90, 130, 50)
         self.widget = QStackedWidget(self)
         self.widget.setGeometry(0, 25, w_width, w_height)
         self.label3 = QLabel(self)
@@ -717,7 +717,7 @@ class MainWindow(QMainWindow):
         #self.combobox.show()
         self.label2.show()
         self.label3.setText("Wirebonding and Encapsulation")
-        self.label3.setGeometry(int(w_width/2), 0, 400, 25)
+        self.label3.setGeometry(int(w_width/3), 0, 400, 25)
         self.load_button.show()
         self.scrolllabel.show()
         self.logolabel.show()
