@@ -400,7 +400,7 @@ class GreyButton(QPushButton):
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
         painter.drawPolygon(polygon)
-        self.setStyleSheet("margin: 90;") #increases clickable area inside button
+        self.setStyleSheet("margin: 90px; padding: 0px;") #increases clickable area inside button
 
         #draw label
         painter.setFont(font)
@@ -533,7 +533,8 @@ class HomePageButton(QPushButton):
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
         painter.drawPolygon(polygon)
-        self.setStyleSheet("margin: 60;") #increases clickable area inside button
+        # self.setStyleSheet("margin: 60;") #increases clickable area inside button
+        self.setStyleSheet("margin: 60px; padding: 0px;")
         #draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
@@ -587,7 +588,7 @@ class SaveButton(QPushButton):
         vertices = [QPoint(0,0), QPoint(self.width,0), QPoint(self.width,self.height), QPoint(0,self.height)]
         polygon = QPolygonF(vertices)
         painter.drawPolygon(polygon)
-        self.setStyleSheet("margin: 60;") #increases clickable area inside button
+        self.setStyleSheet("margin: 60px; padding: 0px;")
         #draw label
         painter.setFont(font)
         pen = QPen(Qt.black)
