@@ -897,9 +897,14 @@ class MainWindow(QMainWindow):
             cure_start_full = f"{page.start_date.text()} {page.start_time.text()}:00"
             cure_end_full = f"{page.end_date.text()} {page.end_time.text()}:00"
             if len(page.modules) != 0:
+                if home_seq: 
+                    self.encapspage.timestatlabel.setText("To exit, <b>clear all modules</b>.")
+                    self.encapspage.timestatlabel.setStyleSheet("color: blue;")
+                    return False
                 saved = await upload_encaps(pool, page.modules, page.modnos, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
-                    self.encapspage.timestatlabel.setText("Provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time\n(or) remove modules.")
+                    self.encapspage.timestatlabel.setText("To save, provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time.") #<br>To exit, <b>remove modules</b>.")
+                    self.encapspage.timestatlabel.setStyleSheet("color: blue;")
                 else:
                     self.encapspage.timestatlabel.setText("")
             else: 

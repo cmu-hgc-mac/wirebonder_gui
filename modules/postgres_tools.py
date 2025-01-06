@@ -1,8 +1,14 @@
-import asyncio, asyncpg
+import asyncio, asyncpg, csv
 import numpy as np
 import pandas as pd
 from config.conn import host, database, user, password
 from datetime import datetime
+
+def create_backup_csv(data_dict):
+    file_path = "backup_data_dump.csv"
+    with open(file_path, "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(data_dict.values())
 
 # Write query
 def get_query_write(table_name, column_names):
@@ -399,7 +405,10 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         'module_no' : int(module_no),
         'wb_fr_marked_done': marked_done
     }
-
+    
+    if not home_seq:
+        create_backup_csv(data_dict = db_upload)
+    
     # checkcols = ['list_grounded_cells', 'list_unbonded_cells', 'cell_no', 'bond_count_for_cell', 'bond_type', 'wedge_id' ,'spool_batch']
     lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
     dict_unchanged = lastsave_fwb_new == lastsave_fwb
@@ -461,6 +470,9 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
         'wb_bk_marked_done': marked_done
     }
 
+    if not home_seq:
+        create_backup_csv(data_dict = db_upload)
+
     lastsave_bwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_bwb.keys())}
     dict_unchanged = lastsave_bwb_new == lastsave_bwb
     if dict_unchanged:
@@ -507,6 +519,9 @@ async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, c
         'comment' : comment,
         'module_no' : int(module_no)
     }
+
+    if not home_seq:
+        create_backup_csv(data_dict = db_upload)
 
     lastsave_fpi_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fpi.keys())}
     dict_unchanged = lastsave_fpi_new == lastsave_fpi
@@ -604,5 +619,7 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
         else:
             print("Something happened. Data didn't save")
             return False
+
+    create_backup_csv(data_dict = db_upload)
     return True 
         #print(modname, 'uploaded!')
