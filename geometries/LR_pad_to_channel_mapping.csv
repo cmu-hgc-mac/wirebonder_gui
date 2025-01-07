@@ -1,4 +1,4 @@
-PAD,ASIC,Channel,Channeltype
+PAD,ASIC,Channel,Channeltype,Channelpos
 5,1,4,0,2
 6,1,6,0,4
 7,1,34,0,2
