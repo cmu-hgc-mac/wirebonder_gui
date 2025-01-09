@@ -369,23 +369,20 @@ class BackPage(QMainWindow):
         reset_button.show()
 
         pads = []
-        y_flip = 1; x_flip = 1
-        if (self.modname[5] == "F" and self.modname[4] == "H"):
-            y_flip = -1
-        if (self.modname[5] == "R" and self.modname[4] == "L"):
-            x_flip = -1
+        min_padnum = self.df_pad_map[self.df_pad_map['padnumber'] > 0]['padnumber'].min()
+        max_padnum = self.df_pad_map['padnumber'].max()
 
         #make all the cells
         for index,row0 in self.df_pad_map.iterrows():
             padnumber = int(row0['padnumber'])
+            padlabel = str(int(row0['padnumber'])) if row0['padnumber'] == min_padnum or row0['padnumber'] == max_padnum else ''
             #normal cells without buttons
             if self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 0 and index > -1:
-                pad = Hex(hex_length, str(padnumber), [0,0],'#d1d1d1', self.widget, rotate_by_angle=-self.rotate_by_angle)
+                pad = Hex(hex_length, padlabel, [0,0],'#d1d1d1', self.widget, rotate_by_angle=-self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
-            #half hexagons
-            ## 2<->3 swapped for backside by doing 5-channeltype
+            #half hexagons->   2<->3 swapped for backside by doing 5-channeltype
             elif (self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 2 or self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 3) and index > -1:
-                pad = HalfHex(hex_length, str(padnumber), [0,0],'#d1d1d1', int(5 - self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype']), self.widget, rotate_by_angle=-self.rotate_by_angle)
+                pad = HalfHex(hex_length, padlabel, [0,0],'#d1d1d1', int(5 - self.df_pad_to_channel.loc[row0['padnumber']]['Channeltype']), self.widget, rotate_by_angle=-self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*-1*scaling_factor) + scroll_width/2 +x_offset),int(float(row0["yposition"]*-1*scaling_factor + w_height/2 + y_offset)), int(pad.radius*2), int(pad.radius*2))
 
             pads.append(pad)
