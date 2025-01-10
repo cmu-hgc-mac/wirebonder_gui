@@ -46,7 +46,7 @@ The front page displays a list of all modules that exist in the both wirebonding
 
 Every time you go back to the home page from the encapsulation, front, or back page, the information of that page is automatically saved, except for a few exceptions mentioned below.
 
-## Wirebonder
+## Wirebonder  ([Developer documentation](https://github.com/cmu-hgc-mac/wirebonder_gui/tree/main/geometries#readme))
 ### Front page
 The front page consists of a schematic representation of the board type you have selected, with buttons and text entry on the sidebars.
 
