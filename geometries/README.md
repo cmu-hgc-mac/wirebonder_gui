@@ -3,10 +3,12 @@
 This directory contains the position configuration files for the cells in the hexaboard for the various geometries.
 
 ## Legend for `hex_positions.csv` and `backside_mbites_pos.csv`
-The hexaboard for `Full` is centered around `(0,0)`. These files contain the `(x,y)` coordinates of the cells in the hexaboard. So a hexagonal cell with a vertex pad and a center pad will have the same numbers.
+The hexaboard for `Full` is centered around `(0,0)`. These files contain the `(x,y)` coordinates of the cells in the hexaboard. So a hexagonal cell with a vertex pad and a center pad will have the same coordinates.
 
 ## Legend for `pad_to_channel_mapping.csv`
 (Ignore ASIC and Channel cols; may be left blank)
+
+Positive pad numbers correspond to a chip+channel combination. The negative numbers do not have any physical meaning and are for bookkeeping. Negative numbers smaller than -12 are guardrail bonds and lie on the perimeter. Other negative numbered pads are mousebites.
 
 `Channeltype == 0` is full hexagon,  
 `Channeltype == 1` is outside and circular and has a negative PAD value,   
