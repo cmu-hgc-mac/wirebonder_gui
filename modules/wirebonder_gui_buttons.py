@@ -334,7 +334,7 @@ class WedgeButton(QPushButton):
 
         if self.grounded == 1:
             pen.setColor(Qt.black)
-            pen.setWidth(2)
+            pen.setWidth(4)
         if self.grounded == 2:
             painter.setBrush(Qt.black)
             pen.setColor(Qt.black)
