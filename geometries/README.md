@@ -8,7 +8,9 @@ The hexaboard for `Full` is centered around `(0,0)`. These files contain the `(x
 ## Legend for `pad_to_channel_mapping.csv`
 (Ignore ASIC and Channel cols; may be left blank)
 
-Positive pad numbers correspond to a chip+channel combination. The negative numbers do not have any physical meaning and are for bookkeeping. Negative numbers smaller than `-12` are guardrail bonds and lie on the perimeter. Other negative numbered pads are mousebites.
+Positive pad numbers correspond to a chip+channel combination. 
+
+The negative numbers do not have any physical meaning and are for bookkeeping. Negative numbers smaller than `-12` are guardrail bonds and lie on the perimeter. Other negative numbered pads are mousebites. In the GUI, there are represented with letters that correspond to the `abs(negnum)`. For example, `D` on the GUI is `-4` in the data and code.
 
 `Channeltype == 0` is full hexagon,  
 `Channeltype == 1` is outside and circular and has a negative PAD value,   

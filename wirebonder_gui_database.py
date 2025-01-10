@@ -260,7 +260,7 @@ class FrontPage(QMainWindow):
                     #mousebite size
                     size = 13
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'],
-                    str(padnumber), 6, str(padnumber), [0,0], size, self.widget)
+                    str(padnumber), 6, str(chr(64+abs(padnumber))), [0,0], size, self.widget)
                 pad.setGeometry(int(float(row0["xposition"])*scaling_factor + scroll_width/2 + scaling_factor*0.25 + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset + w_height/2 + scaling_factor*0.25)),
                     int(pad.radius*2), int(pad.radius*2))
@@ -391,7 +391,7 @@ class BackPage(QMainWindow):
             padnumber = int(row['padnumber'])
             #want these to be circular so pass channel_pos = 6
             pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, self.df_back_states.loc[padnumber]['state'], self.df_back_states.loc[padnumber]['grounded'],
-                str(padnumber), 6, str(padnumber), [0,0], 13, self.widget, rotate_by_angle=self.rotate_by_angle)
+                str(padnumber), 6, str(chr(64+abs(padnumber))), [0,0], 13, self.widget, rotate_by_angle=self.rotate_by_angle)
             pad.setGeometry(int(float(row["xposition"])*-1*scaling_factor + scroll_width/2+ scaling_factor*0.25 + x_offset),int(float(row["yposition"]*-1*scaling_factor + w_height/2+ y_offset + scaling_factor*0.3)), int(pad.radius*2), int(pad.radius*2))
             self.buttons[str(padnumber)] = pad
 
