@@ -50,7 +50,8 @@ Every time you go back to the home page from the encapsulation, front, or back p
 ### Front page
 The front page consists of a schematic representation of the board type you have selected, with buttons and text entry on the sidebars.
 
-<img width="1358" alt="image" src="https://github.com/user-attachments/assets/a0edaea2-6586-45c3-8a46-d86d19d14b4f">
+![image](https://github.com/user-attachments/assets/198db0ac-c56f-4078-b3e8-c98d048b6818)
+
 
 Scrolling to the right reveals a few other buttons: 
 
@@ -58,7 +59,9 @@ Scrolling to the right reveals a few other buttons:
 
 The schematic representation of the board is composed of hexagons representing each cell, with a button at the corner that corresponds to the location of the wirebonds for that cell. Calibration channels are small circles in the same position they appear on the board. The schematic also represents the mousebites and shield ring bonds as small circles around the edge, in approximately the positions they appear on the board. The button for each cell holds information about the state of the wirebonds of each cell. Left-clicking the cell will cycle it between three states: blue, or 3/3 successful wirebonds; yellow, or 2/3 successful wirebonds; orange, or 1/3 successful wirebonds; or red, unbonded. Right-clicking the cell will cycle it between three states as well: no outline, a signal channel; a black outline, a cell that needs to be grounded; or filled black, a cell that has been grounded.
 
-<img width="369" alt="image" src="https://github.com/user-attachments/assets/73e7ce56-2a0e-4199-b490-d7fbac9064f6">
+![image](https://github.com/user-attachments/assets/c29ef130-81ed-4554-a20c-59d0561345a4)
+
+**Note:** Mousebites and guardrail bonds are represented with letters. In the database, they will show up a negative integers that correspond to that letter, i.e. `A = -1, B = -2`. **The negative numbers have no physical meaning.**
 
 The right side holds a tally of all states on the board and a key for reading the graphic:
 
@@ -82,8 +85,9 @@ When wirebonding the board has been completed, the user should check the corresp
 
 The back page is very similar. It displays a shadow of the frontside as well as the two backside modules holes for orientation, and lacks entries for pull testing. Similarly, when wirebonding has been completed, the user should check the corresponding box.
 
-<img width="1357" alt="image" src="https://github.com/user-attachments/assets/6e707038-82ac-43f4-9f58-6bf7ddaff268">
+![image](https://github.com/user-attachments/assets/8bdb60a2-f4e4-4de5-b989-dfe61ad1a0cc)
 
+**Note:** Mousebites and guardrail bonds are represented with letters. In the database, they will show up a negative integers that correspond to that letter, i.e. `A = -1, B = -2`. **The negative numbers have no physical meaning.**
 
 ## Encapsulation
 On the encapsulation page, you can add modules to a list by selecting the module name prefix, typing in the number, selecting front or backside encapsulation, and clicking "add." Similarly, a module can be removed from the list if it's already there by clicking "remove."
