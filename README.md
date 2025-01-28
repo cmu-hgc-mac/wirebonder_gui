@@ -2,9 +2,12 @@
 
 # Installation instructions:
 
-We recommend running this is a separate conda environment or virtual environment and install the required packages. ([See instructions](https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md#setting-up-environments))
+We recommend running this is a separate conda environment or virtual environment and install the required packages. ([See more info](https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md#setting-up-environments))
 
-In `python=3.11` with `pip=23.2`, install with `pip`
+```
+conda create -n wbgui -c conda-forge qt=5.15.8 pip=23.2 pyqt=5.15.9 asyncpg=0.29.0 numpy=1.25.2 pandas=2.2.2 qasync=0.27.1
+```
+Alternatively, in `python=3.11` with `pip=23.2`, install with `pip`
 ```
 pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
 ```
@@ -103,9 +106,7 @@ Clicking "save" will upload that information into the database for every module 
 ### Conda
 We've had success with `conda` on Windows, macOS and Linux. If using `conda`, create an environment `wbgui`:
 ```
-conda create -n wbgui python=3.11 pip=23.2
-conda activate wbgui
-pip install --upgrade pyqt5==5.15.9 asyncpg==0.29.0 numpy==1.25.2 pandas==2.2.2 qasync==0.27.1
+conda create -n wbgui -c conda-forge qt=5.15.8 pip=23.2 pyqt=5.15.9 asyncpg=0.29.0 numpy=1.25.2 pandas=2.2.2 qasync=0.27.1
 ```
 Run `conda activate wbgui`. In the environment, run `python wirebonder_gui_database.py`.
 
