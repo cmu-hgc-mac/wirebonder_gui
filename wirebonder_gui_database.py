@@ -240,9 +240,12 @@ class FrontPage(QMainWindow):
                     hexchanpos = self.df_pad_to_channel.loc[hexnumafter]['Channelpos']
                 elif hex_before:
                     hexchanpos = self.df_pad_to_channel.loc[hexnumbefore]['Channelpos']
-
-                angoff = (((hexchanpos+3)%6) * np.pi/3 ) - np.pi/2 - self.rotate_by_angle
-                xoff, yoff = pad.radius*np.cos(angoff)/2, pad.radius*np.sin(angoff)/2
+                
+                xoff, yoff = 0,0
+                if hex_after or hex_before:
+                    angoff = (((hexchanpos+3)%6) * np.pi/3 ) - np.pi/2 - self.rotate_by_angle
+                    xoff, yoff = pad.radius*np.cos(angoff)/2, pad.radius*np.sin(angoff)/2
+                    
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
                                   str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
