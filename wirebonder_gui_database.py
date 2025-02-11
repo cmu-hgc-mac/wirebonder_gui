@@ -227,11 +227,12 @@ class FrontPage(QMainWindow):
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
                 hex_before, hex_after = False, False
-                hexnumafter = df_pad_map.loc[index+1]['padnumber']
+                hexchanpos = self.df_pad_map.loc[index]['padnumber']
+                hexnumafter = self.df_pad_map.loc[index+1]['padnumber']
                 hex_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and 
                                  self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[hexnumafter]['Channeltype'] == 0)
-                hexnumbefore = df_pad_map.loc[index-1]['padnumber']
+                hexnumbefore = self.df_pad_map.loc[index-1]['padnumber']
                 hex_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and 
                                   self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[hexnumbefore]['Channeltype'] == 0)
@@ -239,9 +240,12 @@ class FrontPage(QMainWindow):
                     hexchanpos = self.df_pad_to_channel.loc[hexnumafter]['Channelpos']
                 elif hex_before:
                     hexchanpos = self.df_pad_to_channel.loc[hexnumbefore]['Channelpos']
-
-                angoff = (((hexchanpos+3)%6) * np.pi/3 ) - np.pi/2 - self.rotate_by_angle
-                xoff, yoff = pad.radius*np.cos(angoff)/2, pad.radius*np.sin(angoff)/2
+                
+                xoff, yoff = 0,0
+                if hex_after or hex_before:
+                    angoff = (((hexchanpos+3)%6) * np.pi/3 ) - np.pi/2 - self.rotate_by_angle
+                    xoff, yoff = pad.radius*np.cos(angoff)/2, pad.radius*np.sin(angoff)/2
+                    
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
                                   str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
