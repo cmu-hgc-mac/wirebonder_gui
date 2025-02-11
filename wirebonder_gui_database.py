@@ -227,11 +227,12 @@ class FrontPage(QMainWindow):
             #create calibration channels
             elif self.df_pad_to_channel.loc[padnumber]['Channeltype'] == 1 and padnumber > 0:
                 hex_before, hex_after = False, False
-                hexnumafter = df_pad_map.loc[index+1]['padnumber']
+                hexchanpos = self.df_pad_map.loc[index]['padnumber']
+                hexnumafter = self.df_pad_map.loc[index+1]['padnumber']
                 hex_after = (self.df_pad_map.loc[index+1]['xposition'] == row0["xposition"] and 
                                  self.df_pad_map.loc[index+1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[hexnumafter]['Channeltype'] == 0)
-                hexnumbefore = df_pad_map.loc[index-1]['padnumber']
+                hexnumbefore = self.df_pad_map.loc[index-1]['padnumber']
                 hex_before = (self.df_pad_map.loc[index-1]['xposition'] == row0["xposition"] and 
                                   self.df_pad_map.loc[index-1]['yposition'] == row0["yposition"]
                         and self.df_pad_to_channel.loc[hexnumbefore]['Channeltype'] == 0)
