@@ -5,7 +5,7 @@ hxb_orientation = {
     'HT': {'rot_ang_fr' : 0, 'rot_ang_bk' : 180, 'load_pin' : [148.5,21]}, 
     'HB': {'rot_ang_fr' : 0, 'rot_ang_bk' :   0, 'load_pin' : [216,431]},
     
-    'LF': {'rot_ang_fr' : 0, 'rot_ang_bk' :   0, 'load_pin' : [103,13]}, 
+    'LF': {'rot_ang_fr' : 0, 'rot_ang_bk' :   0, 'load_pin' : [88,13]}, 
     'LL': {'rot_ang_fr' : 0, 'rot_ang_bk' : 180, 'load_pin' : [109,104]}, 
     'LR': {'rot_ang_fr' : 0, 'rot_ang_bk' : 180, 'load_pin' : [112,117]}, 
     'LT': {'rot_ang_fr' : 0, 'rot_ang_bk' : 180, 'load_pin' : [61,15]}, 
