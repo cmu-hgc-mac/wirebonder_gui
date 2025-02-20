@@ -60,9 +60,10 @@ Scrolling to the right reveals a few other buttons:
 
 <img width="342" alt="image" src="https://github.com/user-attachments/assets/b0e75e1e-07aa-419a-a2e8-01a7d55a1cdf">
 
-The schematic representation of the board is composed of hexagons representing each cell, with a button at the corner that corresponds to the location of the wirebonds for that cell. Calibration channels are small circles in the same position they appear on the board. The schematic also represents the mousebites and shield ring bonds as small circles around the edge, in approximately the positions they appear on the board. The button for each cell holds information about the state of the wirebonds of each cell. Left-clicking the cell will cycle it between three states: blue, or 3/3 successful wirebonds; yellow, or 2/3 successful wirebonds; orange, or 1/3 successful wirebonds; or red, unbonded. Right-clicking the cell will cycle it between three states as well: no outline, a signal channel; a black outline, a cell that needs to be grounded; or filled black, a cell that has been grounded.
+The schematic representation of the board is composed of hexagons representing each cell, with a button at the corner that corresponds to the location of the wirebonds for that cell. Calibration channels are small circles in the same position they appear on the board. The schematic also represents the mousebites and shield ring bonds as small circles around the edge, in approximately the positions they appear on the board. The button for each cell holds information about the state of the wirebonds of each cell. Left-clicking the cell will cycle it between three states: blue, or 3/3 successful wirebonds; yellow, or 2/3 successful wirebonds; orange, or 1/3 successful wirebonds; or red, unbonded. Right-clicking the cell will cycle it between three states as well: solid non-black fill -- a signal channel (S); a black cross-pattern -- a cell that needs to be grounded (N); or filled black -- a cell that has been grounded (G).
 
-![image](https://github.com/user-attachments/assets/c29ef130-81ed-4554-a20c-59d0561345a4)
+![image](https://github.com/user-attachments/assets/15a5daa2-1562-41b8-9d6b-b1f7a39fccfc)
+
 
 **Note:** Mousebites and guardrail bonds are represented with letters. In the database, they will show up a negative integers that correspond to that letter, i.e. `A = -1, B = -2`. **The negative numbers have no physical meaning.**
 
