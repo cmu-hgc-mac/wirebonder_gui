@@ -2,7 +2,7 @@ import numpy as np
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QLabel
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
-from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont
+from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont, QBrush
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 from PyQt5.QtGui import QRegion, QPainterPath
 from qasync import QEventLoop, asyncSlot
@@ -320,24 +320,23 @@ class WedgeButton(QPushButton):
         pen = QPen(Qt.black)
         painter.setPen(pen)
         if self.state == 0:
-            painter.setBrush(QColor('#87d4fa'))
-            pen.setColor(QColor('#87d4fa'))
+            baseColor = '#87d4fa'
         elif self.state == 1:
-            painter.setBrush(Qt.yellow)
-            pen.setColor(Qt.yellow)
+            baseColor = Qt.yellow
         elif self.state == 3:
-            painter.setBrush(QColor('#fa5846'))
-            pen.setColor(QColor('#fa5846'))
+            baseColor = '#fa5846'
         elif self.state == 2:
-            painter.setBrush(QColor('#ffbc36'))
-            pen.setColor(QColor('#ffbc36'))
+            baseColor = '#ffbc36'
+
+        painter.setBrush(QColor(baseColor))
+        pen.setColor(QColor(baseColor))
+        pen.setWidth(4)
 
         if self.grounded == 1:
-            pen.setColor(Qt.black)
-            pen.setWidth(4)
+            painter.setBrush(QBrush(Qt.black, Qt.CrossPattern)) 
+
         if self.grounded == 2:
             painter.setBrush(Qt.black)
-            pen.setColor(Qt.black)
 
         painter.setPen(pen)
 
