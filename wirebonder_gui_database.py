@@ -134,7 +134,7 @@ class FrontPage(QMainWindow):
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
-        labellegend = QLabel("<b>Legend:</b><br><b>Black outline</b>: \
+        labellegend = QLabel("<b>Legend:</b><br><b>Black mesh</b>: \
                         Needs to be grounded(R-clk)<br>Black fill: Grounded(R-clk)<br>Blue: nominal;  Yellow: 1 failed bond<br>Orange: \
                         2 failed bonds; Red: 3 failed bonds<br>",
                         self.widget)
