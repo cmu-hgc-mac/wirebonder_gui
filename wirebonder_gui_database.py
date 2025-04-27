@@ -144,11 +144,19 @@ class FrontPage(QMainWindow):
         labellegend.setWordWrap(True)
         labellegend.setTextFormat(Qt.RichText)
 
-        labellegend.setGeometry(20,90, 300,150)
+        labellegend.setGeometry(20,90, 300,80)
+        labeltbgrounded = QLabel("ToBeGround:", self.widget)
+        labelgrounded = QLabel("Grounded:", self.widget)
+        labelgrounded.setFont(lfont)
+        labeltbgrounded.setFont(lfont)
+        labelgrounded.setWordWrap(True)
+        labeltbgrounded.setWordWrap(True)
+        labeltbgrounded.setGeometry(20,90+80, 300,20)
+        labelgrounded.setGeometry(20,90+100, 300,20)
 
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
-        info_label.setGeometry(200, 110, 100, 25)
+        info_label.setGeometry(250, 110, 100, 25)
 
         self.marked_done = QCheckBox("Frontside complete", self.widget)
         self.marked_done.setGeometry(20,245,150,25)
