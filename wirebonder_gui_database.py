@@ -145,7 +145,7 @@ class FrontPage(QMainWindow):
         labellegend.setTextFormat(Qt.RichText)
 
         labellegend.setGeometry(20,90, 300,80)
-        labeltbgrounded = QLabel("ToBeGround:", self.widget)
+        labeltbgrounded = QLabel("ToBeGrounded:", self.widget)
         labelgrounded = QLabel("Grounded:", self.widget)
         labelgrounded.setFont(lfont)
         labeltbgrounded.setFont(lfont)
@@ -201,8 +201,7 @@ class FrontPage(QMainWindow):
         reset_button.show()
 
         pads = []
-        #make all the cells
-        for index,row0 in self.df_pad_map.iterrows():
+        for index,row0 in self.df_pad_map.iterrows():   #make all the cells
             padnumber = int(df_pad_map.loc[index]['padnumber'])
             #row of the dataframe that converts between pad and the channel number of the channel on that pad
             row1 = self.df_pad_to_channel.loc[padnumber]
@@ -213,12 +212,11 @@ class FrontPage(QMainWindow):
                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
                 #wedge buttons associated with cells are automatically added to button dictionary
-                #set pad position
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
-                pad.raise_()
-            #create half hexagon cells
-            elif row1['Channeltype'] == 2 and index > -1:
+                pad.raise_()  #set pad position
+            
+            elif row1['Channeltype'] == 2 and index > -1:  #create half hexagon cells
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
                                          str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
@@ -259,27 +257,19 @@ class FrontPage(QMainWindow):
                                   str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset + xoff),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3) + yoff), int(pad.radius*2), int(pad.radius*2))
-                #add manually to list of buttons
-                self.buttons[str(padnumber)] = pad
+                self.buttons[str(padnumber)] = pad #add manually to list of buttons
                 pad.raise_()
             #create mousebites and guardrails
-            else:
-                #want these to be circular so pass channel_pos = 6
-                if padnumber < -12:
-                    #guardrail button size
-                    size = hex_length/3
-                else:
-                    #mousebite size
-                    size = 13
+            else:  #want these to be circular so pass channel_pos = 6
+                size = hex_length/3 if padnumber < -12 else 13 # guardrail button size; mousebite size
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'],
                     str(padnumber), 6, str(chr(64+abs(padnumber))), [0,0], size, self.widget)
                 pad.setGeometry(int(float(row0["xposition"])*scaling_factor + scroll_width/2 + scaling_factor*0.25 + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset + w_height/2 + scaling_factor*0.25)),
                     int(pad.radius*2), int(pad.radius*2))
-                #manually add to list of buttons
-                self.buttons[str(padnumber)] = pad
-            #add to list of pads
-            pads.append(pad)
+                self.buttons[str(padnumber)] = pad  #manually add to list of buttons
+            
+            pads.append(pad)  #add to list of pads
             
 
         #this brings pads in position 3 to the front to remove problematic overlap in clicking areas
