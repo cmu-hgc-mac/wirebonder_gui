@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QPolygonF, QFont, QBrush
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 from PyQt5.QtGui import QRegion, QPainterPath
 from qasync import QEventLoop, asyncSlot
-import math
+import math, ast
 from modules.postgres_tools import  (upload_front_wirebond, upload_back_wirebond, upload_encaps, 
                                      upload_bond_pull_test, read_front_db, read_back_db, read_pull_db)
 from config.graphics_config import button_font_size
@@ -106,7 +106,7 @@ class HalfHex(QWidget):
 #normal cell class (doesn't include calibration channels) with channel buttons
 class HexWithButtons(Hex):
     def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
-                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None, rotate_by_angle = 0):
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color,  parent=None, rotate_by_angle = 0, ground_tracker_labels = None):
         super().__init__(radius, cell_id, label_pos, color,parent, rotate_by_angle)
         self.channel_id = channel_id
         self.rotate_by_angle = rotate_by_angle
@@ -115,7 +115,7 @@ class HexWithButtons(Hex):
         self.channel_pos = rotate_channel_pos(channel_pos, self.rotate_by_angle)
         #make button that is associated with this cell, store it in button dict
         self.button2 = WedgeButton(state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, self.channel_pos, ' ',
-            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle)], self.radius/1.5, self)
+            [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle),self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 -self.rotate_by_angle)], self.radius/1.5, self, ground_tracker_labels = ground_tracker_labels , cell_id=cell_id)
         buttons[cell_id] = self.button2
         self.setMask(self.createMask())
 
@@ -165,7 +165,7 @@ class HexWithButtons(Hex):
 #normal half cell class (doesn't include calibration channels) with channel buttons
 class HalfHexWithButtons(Hex):
     def __init__(self, buttons, state_counter, state_counter_labels, state_button_labels, 
-                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0):
+                 state, grounded, radius, cell_id, label_pos, channel_id, channel_pos, color, channeltype, parent=None, rotate_by_angle = 0, ground_tracker_labels = None):
         super().__init__(radius, cell_id, label_pos, color, parent,rotate_by_angle)
         self.channel_id = channel_id
         self.rotate_by_angle = rotate_by_angle
@@ -177,7 +177,7 @@ class HalfHexWithButtons(Hex):
         #make button that is associated with this cell, store it in button dict
         self.button2 = WedgeButton(state_counter, state_counter_labels, state_button_labels, state, grounded, channel_id, self.channel_pos, ' ',
             [self.radius/3*np.cos(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle),
-             self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle)], self.radius/1.5, self)
+             self.radius/3*np.sin(channel_pos*np.pi/3 + np.pi/2 - self.rotate_by_angle)], self.radius/1.5, self, ground_tracker_labels = ground_tracker_labels, cell_id=cell_id)
         buttons[cell_id] = self.button2
         self.setMask(self.createMask())
 
@@ -243,11 +243,12 @@ class HalfHexWithButtons(Hex):
 #these are the clickable buttons that represent channels
 class WedgeButton(QPushButton):
     def __init__(self, state_counter, state_counter_labels, state_button_labels, state,
-                 grounded, channel_id, channel_pos, label, label_pos, radius, parent=None, rotate_by_angle = 0):
+                 grounded, channel_id, channel_pos, label, label_pos, radius, parent=None, rotate_by_angle = 0, ground_tracker_labels = None, cell_id = None):
         super().__init__(parent)
         self.state_counter = state_counter
         self.state_counter_labels = state_counter_labels
         self.state_button_labels = state_button_labels
+        self.ground_tracker_labels = ground_tracker_labels
         self.channel_id = channel_id
         self.channel_pos = channel_pos
         self.label_pos = label_pos
@@ -257,6 +258,7 @@ class WedgeButton(QPushButton):
         self.grounded = grounded
         self.clicked.connect(self.changeState)
         self.rotate_by_angle = rotate_by_angle
+        self.cell_id = cell_id
         self.setMask(self.createMask())
 
     def createMask(self):
@@ -296,7 +298,22 @@ class WedgeButton(QPushButton):
             self.changeState()
         #right click- change border/grounded state
         elif QMouseEvent.button() == Qt.RightButton:
+            if self.ground_tracker_labels and self.cell_id:
+                tobegroundedset = set(ast.literal_eval( (self.ground_tracker_labels['tobegroundedlist'].text()).split(":")[1].strip()))
+                groundedset = set(ast.literal_eval( (self.ground_tracker_labels['groundedlist'].text()).split(":")[1].strip()))
+                old_ground_state, cell_id_ground = self.grounded, self.cell_id
             self.grounded = (self.grounded + 1)%3
+            if self.ground_tracker_labels and self.cell_id:
+                new_ground_state = self.grounded
+                if old_ground_state == 1 and new_ground_state == 2:
+                    tobegroundedset.remove(int(cell_id_ground))
+                    groundedset.add(int(cell_id_ground))
+                elif old_ground_state == 2 and new_ground_state == 0:
+                    groundedset.remove(int(cell_id_ground))
+                elif old_ground_state == 0 and new_ground_state == 1:
+                    tobegroundedset.add(int(cell_id_ground))
+                self.ground_tracker_labels['tobegroundedlist'].setText(f"ToBeGrounded: {list(tobegroundedset)}") 
+                self.ground_tracker_labels['groundedlist'].setText(f"Grounded: {list(groundedset)}") 
             self.update()
 
     def changeState(self):
@@ -453,7 +470,7 @@ class ResetButton(GreyButton):
 #for front page
 class ResetButton2(GreyButton):
     def __init__(self, module_name, side, df_pos, techname, comments, button_text, buttons, width, height, pull_techname,
-                 pull_comments, std, mean, parent = None, pool = None):
+                 pull_comments, std, mean, parent = None, pool = None, ground_tracker_labels = None):
         super().__init__(button_text, width, height, parent)
         self.buttons = buttons
         self.module_name = module_name
@@ -468,6 +485,8 @@ class ResetButton2(GreyButton):
         self.std = std
         self.clicked.connect(self.reset)
         self.pool = pool
+        self.ground_tracker_labels = ground_tracker_labels
+        self.ground_tracker_labels_init = ground_tracker_labels
 
     @asyncSlot()
     async def reset(self):
@@ -489,16 +508,24 @@ class ResetButton2(GreyButton):
         self.pull_comments.setText(info["comment"])
         self.std.setText(str(info["std_pull_strg_g"]))
         self.mean.setText(str(info["avg_pull_strg_g"]))
+        if self.ground_tracker_labels:
+            tobegroundedlist = df_states.index[df_states['grounded'] == 1].tolist()
+            tobegroundedlist = str([int(i) for i in tobegroundedlist])
+            groundedlist = df_states.index[df_states['grounded'] == 2].tolist()
+            groundedlist = str([int(i) for i in groundedlist])
+            self.ground_tracker_labels["tobegroundedlist"].setText(f"ToBeGrounded: {tobegroundedlist}")
+            self.ground_tracker_labels["groundedlist"].setText(f"Grounded: {groundedlist}")
 
 #button that resets states to default/nominal
 class SetToNominal(GreyButton):
-    def __init__(self, state_counter_labels, state_counter, module_name, button_text, buttons, width, height, parent = None):
+    def __init__(self, state_counter_labels, state_counter, module_name, button_text, buttons, width, height, parent = None, ground_tracker_labels = None):
         super().__init__(button_text, width, height, parent)
         self.buttons = buttons
         self.module_name = module_name
         self.clicked.connect(self.reset)
         self.state_counter_labels = state_counter_labels
         self.state_counter = state_counter
+        self.ground_tracker_labels = ground_tracker_labels
 
     def reset(self):
         for button_id in self.buttons:
@@ -510,6 +537,9 @@ class SetToNominal(GreyButton):
                 count_label.setText(f"{state} missing bonds: {len(self.buttons)}")
             else:
                 count_label.setText(f"{state} missing bonds: {0}")
+        if self.ground_tracker_labels:
+            self.ground_tracker_labels["tobegroundedlist"].setText(f"ToBeGrounded: {[]}")
+            self.ground_tracker_labels["groundedlist"].setText(f"Grounded: {[]}")
 
 #button that switches to provided window
 class HomePageButton(QPushButton):

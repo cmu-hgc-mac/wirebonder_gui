@@ -87,8 +87,13 @@ class FrontPage(QMainWindow):
                               2: len(self.df_front_states[self.df_front_states['state'] == 2]), 
                               3: len(self.df_front_states[self.df_front_states['state'] == 3])}
         self.state_counter_labels = {}
+        self.ground_tracker_labels = {}
         self.state_button_labels = {}
-
+        tobegroundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 1].tolist()
+        tobegroundedlist = str([int(i) for i in tobegroundedlist])
+        groundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 2].tolist()
+        groundedlist = str([int(i) for i in groundedlist])
+        
         #make label of state counter
         for state in self.state_counter:
             lab = QLabel(f"{state} missing bonds: {self.state_counter[state]}", self.widget)
@@ -101,7 +106,7 @@ class FrontPage(QMainWindow):
 
         #side bar buttons and text entry
         nominal_button = SetToNominal(self.state_counter_labels, self.state_counter, 
-                                      self.modname, "Set to nominal", self.buttons, 90, 25, self.widget)
+                                      self.modname, "Set to nominal", self.buttons, 90, 25, self.widget, ground_tracker_labels = self.ground_tracker_labels)
         nominal_button.setGeometry(200,75, nominal_button.width, nominal_button.height)
         nominal_button.show()
 
@@ -145,14 +150,16 @@ class FrontPage(QMainWindow):
         labellegend.setTextFormat(Qt.RichText)
 
         labellegend.setGeometry(20,90, 300,80)
-        labeltbgrounded = QLabel("ToBeGrounded:", self.widget)
-        labelgrounded = QLabel("Grounded:", self.widget)
+        labeltbgrounded = QLabel(f"ToBeGrounded: {tobegroundedlist}", self.widget)
+        labelgrounded = QLabel(f"Grounded: {groundedlist}", self.widget)
         labelgrounded.setFont(lfont)
         labeltbgrounded.setFont(lfont)
         labelgrounded.setWordWrap(True)
         labeltbgrounded.setWordWrap(True)
         labeltbgrounded.setGeometry(20,90+80, 300,20)
         labelgrounded.setGeometry(20,90+100, 300,20)
+        self.ground_tracker_labels['tobegroundedlist'] = labeltbgrounded
+        self.ground_tracker_labels['groundedlist'] = labelgrounded
 
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
@@ -196,7 +203,7 @@ class FrontPage(QMainWindow):
 
         reset_button = ResetButton2(self.modname, "front", self.df_pad_map, self.techname, 
                                     self.comments , "Reset to last\nsaved version\n(irreversible)", self.buttons, 90, 50,
-            self.pull_techname, self.pull_comments, self.std, self.mean, self.widget, pool = pool)
+            self.pull_techname, self.pull_comments, self.std, self.mean, self.widget, pool = pool, ground_tracker_labels = self.ground_tracker_labels)
         reset_button.setGeometry(200,10, reset_button.width, reset_button.height)
         reset_button.show()
 
@@ -210,7 +217,7 @@ class FrontPage(QMainWindow):
             if row1['Channeltype'] == 0 and index > -1:
                 pad = HexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                         self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                        str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle)
+                                        str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8', self.widget, rotate_by_angle = self.rotate_by_angle, ground_tracker_labels = self.ground_tracker_labels)
                 #wedge buttons associated with cells are automatically added to button dictionary
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
@@ -219,13 +226,13 @@ class FrontPage(QMainWindow):
             elif row1['Channeltype'] == 2 and index > -1:  #create half hexagon cells
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle, ground_tracker_labels = self.ground_tracker_labels)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 +x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
             elif row1['Channeltype'] == 3 and index > -1:
                 pad = HalfHexWithButtons(self.buttons, self.state_counter, self.state_counter_labels, 
                                          self.state_button_labels,row2['state'],row2['grounded'], hex_length, str(padnumber), [0,0],
-                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle)
+                                         str(row1['Channel']), int(row1['Channelpos']), '#d1dbe8',row1['Channeltype'],  self.widget, rotate_by_angle = self.rotate_by_angle, ground_tracker_labels = self.ground_tracker_labels)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+ w_height/2)), int(pad.radius*2), int(pad.radius*2))
 
@@ -254,7 +261,7 @@ class FrontPage(QMainWindow):
                     
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, 
                                   self.state_button_labels, row2['state'], row2['grounded'],
-                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle)
+                                  str(row1['Channel']), 6, str(padnumber), [0,0], hex_length/3, self.widget, rotate_by_angle = self.rotate_by_angle, ground_tracker_labels = self.ground_tracker_labels)
                 pad.setGeometry(int(float(row0["xposition"]*scaling_factor) + scroll_width/2 + hex_length*2/3 +x_offset + xoff),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset+w_height/2+hex_length*2/3) + yoff), int(pad.radius*2), int(pad.radius*2))
                 self.buttons[str(padnumber)] = pad #add manually to list of buttons
@@ -263,7 +270,7 @@ class FrontPage(QMainWindow):
             else:  #want these to be circular so pass channel_pos = 6
                 size = hex_length/3 if padnumber < -12 else 13 # guardrail button size; mousebite size
                 pad = WedgeButton(self.state_counter, self.state_counter_labels, self.state_button_labels, row2['state'], row2['grounded'],
-                    str(padnumber), 6, str(chr(64+abs(padnumber))), [0,0], size, self.widget)
+                    str(padnumber), 6, str(chr(64+abs(padnumber))), [0,0], size, self.widget, ground_tracker_labels = self.ground_tracker_labels)
                 pad.setGeometry(int(float(row0["xposition"])*scaling_factor + scroll_width/2 + scaling_factor*0.25 + x_offset),
                                 int(float(row0["yposition"]*-1*scaling_factor + y_offset + w_height/2 + scaling_factor*0.25)),
                     int(pad.radius*2), int(pad.radius*2))
