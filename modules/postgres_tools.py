@@ -170,11 +170,10 @@ async def read_front_db(pool, modname, df_pad_map):
         #        FROM module_info
         #        JOIN hexaboard ON module_info.module_no = hexaboard.module_no
         #        WHERE module_info.module_no = '{module_no}' LIMIT 1;"""
-        read_query = f"""SELECT hxb_pedestal_test.list_dead_cells, hxb_pedestal_test.list_noisy_cells
-                        FROM hxb_pedestal_test
-                        JOIN module_info ON module_info.hxb_name = hxb_pedestal_test.hxb_name
-                        WHERE REPLACE(module_info.module_name, '-','') = '{modname}'
-                        ORDER BY hxb_pedestal_test.hxb_pedtest_no DESC LIMIT 1; """
+        read_query = f"""SELECT list_dead_cells, list_noisy_cells
+                        FROM module_pedestal_test
+                        WHERE REPLACE(module_name, '-','') = '{modname}'
+                        ORDER BY mod_pedtest_no DESC LIMIT 1; """
         records = await fetch_PostgreSQL(pool, read_query)
         if len(records) != 0:
             res2 = [dict(record) for record in records][0]
@@ -185,7 +184,23 @@ async def read_front_db(pool, modname, df_pad_map):
             else:
                 ground = noisy if noisy != None else []
         else:
-            print(f"No hexaboard record found for module {modname}.")
+            print(f"No module testing record found for module {modname}.")
+            read_query = f"""SELECT hxb_pedestal_test.list_dead_cells, hxb_pedestal_test.list_noisy_cells
+                            FROM hxb_pedestal_test
+                            JOIN module_info ON module_info.hxb_name = hxb_pedestal_test.hxb_name
+                            WHERE REPLACE(module_info.module_name, '-','') = '{modname}'
+                            ORDER BY hxb_pedestal_test.hxb_pedtest_no DESC LIMIT 1; """
+            records = await fetch_PostgreSQL(pool, read_query)
+            if len(records) != 0:
+                res2 = [dict(record) for record in records][0]
+                dead = res2['list_dead_cells']
+                noisy = res2['list_noisy_cells']
+                if dead != None:
+                    ground = np.union1d(dead, noisy) if noisy != None else dead                    
+                else:
+                    ground = noisy if noisy != None else []
+            else:
+                print(f"No hexaboard record found for module {modname}.")
 
         for index, row in df_pad_map.iterrows():
             is_grounded = 1 if int(df_pad_map.loc[index]['padnumber']) in ground else 0
