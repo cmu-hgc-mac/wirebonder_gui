@@ -69,7 +69,15 @@ async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_nam
             print(e, f"for query {query}.")
 
 # Read query
-async def fetch_PostgreSQL(pool, query):
+async def fetch_PostgreSQL(pool, query, modname = None):
+    if modname:
+        try:
+            async with pool.acquire() as connection:  # Acquire a connection from the pool
+                value = await connection.fetch(query, modname)
+                return value
+        except Exception as e:
+            print(e, f"for query {query}.")    
+
     try:
         async with pool.acquire() as connection:  # Acquire a connection from the pool
             value = await connection.fetch(query)
@@ -83,8 +91,8 @@ async def add_new_to_db(pool, modname, hxbname = None):
         hxbname = None if len(str(hxbname)) == 0 else str(hxbname)
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
             FROM module_info
-            WHERE REPLACE(module_name, '-','') ='{modname}');"""
-        records = await fetch_PostgreSQL(pool, read_query)
+            WHERE REPLACE(module_name, '-','') = $1);"""
+        records = await fetch_PostgreSQL(pool, read_query, modname=modname)
         check = [dict(record) for record in records][0]
         if not check['exists']:
             try:
@@ -149,8 +157,8 @@ async def read_from_db(pool, modname, df_pad_map, df_backside_mbites_pos):
 async def read_test_result_cells(pool, modname):
     read_query = f"""SELECT dead_pad_to_be_ground, noisy_pad_to_be_ground, pad_to_attempt_rebond
                     FROM module_info
-                    WHERE REPLACE(module_name, '-','') = '{modname}' AND (dead_pad_to_be_ground IS NOT NULL  OR noisy_pad_to_be_ground IS NOT NULL  OR pad_to_attempt_rebond IS NOT NULL );""" ### ASK TO UPDATE THIS AS WILL
-    records = await fetch_PostgreSQL(pool, read_query)
+                    WHERE REPLACE(module_name, '-','') = $1 AND (dead_pad_to_be_ground IS NOT NULL  OR noisy_pad_to_be_ground IS NOT NULL  OR pad_to_attempt_rebond IS NOT NULL );""" ### ASK TO UPDATE THIS AS WILL
+    records = await fetch_PostgreSQL(pool, read_query, modname=modname)
     if len(records) != 0:
         res2 = [dict(record) for record in records][0]
         attempt_rebond = res2['pad_to_attempt_rebond'] if res2['pad_to_attempt_rebond'] else []
@@ -159,9 +167,9 @@ async def read_test_result_cells(pool, modname):
         attempt_rebond = []
         read_query = f"""SELECT hexaboard.mac_dead_pad_to_be_ground AS dead_pad_to_be_ground, hexaboard.mac_noisy_pad_to_be_ground AS noisy_pad_to_be_ground FROM hexaboard
                         JOIN module_info ON module_info.hxb_name = hexaboard.hxb_name
-                        WHERE REPLACE(module_info.module_name, '-','') = '{modname}'
+                        WHERE REPLACE(module_info.module_name, '-','') = $1
                         ORDER BY hexaboard.hxb_no DESC LIMIT 1; """
-        records = await fetch_PostgreSQL(pool, read_query)
+        records = await fetch_PostgreSQL(pool, read_query, modname=modname)
 
     if len(records) != 0:  ## common for hexaboard and module
         res2 = [dict(record) for record in records][0]
@@ -185,17 +193,17 @@ async def read_front_db(pool, modname, df_pad_map):
 
     #read from front_wirebond to see if there is anything in it for this module
     read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM front_wirebond WHERE REPLACE(module_name, '-','') ='{modname}');"""
-    records = await fetch_PostgreSQL(pool, read_query)
+        FROM front_wirebond WHERE REPLACE(module_name, '-','') = $1);"""
+    records = await fetch_PostgreSQL(pool, read_query, modname=modname)
     check = [dict(record) for record in records][0]
     if check['exists']:
         read_query = f"""SELECT technician, wedge_id, spool_batch, comment, wb_fr_marked_done,
         cell_no, bond_count_for_cell, bond_type, module_no,
         list_grounded_cells, list_unbonded_cells, cell_no, bond_count_for_cell, bond_type
         FROM front_wirebond
-        WHERE REPLACE(module_name, '-','') = '{modname}'
+        WHERE REPLACE(module_name, '-','') = $1
         ORDER BY frwirebond_no DESC LIMIT 1;"""
-        records = await fetch_PostgreSQL(pool, read_query)
+        records = await fetch_PostgreSQL(pool, read_query, modname=modname)
         front_wirebond_return = [dict(record) for record in records][0]
 
         front_res = {tkey: front_wirebond_return[tkey]  for tkey in ['cell_no', 'bond_count_for_cell', 'bond_type', 'technician', 'comment', 'module_no']}
@@ -256,8 +264,8 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
     #check if info on this module already exists
     read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM back_wirebond
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
-    records = await fetch_PostgreSQL(pool, read_query)
+        WHERE REPLACE(module_name, '-','') = $1);"""
+    records = await fetch_PostgreSQL(pool, read_query, modname=modname)
     check = [dict(record) for record in records][0]
 
     #set defaults
@@ -276,9 +284,9 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
         
         read_query = f"""SELECT wedge_id, spool_batch, technician, comment, wb_bk_marked_done, mbite_no, bond_count_for_mbite
         FROM back_wirebond
-        WHERE REPLACE(module_name, '-','') = '{modname}'
+        WHERE REPLACE(module_name, '-','') = $1
         ORDER BY bkwirebond_no DESC LIMIT 1;"""
-        records = await fetch_PostgreSQL(pool, read_query)
+        records = await fetch_PostgreSQL(pool, read_query, modname=modname)
         back_wirebond_return = [dict(record) for record in records][0]
 
         back_wirebond_states = {tkey: back_wirebond_return[tkey]  for tkey in ['mbite_no', 'bond_count_for_mbite']}
@@ -321,8 +329,8 @@ async def read_pull_db(pool, modname):
     #check if info already exists
     read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
         FROM bond_pull_test
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
-    records = await fetch_PostgreSQL(pool, read_query)
+        WHERE REPLACE(module_name, '-','') = $1);"""
+    records = await fetch_PostgreSQL(pool, read_query, modname=modname)
     check = [dict(record) for record in records][0]
 
     #set defaults
@@ -333,9 +341,9 @@ async def read_pull_db(pool, modname):
     if check['exists']:
         read_query = f"""SELECT avg_pull_strg_g, std_pull_strg_g, technician, comment
                 FROM bond_pull_test
-                WHERE REPLACE(module_name, '-','') = '{modname}'
+                WHERE REPLACE(module_name, '-','') = $1
                 ORDER BY pulltest_no DESC LIMIT 1;"""
-        records = await fetch_PostgreSQL(pool, read_query)
+        records = await fetch_PostgreSQL(pool, read_query, modname=modname)
         pull_info = [dict(record) for record in records][0]
 
     return {"pull_info": pull_info}
@@ -608,8 +616,8 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
             try:  
                 read_query = f"""SELECT comment
                     FROM {db_table_name}
-                    WHERE REPLACE(module_name, '-','') = '{module}';"""
-                records = await fetch_PostgreSQL(pool, read_query)
+                    WHERE REPLACE(module_name, '-','') = $1;"""
+                records = await fetch_PostgreSQL(pool, read_query, modname=module)
                 comment_old = [dict(record) for record in records][0]["comment"]
 
                 db_upload = {
