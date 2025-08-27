@@ -509,6 +509,7 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
         db_table_name = 'back_wirebond'
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload)
+            await update_PostgreSQL(pool=pool, table_name = 'module_info', db_upload_data = {'wb_back': datetime.date.today()} , name_col = 'module_name', part_name = modname)
             return True, lastsave_bwb_new
         except Exception as e:
             print(f"Failed to upload data: {e}")
@@ -565,11 +566,12 @@ async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, c
             return False, lastsave_fpi
 
 #save pull test information to database
-async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure_end, temperature, rel_hum, epoxy_batch, comment):
+async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure_end, temperature, cure_temperature, rel_hum, epoxy_batch, comment):
     #if this page is empty, don't save it (causes error with inputting date and time)
     #this tests if encapsulation page is empty
     #and returns false, since we didn't actually save it
     
+    cure_temperature = cure_temperature if cure_temperature else temperature
     date_format = "%Y/%m/%d %H:%M:%S"
 
     if (enc != " :00" and cure_start != " :00"): 
@@ -598,6 +600,7 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
                 'comment' : comment,
                 'cure_start': cure_start,
                 'temp_c': temperature,
+                'cure_temp_c': cure_temperature,
                 'rel_hum': rel_hum,
                 'epoxy_batch': epoxy_batch,
                 }

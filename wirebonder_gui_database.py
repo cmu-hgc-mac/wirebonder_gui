@@ -493,14 +493,24 @@ class EncapsPage(QMainWindow):
         nowbutton2.setGeometry(10 + self.start_time.geometry().left() + self.start_time.geometry().width(), 230+30-5, 50, 25)
         nowbutton2.clicked.connect(lambda: self.set_to_now(self.start_date, self.start_time))
 
-        label = QLabel("Temperature:", self)
-        label.setGeometry(encap_left_align,255+30-5, 150, 25)
-        self.temperature = QLineEdit(self)
-        self.temperature.setGeometry(encap_left_align,280+30-5, 150, 25)
         label = QLabel("Relative Humidity:",self)
-        label.setGeometry(15 + self.temperature.geometry().left() + self.temperature.geometry().width(),255+30-5, 150, 25)
+        label.setGeometry(encap_left_align,255+30-5, 120, 25)
         self.rel_hum = QLineEdit(self)
-        self.rel_hum.setGeometry(15 + self.temperature.geometry().left() + self.temperature.geometry().width(),280+30-5, 150, 25)
+        self.rel_hum.setGeometry(encap_left_align,280+30-5, 120, 25)
+    
+        label = QLabel("Temperature (C):", self)
+        label.setGeometry(15 + self.rel_hum.geometry().left() + self.rel_hum.geometry().width(),255+30-5, 150, 25)
+        self.temperature = QLineEdit(self)
+        self.temperature.setGeometry(15 + self.rel_hum.geometry().left() + self.rel_hum.geometry().width(),280+30-5, 150, 25)
+
+        label = QLabel("Cure Temperature (C):", self)
+        label.setGeometry(15 + self.temperature.geometry().left() + self.temperature.geometry().width(),255+30-5, 150, 25)
+        self.curetemperature = QLineEdit(self)
+        self.curetemperature.setGeometry(15 + self.temperature.geometry().left() + self.temperature.geometry().width(),280+30-5, 150, 25)
+        
+        # sametempbutton = GreyButton("Same as Room", 80, 25, self)
+        # sametempbutton.setGeometry(5 + self.curetemperature.geometry().left() + self.curetemperature.geometry().width(), 280+30-5, 80, 25)
+        # sametempbutton.clicked.connect(lambda: self.same_as_room(self.temperature, self.curetemperature))
 
         labelline2 = QLabel("----------------------------------------------------------------------", self)
         labelline2.setGeometry(encap_left_align, 335, 500, 25)
@@ -916,7 +926,7 @@ class MainWindow(QMainWindow):
                     self.encapspage.timestatlabel.setText("To exit, <b>clear all modules</b>.")
                     self.encapspage.timestatlabel.setStyleSheet("color: blue;")
                     return False
-                saved = await upload_encaps(pool, page.modules, page.modnos, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
+                saved = await upload_encaps(pool, page.modules, page.modnos, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.curetemperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
                     self.encapspage.timestatlabel.setText("To save, provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time.") #<br>To exit, <b>remove modules</b>.")
                     self.encapspage.timestatlabel.setStyleSheet("color: blue;")
