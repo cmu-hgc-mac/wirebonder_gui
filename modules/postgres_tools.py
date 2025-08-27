@@ -2,7 +2,7 @@ import asyncio, asyncpg, csv
 import numpy as np
 import pandas as pd
 from config.conn import host, database, user, password
-from datetime import datetime
+import datetime
 
 def create_backup_csv(data_dict):
     file_path = "backup_data_dump.csv"
@@ -371,16 +371,19 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
 
     dead_pad_to_be_ground_init, noisy_pad_to_be_ground_init, pad_to_attempt_rebond_init = await read_test_result_cells(pool, modname)
     list_grounded_cells = []
+    list_to_be_grounded_cells = []
     list_unbonded_cells = []
     cell_no = []
     bond_count_for_cell = []
     bond_type = []
     for button in buttons:
-        if buttons[button].state == 3:
+        if buttons[button].state == 3: ### cells with all three bonds missing
             list_unbonded_cells.append(int(button))
-        if buttons[button].grounded == 1 and buttons[button].state != 3:
+        if buttons[button].grounded == 2 and buttons[button].state != 3: ### cells that have all been grounded to some capacity
             list_grounded_cells.append(int(button))
-        if buttons[button].state != 0 or buttons[button].grounded != 0:
+        if buttons[button].grounded == 1: # and buttons[button].state != 3: ### cells that have all been grounded to some capacity
+            list_to_be_grounded_cells.append(int(button))
+        if buttons[button].state != 0 or buttons[button].grounded != 0: ### get non-signal cells or have missing bonds
             cell_no.append(int(button))
             bond_count_for_cell.append(3-buttons[button].state)
             if buttons[button].grounded == 0:
@@ -391,15 +394,15 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
                 bond_type.append("G")
                 list_grounded_cells.append(int(button))
 
-    date_time = datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
+    date_time = datetime.datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
 
     db_upload = {
         'module_name' : modname,
-        'list_grounded_cells' : list_grounded_cells,
-        'list_unbonded_cells' : list_unbonded_cells,
+        'list_grounded_cells' : list(set(list_grounded_cells)),
+        'list_unbonded_cells' : list(set(list_unbonded_cells)),
         'cell_no' : cell_no,
         'bond_count_for_cell' : bond_count_for_cell,
         'bond_type' : bond_type,
@@ -415,6 +418,13 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         'noisy_pad_to_be_ground_init': noisy_pad_to_be_ground_init,
         'pad_to_attempt_rebond_init': pad_to_attempt_rebond_init,
     }
+    
+    ### additional_ground -- do we want to mix results from testing and non-testing?
+    additional_ground = list(set(list_to_be_grounded_cells) - set(dead_pad_to_be_ground_init) - set(noisy_pad_to_be_ground_init))
+    additional_ground = []
+    db_update_module_info = {'dead_pad_to_be_ground':  list((set(dead_pad_to_be_ground_init)  - set(list_grounded_cells))) + additional_ground,
+                             'noisy_pad_to_be_ground': list((set(noisy_pad_to_be_ground_init) - set(list_grounded_cells))) + additional_ground,
+                             'pad_to_attempt_rebond':  list(set(list_unbonded_cells))}
     
     if not home_seq:
         create_backup_csv(data_dict = db_upload)
@@ -433,7 +443,10 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload)
             lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
-            ### Add an update query here
+            db_date_info = {'wb_front': datetime.date.today()}
+            if db_update_module_info['dead_pad_to_be_ground'] or db_update_module_info['noisy_pad_to_be_ground'] or db_update_module_info['pad_to_attempt_rebond']:
+                db_date_info.update(db_update_module_info)
+            await update_PostgreSQL(pool=pool, table_name = 'module_info', db_upload_data = db_date_info, name_col = 'module_name', part_name = modname)
             return True, lastsave_fwb_new
         except Exception as e:
             print(f"Failed to upload data: {e}")
@@ -462,7 +475,7 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
             cell_no.append(int(button))
             bond_count_for_cell.append(3-buttons[button].state)
 
-    date_time = datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
+    date_time = datetime.datetime.strptime(wb_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
@@ -515,7 +528,7 @@ async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, c
     # records = await fetch_PostgreSQL(pool, read_query)
     # module_no = [dict(record) for record in records][0]["module_no"]
 
-    date_time = datetime.strptime(pull_time, "%Y/%m/%d %H:%M:%S")
+    date_time = datetime.datetime.strptime(pull_time, "%Y/%m/%d %H:%M:%S")
 
     date = date_time.date()
     time = date_time.time()
@@ -560,13 +573,13 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
     date_format = "%Y/%m/%d %H:%M:%S"
 
     if (enc != " :00" and cure_start != " :00"): 
-        enc_time = datetime.strptime(enc, date_format).time()
-        enc_date = datetime.strptime(enc, date_format).date()
-        cure_start = datetime.strptime(cure_start, date_format)
+        enc_time = datetime.datetime.strptime(enc, date_format).time()
+        enc_date = datetime.datetime.strptime(enc, date_format).date()
+        cure_start = datetime.datetime.strptime(cure_start, date_format)
         if cure_end != " :00":
-            cure_end = datetime.strptime(cure_end, date_format)
+            cure_end = datetime.datetime.strptime(cure_end, date_format)
     elif cure_end != " :00":
-        cure_end = datetime.strptime(cure_end, date_format)
+        cure_end = datetime.datetime.strptime(cure_end, date_format)
         if enc != " :00" and cure_start == " :00": 
             print('Returning false since time not provided.')
             return False

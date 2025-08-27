@@ -161,8 +161,8 @@ class FrontPage(QMainWindow):
         labelgrounded.setWordWrap(True)
         labeltbgrounded.setWordWrap(True)
         labelattrebond.setWordWrap(True)
-        labeltbgrounded.setGeometry(20,90+80, 300,20)
-        labelgrounded.setGeometry(20,90+100, 300,20)
+        labelgrounded.setGeometry(20,90+80, 300,20)
+        labeltbgrounded.setGeometry(20,90+100, 300,20)
         labelattrebond.setGeometry(20,90+120, 300,20)
         self.ground_tracker_labels['tobegroundedlist'] = labeltbgrounded
         self.ground_tracker_labels['groundedlist'] = labelgrounded
