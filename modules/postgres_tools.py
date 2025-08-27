@@ -146,67 +146,49 @@ async def read_from_db(pool, modname, df_pad_map, df_backside_mbites_pos):
         print(f"Error in reading pull from db: {e}")
     return d
 
+async def read_test_result_cells(pool, modname):
+    read_query = f"""SELECT dead_pad_to_be_ground, noisy_pad_to_be_ground, pad_to_attempt_rebond
+                    FROM module_info
+                    WHERE REPLACE(module_name, '-','') = '{modname}' AND (dead_pad_to_be_ground IS NOT NULL  OR noisy_pad_to_be_ground IS NOT NULL  OR pad_to_attempt_rebond IS NOT NULL );""" ### ASK TO UPDATE THIS AS WILL
+    records = await fetch_PostgreSQL(pool, read_query)
+    if len(records) != 0:
+        res2 = [dict(record) for record in records][0]
+        attempt_rebond = res2['pad_to_attempt_rebond'] if res2['pad_to_attempt_rebond'] else []
+    else:
+        print(f"No module testing record found for module {modname}.")
+        attempt_rebond = []
+        read_query = f"""SELECT hexaboard.mac_dead_pad_to_be_ground AS dead_pad_to_be_ground, hexaboard.mac_noisy_pad_to_be_ground AS noisy_pad_to_be_ground FROM hexaboard
+                        JOIN module_info ON module_info.hxb_name = hexaboard.hxb_name
+                        WHERE REPLACE(module_info.module_name, '-','') = '{modname}'
+                        ORDER BY hexaboard.hxb_no DESC LIMIT 1; """
+        records = await fetch_PostgreSQL(pool, read_query)
+
+    if len(records) != 0:  ## common for hexaboard and module
+        res2 = [dict(record) for record in records][0]
+        dead, noisy = res2['dead_pad_to_be_ground'], res2['noisy_pad_to_be_ground'] ## can be none
+        dead  = dead  if dead else []
+        noisy = noisy if noisy else []
+        ground = list(np.union1d(dead, noisy))
+    else:
+        dead, noisy = [], []
+        print(f"No hexaboard record found for module {modname}.")
+    
+    return dead, noisy, attempt_rebond
+
 #read frontside wirebonder information
 async def read_front_db(pool, modname, df_pad_map):
-    #read from front_wirebond to see if there is anything in it for this module
-    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
-        FROM front_wirebond
-        WHERE REPLACE(module_name, '-','') ='{modname}');"""
-    records = await fetch_PostgreSQL(pool, read_query)
-    check = [dict(record) for record in records][0]
-
     #set defaults
-    ground = []
     df_front_states = pd.DataFrame(columns=["ID","state","grounded"]).set_index('ID')
     front_wirebond_info = {'technician': None, 'comment': None, 'wedge_id':'','spool_batch':'', 'wb_fr_marked_done':False}
     front_wirebond_info.update({'list_grounded_cells':[], 'list_unbonded_cells':[], 'cell_no':[], 'bond_count_for_cell':[], 'bond_type':[]})
     front_encaps_info = {'technician': None, 'comment': None}
 
-    #test if front_wirebond has been filled in at all
-    #if so, it's an old module and read from database
-    #if not, it's a new module and just read in ground info
-    if not check['exists']:
-        # read_query = f"""SELECT hexaboard.list_dead_cell_init, hexaboard.list_noisy_cell_init
-        #        FROM module_info
-        #        JOIN hexaboard ON module_info.module_no = hexaboard.module_no
-        #        WHERE module_info.module_no = '{module_no}' LIMIT 1;"""
-        read_query = f"""SELECT dead_pad_to_be_ground, noisy_pad_to_be_ground
-                        FROM module_info
-                        WHERE REPLACE(module_name, '-','') = '{modname}';"""
-        records = await fetch_PostgreSQL(pool, read_query)
-        if len(records) != 0:
-            res2 = [dict(record) for record in records][0]
-            dead, noisy = res2['dead_pad_to_be_ground'], res2['noisy_pad_to_be_ground']
-            if dead != None:
-                ground = np.union1d(dead, noisy) if noisy != None else dead                    
-            else:
-                ground = noisy if noisy != None else []
-        else:
-            print(f"No module testing record found for module {modname}.")
-            read_query = f"""SELECT hexaboard.mac_dead_pad_to_be_ground, hexaboard.mac_noisy_pad_to_be_ground FROM hexaboard
-                            JOIN module_info ON module_info.hxb_name = hexaboard.hxb_name
-                            WHERE REPLACE(module_info.module_name, '-','') = '{modname}'
-                            ORDER BY hexaboard.hxb_no DESC LIMIT 1; """
-            records = await fetch_PostgreSQL(pool, read_query)
-            if len(records) != 0:
-                res2 = [dict(record) for record in records][0]
-                dead, noisy = res2['mac_dead_pad_to_be_ground'], res2['mac_noisy_pad_to_be_ground']
-                if dead != None:
-                    ground = np.union1d(dead, noisy) if noisy != None else dead                    
-                else:
-                    ground = noisy if noisy != None else []
-            else:
-                print(f"No hexaboard record found for module {modname}.")
-
-        for index, row in df_pad_map.iterrows():
-            is_grounded = 1 if int(df_pad_map.loc[index]['padnumber']) in ground else 0
-            df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {"state": 0,"grounded":is_grounded}
-    else:
-        #I don't know why, but this doesn't work unless it's inside a list
-        #so get the dictionary from inside the list
-        # records = await fetch_PostgreSQL(pool, read_query)
-        # front_res = [dict(record) for record in records][0]
-
+    #read from front_wirebond to see if there is anything in it for this module
+    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+        FROM front_wirebond WHERE REPLACE(module_name, '-','') ='{modname}');"""
+    records = await fetch_PostgreSQL(pool, read_query)
+    check = [dict(record) for record in records][0]
+    if check['exists']:
         read_query = f"""SELECT technician, wedge_id, spool_batch, comment, wb_fr_marked_done,
         cell_no, bond_count_for_cell, bond_type, module_no,
         list_grounded_cells, list_unbonded_cells, cell_no, bond_count_for_cell, bond_type
@@ -222,15 +204,27 @@ async def read_front_db(pool, modname, df_pad_map):
         for index, row in df_pad_map.iterrows():
             if int(df_pad_map.loc[index]['padnumber']) in front_res['cell_no']:
                 state = 3-front_res['bond_count_for_cell'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])]
-                if front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "S":
+                if front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "S":  ### Signal bond
                     is_grounded = 0
-                elif front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "N":
+                elif front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "N":  ### Needs to be grounded
                     is_grounded = 1
-                elif front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "G":
+                elif front_res['bond_type'][front_res['cell_no'].index(df_pad_map.loc[index]['padnumber'])] == "G":   ### Grounded pad
                     is_grounded = 2
             else:
                 state = is_grounded = 0
             df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {'state' : state, 'grounded' : is_grounded}
+
+    else: ### Set default
+        for index, row in df_pad_map.iterrows():
+            df_front_states.loc[df_pad_map.loc[index]['padnumber']] = {"state": 0, "grounded": 0} ### all signal bonds present
+
+    dead, noisy, attempt_rebond = await read_test_result_cells(pool, modname)
+    ground_from_test = np.union1d(dead, noisy)
+    for index in ground_from_test:
+        df_front_states.loc[index] = {"state": 0, "grounded": 1}
+
+    for index in attempt_rebond:
+        df_front_states.loc[index] = {"state": 3, "grounded": 0}
 
     #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if front_wirebond_info['wedge_id'] == None or front_wirebond_info['wedge_id'] == '':
@@ -361,19 +355,13 @@ async def read_encaps(pool, ):
 
 #save front wirebonder information to database
 async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None, home_seq = None):
-    #get module number
-    # read_query = f"""SELECT module_no
-    #     FROM module_info
-    #     WHERE REPLACE(module_name, '-','') = '{modname}';"""
-    # #print([dict(record) for record in asyncio.run(fetch_PostgreSQL(pool, read_query))])
-    # records = await fetch_PostgreSQL(pool, read_query)
-    # module_no = [dict(record) for record in records][0]["module_no"]
 
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
     technician = None if technician == 'None' else technician
     comment    = None if comment    == 'None' else comment
 
+    dead_pad_to_be_ground_init, noisy_pad_to_be_ground_init, pad_to_attempt_rebond_init = await read_test_result_cells(pool, modname)
     list_grounded_cells = []
     list_unbonded_cells = []
     cell_no = []
@@ -414,7 +402,10 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         'wedge_id' : wedge_id,
         'spool_batch': spool_batch,
         'module_no' : int(module_no),
-        'wb_fr_marked_done': marked_done
+        'wb_fr_marked_done': marked_done,
+        'dead_pad_to_be_ground_init': dead_pad_to_be_ground_init,
+        'noisy_pad_to_be_ground_init': noisy_pad_to_be_ground_init,
+        'pad_to_attempt_rebond_init': pad_to_attempt_rebond_init,
     }
     
     if not home_seq:
@@ -434,6 +425,7 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         try:
             await upload_PostgreSQL(pool, db_table_name, db_upload)
             lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
+            ### Add an update query here
             return True, lastsave_fwb_new
         except Exception as e:
             print(f"Failed to upload data: {e}")

@@ -89,6 +89,8 @@ class FrontPage(QMainWindow):
         self.state_counter_labels = {}
         self.ground_tracker_labels = {}
         self.state_button_labels = {}
+        attemptrebondlist = list(np.intersect1d(self.df_front_states.index[self.df_front_states['grounded'] == 0].tolist(),self.df_front_states.index[self.df_front_states['state'] == 3].tolist()))
+        attemptrebondlist = str([int(i) for i in attemptrebondlist])
         tobegroundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 1].tolist()
         tobegroundedlist = str([int(i) for i in tobegroundedlist])
         groundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 2].tolist()
@@ -152,14 +154,19 @@ class FrontPage(QMainWindow):
         labellegend.setGeometry(20,90, 300,80)
         labeltbgrounded = QLabel(f"ToBeGrounded: {tobegroundedlist}", self.widget)
         labelgrounded = QLabel(f"Grounded: {groundedlist}", self.widget)
+        labelattrebond = QLabel(f"ToBeBonded: {attemptrebondlist}", self.widget)
         labelgrounded.setFont(lfont)
         labeltbgrounded.setFont(lfont)
+        labelattrebond.setFont(lfont)
         labelgrounded.setWordWrap(True)
         labeltbgrounded.setWordWrap(True)
+        labelattrebond.setWordWrap(True)
         labeltbgrounded.setGeometry(20,90+80, 300,20)
         labelgrounded.setGeometry(20,90+100, 300,20)
+        labelattrebond.setGeometry(20,90+120, 300,20)
         self.ground_tracker_labels['tobegroundedlist'] = labeltbgrounded
         self.ground_tracker_labels['groundedlist'] = labelgrounded
+        self.ground_tracker_labels['attemptrebondlist'] = labelattrebond
 
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
         info_label.setOpenExternalLinks(True)
@@ -569,7 +576,7 @@ class EncapsPage(QMainWindow):
         self.problemlabel.hide()
         modname = (self.modid.text()).replace("-","")
         try:
-            asyncio.create_task(self.check_mod_exists_encap(modname=modname))
+            asyncio.create_task(self.check_mod_exists_encap(modname=modname.strip()))
         except Exception as e:
             print(e)
 
@@ -757,6 +764,7 @@ class MainWindow(QMainWindow):
         if page == "encapspage":
             asyncio.create_task(self.begin_program(page))
         else:
+            self.modname = self.modname.strip()
             combined_query = f""" SELECT 
             (SELECT module_no FROM module_info WHERE REPLACE(module_name, '-','') = '{self.modname}' LIMIT 1) AS in_info,
             (SELECT module_no FROM front_wirebond WHERE REPLACE(module_name, '-','') = '{self.modname}' LIMIT 1) AS in_fr_wirebond,

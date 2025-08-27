@@ -299,10 +299,12 @@ class WedgeButton(QPushButton):
         #right click- change border/grounded state
         elif QMouseEvent.button() == Qt.RightButton:
             if self.ground_tracker_labels and self.cell_id:
-                tobegroundedset = set(ast.literal_eval( (self.ground_tracker_labels['tobegroundedlist'].text()).split(":")[1].strip()))
-                groundedset = set(ast.literal_eval( (self.ground_tracker_labels['groundedlist'].text()).split(":")[1].strip()))
+                tobegroundedset  = set(ast.literal_eval( (self.ground_tracker_labels[ 'tobegroundedlist'].text()).split(":")[1].strip()))
+                groundedset      = set(ast.literal_eval( (self.ground_tracker_labels[     'groundedlist'].text()).split(":")[1].strip()))
                 old_ground_state, cell_id_ground = self.grounded, self.cell_id
-            self.grounded = (self.grounded + 1)%3
+                
+            ### Toggles between signal, tobeground, ground and keeps track in counter
+            self.grounded = (self.grounded + 1)%3  ### This is action when the button is right-clicked
             if self.ground_tracker_labels and self.cell_id:
                 new_ground_state = self.grounded
                 if old_ground_state == 1 and new_ground_state == 2:
@@ -312,16 +314,24 @@ class WedgeButton(QPushButton):
                     groundedset.remove(int(cell_id_ground))
                 elif old_ground_state == 0 and new_ground_state == 1:
                     tobegroundedset.add(int(cell_id_ground))
-                self.ground_tracker_labels['tobegroundedlist'].setText(f"ToBeGrounded: {list(tobegroundedset)}") 
-                self.ground_tracker_labels['groundedlist'].setText(f"Grounded: {list(groundedset)}") 
+                self.ground_tracker_labels[ 'tobegroundedlist'].setText(f"ToBeGrounded: {list(tobegroundedset)}") 
+                self.ground_tracker_labels[     'groundedlist'].setText(f"Grounded: {list(groundedset)}") 
             self.update()
 
     def changeState(self):
         #checks if button is active
         old_state = self.state
-        self.state = (self.state + 1) % 4
+        self.state = (self.state + 1) % 4 ### This is action when the button is left-clicked
         self.state_counter[old_state] -= 1
         self.state_counter[self.state] += 1
+        if self.ground_tracker_labels and self.cell_id:  ### remove from unbond list or add to unbond list based on the state
+            attemptrebondset = set(ast.literal_eval( (self.ground_tracker_labels['attemptrebondlist'].text()).split(":")[1].strip()))
+            new_state, cell_id_unbond = self.state, self.cell_id
+            if old_state == 3 and new_state != 3:
+                attemptrebondset.remove(int(cell_id_unbond))
+            elif old_state != 3 and new_state == 3:
+                attemptrebondset.add(int(cell_id_unbond))
+            self.ground_tracker_labels["attemptrebondlist"].setText(f"ToBeBonded: {list(attemptrebondset)}")
         self.updateCounter()
         self.update()
 
@@ -513,8 +523,11 @@ class ResetButton2(GreyButton):
             tobegroundedlist = str([int(i) for i in tobegroundedlist])
             groundedlist = df_states.index[df_states['grounded'] == 2].tolist()
             groundedlist = str([int(i) for i in groundedlist])
+            attemptrebondlist = list(np.intersect1d(df_states.index[df_states['grounded'] == 0].tolist(), df_states.index[df_states['state'] == 3].tolist()))
+            attemptrebondlist = str([int(i) for i in attemptrebondlist])
             self.ground_tracker_labels["tobegroundedlist"].setText(f"ToBeGrounded: {tobegroundedlist}")
             self.ground_tracker_labels["groundedlist"].setText(f"Grounded: {groundedlist}")
+            self.ground_tracker_labels["attemptrebondlist"].setText(f"ToBeBonded: {attemptrebondlist}")
 
 #button that resets states to default/nominal
 class SetToNominal(GreyButton):
@@ -540,6 +553,7 @@ class SetToNominal(GreyButton):
         if self.ground_tracker_labels:
             self.ground_tracker_labels["tobegroundedlist"].setText(f"ToBeGrounded: {[]}")
             self.ground_tracker_labels["groundedlist"].setText(f"Grounded: {[]}")
+            self.ground_tracker_labels["attemptrebondlist"].setText(f"ToBeBonded: {[]}")
 
 #button that switches to provided window
 class HomePageButton(QPushButton):
