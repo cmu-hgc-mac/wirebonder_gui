@@ -620,9 +620,11 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
                 print('Module number for encapsulated module not found.')
 
             db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
+            db_info_data = {'encap_front': datetime.date.today()} if modules[module] == "frontside" else {'encap_back': datetime.date.today()}
 
             try:
                 await upload_PostgreSQL(pool, db_table_name, db_upload) 
+                await update_PostgreSQL(pool=pool, table_name = 'module_info', db_upload_data = db_info_data , name_col = 'module_name', part_name = module)
             except Exception as e:
                 print(f"Failed to upload data: {e}") 
 
