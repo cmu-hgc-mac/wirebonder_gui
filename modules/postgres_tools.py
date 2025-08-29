@@ -600,7 +600,7 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
                 'comment' : comment,
                 'cure_start': cure_start,
                 'temp_c': temperature,
-                'cure_temp_c': cure_temperature,
+                'cure_temp_c': float(cure_temperature),
                 'rel_hum': rel_hum,
                 'epoxy_batch': epoxy_batch,
                 }
