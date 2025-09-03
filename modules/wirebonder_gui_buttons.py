@@ -660,6 +660,7 @@ class ScrollLabel(QScrollArea):
         self.label = QLabel(content)
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.label.setWordWrap(True)
+        self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         lay.addWidget(self.label)
 
     def setText(self, text):
