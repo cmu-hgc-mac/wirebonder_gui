@@ -540,10 +540,13 @@ class EncapsPage(QMainWindow):
         self.comments= QTextEdit(self)
         self.comments.setGeometry(encap_left_align, 460, 300, 150)
 
+        self.combobox2 = QComboBox(self)
+        self.combobox2.addItems(["frontside", "backside"])
+        self.combobox2.setGeometry(15, 70, 150, 25)
         self.label2 = QLabel("Module ID:",self)
-        self.label2.setGeometry(20, 70, 150, 25)
+        self.label2.setGeometry(20, 110, 150, 25)
         self.modid = QLineEdit(self)
-        self.modid.setGeometry(20, 100, 150, 25)
+        self.modid.setGeometry(20, 140, 150, 25)
         self.scrolllabel = ScrollLabel(self)
         self.scrolllabel.setGeometry(20, 300, 250, 150)
         self.problemlabel = QLabel("This module isn't available.", self)
@@ -559,9 +562,7 @@ class EncapsPage(QMainWindow):
         addbutton = GreyButton("Clear All", 90, 25, self)
         addbutton.setGeometry(20, 220, 100, 25)
         addbutton.clicked.connect(self.clearall)
-        self.combobox2 = QComboBox(self)
-        self.combobox2.addItems(["frontside", "backside"])
-        self.combobox2.setGeometry(15, 140, 150, 25)
+        
         self.modules = {}
         self.modnos = {}
         self.async_epoxy_batch()

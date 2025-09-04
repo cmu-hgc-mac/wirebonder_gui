@@ -11,10 +11,14 @@ def create_backup_csv(data_dict):
         writer.writerow(data_dict.values())
 
 # Write query
-def get_query_write(table_name, column_names):
-    pre_query = f""" INSERT INTO {table_name} ({', '.join(column_names)}) VALUES """
+def get_query_write(table_name, column_names, check_conflict_col = None, db_upload_data = None):
+    pre_query = f""" INSERT INTO {table_name} ({', '.join(column_names)})"""
     data_placeholder = ', '.join([f"${i+1}" for i in range(len(column_names))])
-    query = f"""{pre_query} ({data_placeholder});"""
+    if check_conflict_col is not None:
+        query = f"""{pre_query}  SELECT {data_placeholder}"""
+        query += f" WHERE NOT EXISTS ( SELECT 1 FROM {table_name} WHERE {check_conflict_col} = '{db_upload_data[check_conflict_col]}'); "
+        return query
+    query = f"""{pre_query}  VALUES ({data_placeholder})"""
     return query
 
 def check_valid_module(modname):
@@ -42,9 +46,9 @@ def check_valid_module(modname):
         print(e); return False
     
 
-async def upload_PostgreSQL(pool, table_name, db_upload_data):
+async def upload_PostgreSQL(pool, table_name, db_upload_data, check_conflict_col = None):
     async with pool.acquire() as connection: 
-        query = get_query_write(table_name, db_upload_data.keys())
+        query = get_query_write(table_name, db_upload_data.keys(), check_conflict_col=check_conflict_col, db_upload_data=db_upload_data)
         try:
             await connection.execute(query, *db_upload_data.values())
             if 'module_name' in list(db_upload_data.keys()):
@@ -55,7 +59,7 @@ async def upload_PostgreSQL(pool, table_name, db_upload_data):
 def get_query_update(table_name, column_names, name_col):
     data_placeholder = ', '.join([f"{col} = ${i+1}" for i, col in enumerate(column_names)])
     pre_query = f""" UPDATE {table_name} SET {data_placeholder} WHERE """
-    query = f""" {pre_query} {name_col} = ${1+len(column_names)}; """
+    query = f""" {pre_query} {name_col} = ${1+len(column_names)} """
     return query
 
 async def update_PostgreSQL(pool, table_name, db_upload_data, name_col, part_name):
@@ -91,7 +95,7 @@ async def add_new_to_db(pool, modname, hxbname = None):
         hxbname = None if len(str(hxbname)) == 0 else str(hxbname)
         read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
             FROM module_info
-            WHERE REPLACE(module_name, '-','') = $1);"""
+            WHERE REPLACE(module_name, '-','') = $1)"""
         records = await fetch_PostgreSQL(pool, read_query, modname=modname)
         check = [dict(record) for record in records][0]
         if not check['exists']:
@@ -589,18 +593,22 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
         print('Returning false since time not provided.')
         return False
 
+    try:
+        cure_temperature = float(cure_temperature) 
+    except:
+        cure_temperature = None
     for module in modules:
-        
         if (enc != " :00" and cure_start != " :00"): 
+            db_upload_name_only = {'module_name' : module}
             db_upload = {
-                'module_name' : module,
+                'module_name': module,
                 'date_encap' : enc_date,
                 'time_encap' : enc_time,
                 'technician' : technician,
                 'comment' : comment,
                 'cure_start': cure_start,
                 'temp_c': temperature,
-                'cure_temp_c': float(cure_temperature),
+                'cure_temp_c': cure_temperature,
                 'rel_hum': rel_hum,
                 'epoxy_batch': epoxy_batch,
                 }
@@ -623,8 +631,9 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
             db_info_data = {'encap_front': datetime.date.today()} if modules[module] == "frontside" else {'encap_back': datetime.date.today()}
 
             try:
-                await upload_PostgreSQL(pool, db_table_name, db_upload) 
-                await update_PostgreSQL(pool=pool, table_name = 'module_info', db_upload_data = db_info_data , name_col = 'module_name', part_name = module)
+                await upload_PostgreSQL(pool, db_table_name, db_upload_name_only, check_conflict_col='module_name') 
+                await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
+                await update_PostgreSQL(pool, table_name = 'module_info', db_upload_data = db_info_data , name_col = 'module_name', part_name = module)
             except Exception as e:
                 print(f"Failed to upload data: {e}") 
 
