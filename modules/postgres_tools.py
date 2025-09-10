@@ -129,8 +129,8 @@ async def find_to_revisit(pool,):
             FROM module_info mi
             LEFT JOIN latest_fr_wb fw ON mi.module_no = fw.module_no
             LEFT JOIN latest_bk_wb bw ON mi.module_no = bw.module_no
-            WHERE (fw.wb_fr_marked_done = false OR fw.wb_fr_marked_done IS NULL)
-            OR (bw.wb_bk_marked_done = false OR bw.wb_bk_marked_done IS NULL)"""
+            WHERE mi.assembled IS NOT NULL AND ((fw.wb_fr_marked_done = false OR fw.wb_fr_marked_done IS NULL)
+            OR (bw.wb_bk_marked_done = false OR bw.wb_bk_marked_done IS NULL)) """
 
     records = await fetch_PostgreSQL(pool, read_query)
     if records is not None:
