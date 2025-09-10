@@ -597,15 +597,26 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
         cure_temperature = float(cure_temperature) 
     except:
         cure_temperature = None
+
     for module in modules:
+        db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
+        db_primary_key = "frencap_no" if  modules[module] == "frontside" else "bkencap_no"
+
         if (enc != " :00" and cure_start != " :00"): 
+            try:  
+                read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
+                records = await fetch_PostgreSQL(pool, read_query, modname=module)
+                comment_old = [dict(record) for record in records][0]["comment"]
+            except Exception as e:
+                comment_old = "" #"No old record"
+
             db_upload_name_only = {'module_name' : module}
             db_upload = {
                 'module_name': module,
                 'date_encap' : enc_date,
                 'time_encap' : enc_time,
                 'technician' : technician,
-                'comment' : comment,
+                'comment' : f"{comment_old}; {comment}" ,
                 'cure_start': cure_start,
                 'temp_c': temperature,
                 'cure_temp_c': cure_temperature,
@@ -627,7 +638,6 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
             except:
                 print('Module number for encapsulated module not found.')
 
-            db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
             db_info_data = {'encap_front': datetime.date.today()} if modules[module] == "frontside" else {'encap_back': datetime.date.today()}
 
             try:
@@ -638,12 +648,8 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
                 print(f"Failed to upload data: {e}") 
 
         elif cure_end != " :00": # and enc == " :00" and cure_start == " :00":
-            db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
-
             try:  
-                read_query = f"""SELECT comment
-                    FROM {db_table_name}
-                    WHERE REPLACE(module_name, '-','') = $1;"""
+                read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
                 records = await fetch_PostgreSQL(pool, read_query, modname=module)
                 comment_old = [dict(record) for record in records][0]["comment"]
 
