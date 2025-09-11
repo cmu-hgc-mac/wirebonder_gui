@@ -994,6 +994,11 @@ class MainWindow(QMainWindow):
                     self.encapspage.timestatlabel.setStyleSheet("color: blue;")
                 else:
                     self.encapspage.timestatlabel.setText("")
+                    self.encapspage.clearall()
+                    self.encapspage.start_date.setText("")
+                    self.encapspage.start_time.setText("")
+                    self.encapspage.end_date.setText("")
+                    self.encapspage.end_time.setText("")
             else: 
                 return True
         if not saved:
