@@ -622,6 +622,8 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
                 'cure_temp_c': cure_temperature,
                 'rel_hum': rel_hum,
                 'epoxy_batch': epoxy_batch,
+                'xml_gen_datetime': None,
+                'xml_upload_success': None,
                 }
             if cure_end != " :00":
                 db_upload.update({'cure_end': cure_end,})
@@ -655,6 +657,8 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
 
                 db_upload = {
                     'cure_end': cure_end,
+                    'xml_gen_datetime': None,
+                    'xml_upload_success': None,
                     'comment': f"{comment_old}; {comment}", }
                 
                 await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
