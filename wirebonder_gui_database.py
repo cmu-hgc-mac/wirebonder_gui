@@ -582,7 +582,6 @@ class EncapsPage(QMainWindow):
             modinfo_checkvar = "wb_front" if self.combobox2.currentText() == "frontside" else "wb_back"
             read_query2 = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL AND {modinfo_checkvar} IS NOT NULL) LIMIT 1) as in_info;"""
             check2 = await async_check(pool, read_query2)
-            print(read_query2)
             if check2['in_info'] is not None:
                 self.modules[modname] = self.combobox2.currentText()
                 self.modnos[modname] = check['in_info']
