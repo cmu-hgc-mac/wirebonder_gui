@@ -475,6 +475,7 @@ class EncapsPage(QMainWindow):
         label.setGeometry(10 + self.enc_date.geometry().left() + self.enc_date.geometry().width(),145+30, 40, 25)
         self.enc_time = QLineEdit(self)
         self.enc_time.setGeometry(10 + label.geometry().left() + label.geometry().width(),145+30, 150, 25)
+        self.set_to_now(self.enc_date, self.enc_time)
         nowbutton1 = GreyButton("Now", 50, 25, self)
         nowbutton1.setGeometry(10 + self.enc_time.geometry().left() + self.enc_time.geometry().width(), 145+30, 50, 25)
         nowbutton1.clicked.connect(lambda: self.set_to_now(self.enc_date, self.enc_time))
@@ -587,6 +588,7 @@ class EncapsPage(QMainWindow):
                 self.modnos[modname] = check['in_info']
                 string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
                 self.scrolllabel.setText(string)
+                self.set_to_now(self.enc_date, self.enc_time)
             else:
                 self.problemlabel.setText(f"Module not {self.combobox2.currentText()} wirebonded.")
                 self.problemlabel.show()    
@@ -617,7 +619,7 @@ class EncapsPage(QMainWindow):
         self.modnos = {}
         self.scrolllabel.setText("")
 
-    def set_to_now(self,date, time):
+    def set_to_now(self, date, time):
         now = datetime.now()
         date.setText(str(now.strftime("%Y")) + "/" + str(now.strftime("%m")) + "/" + str(now.strftime("%d")))
         time.setText(str(now.strftime("%H"))+":"+str(now.strftime("%M")))
