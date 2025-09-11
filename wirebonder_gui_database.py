@@ -1,6 +1,6 @@
 import asyncio, asyncpg, sys, math
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt,  QPoint, QTimer
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont, QBrush
@@ -477,11 +477,6 @@ class EncapsPage(QMainWindow):
         self.techname = QLineEdit(self)
         self.techname.setGeometry(encap_left_align,130+25, 150, 25)
 
-        label = QLabel("Epoxy Batch:", self)
-        label.setGeometry(40 + self.techname.geometry().left() + self.techname.geometry().width(), 130, 150, 25)
-        self.epoxy_batch = QLineEdit(self)
-        self.epoxy_batch.setText("Waiting for batch...")
-        self.epoxy_batch.setGeometry(40 + self.techname.geometry().left() + self.techname.geometry().width() ,130+25, 150, 25)
 
         label = QLabel("Relative Humidity:",self)
         label.setGeometry(encap_left_align,165+30-5, 150, 25)
@@ -514,6 +509,27 @@ class EncapsPage(QMainWindow):
 
         
 
+        label = QLabel("Cure duration:", self)
+        label.setGeometry(encap_left_align, 325, 100, 25)
+        self.time_enter = QLineEdit(self)
+        self.time_enter.setGeometry(10 + label.geometry().left() + label.geometry().width(), 325, 45, 25)
+        self.time_enter.textChanged.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), None))
+        time_type = QLabel("", self)
+        time_type.setGeometry(2 + self.time_enter.geometry().left() + self.time_enter.geometry().width(), 325, 40, 25)
+        
+
+        minbutton = GreyButton("mins", 50, 25, self)
+        minbutton.setGeometry(10 + time_type.geometry().left() + time_type.geometry().width(), 325, 50, 25)
+        minbutton.clicked.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), minbutton.button_text))
+
+        hrbutton = GreyButton("hrs", 50, 25, self)
+        hrbutton.setGeometry(10 + minbutton.geometry().left() + minbutton.geometry().width(), 325, 50, 25)
+        hrbutton.clicked.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), hrbutton.button_text))
+
+        daybutton = GreyButton("days", 50, 25, self)
+        daybutton.setGeometry(10 + hrbutton.geometry().left() + hrbutton.geometry().width(), 325, 50, 25)
+        daybutton.clicked.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), daybutton.button_text))
+
         # sametempbutton = GreyButton("Same as Room", 80, 25, self)
         # sametempbutton.setGeometry(5 + self.curetemperature.geometry().left() + self.curetemperature.geometry().width(), 280+30-5, 80, 25)
         # sametempbutton.clicked.connect(lambda: self.same_as_room(self.temperature, self.curetemperature))
@@ -521,7 +537,7 @@ class EncapsPage(QMainWindow):
         # labelline2 = QLabel("----------------------------------------------------------------------", self)
         # labelline2.setGeometry(encap_left_align, 335, 500, 25)
 
-        label = QLabel("Cure <b>end</b>:", self)
+        label = QLabel("Cure <b>end</b>: **", self)
         label.setGeometry(encap_left_align,360, 400, 25)
         label = QLabel("Date: ", self)
         label.setGeometry(encap_left_align,385, 40, 25)
@@ -566,6 +582,12 @@ class EncapsPage(QMainWindow):
         addbutton.setGeometry(20, 220, 100, 25)
         addbutton.clicked.connect(self.clearall)
         
+        label = QLabel("Epoxy Batch:", self)
+        label.setGeometry(40 + self.techname.geometry().left() + self.techname.geometry().width(), 130, 150, 25)
+        self.epoxy_batch = QLineEdit(self)
+        self.epoxy_batch.setText("Waiting for batch...")
+        self.epoxy_batch.setGeometry(40 + self.techname.geometry().left() + self.techname.geometry().width() ,130+25, 150, 25)
+
         self.modules = {}
         self.modnos = {}
         self.async_epoxy_batch()
@@ -625,6 +647,29 @@ class EncapsPage(QMainWindow):
         now = datetime.now()
         date.setText(str(now.strftime("%Y")) + "/" + str(now.strftime("%m")) + "/" + str(now.strftime("%d")))
         time.setText(str(now.strftime("%H"))+":"+str(now.strftime("%M")))
+
+    def get_end_time(self, end_date, end_time, time_type, start_date, start_time, duration = None, unit = None):
+        if unit:
+            time_type.setText(unit)
+        try:
+            duration = float(duration.strip())
+            okgo = True
+        except:
+            okgo = False
+
+        if (duration and start_date.strip() and start_time.strip()) and time_type.text() and okgo:
+            try:
+                base_time = datetime.strptime(f"{start_date.strip()} {start_time.strip()}", "%Y/%m/%d %H:%M")
+                if time_type.text() in ("mins", "minutes"):
+                    base_time += timedelta(minutes=duration)
+                elif time_type.text() in ("hrs", "hours"):
+                    base_time += timedelta(hours=duration)
+                elif time_type.text() == "days":
+                    base_time += timedelta(days=duration)
+                end_date.setText(str(base_time.strftime("%Y")) + "/" + str(base_time.strftime("%m")) + "/" + str(base_time.strftime("%d")))
+                end_time.setText(str(base_time.strftime("%H"))+":"+str(base_time.strftime("%M")))
+            except:
+                raise ValueError("Unsupported unit. Use 'mins', 'hrs', or 'days'.")
 
 #overarching window
 class MainWindow(QMainWindow):
