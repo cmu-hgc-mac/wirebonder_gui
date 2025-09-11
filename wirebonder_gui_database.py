@@ -516,7 +516,8 @@ class EncapsPage(QMainWindow):
         self.time_enter.textChanged.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), None))
         time_type = QLabel("", self)
         time_type.setGeometry(2 + self.time_enter.geometry().left() + self.time_enter.geometry().width(), 325, 40, 25)
-        
+        self.start_time.textChanged.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), None))
+        self.start_date.textChanged.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), None))
 
         minbutton = GreyButton("mins", 50, 25, self)
         minbutton.setGeometry(10 + time_type.geometry().left() + time_type.geometry().width(), 325, 50, 25)
@@ -547,9 +548,9 @@ class EncapsPage(QMainWindow):
         label.setGeometry(10 + self.end_date.geometry().left() + self.end_date.geometry().width(),385, 40, 25)
         self.end_time = QLineEdit(self)
         self.end_time.setGeometry(10 + label.geometry().left() + label.geometry().width(),385, 150, 25)
-        nowbutton3 = GreyButton("Now", 50, 25, self)
-        nowbutton3.setGeometry(10 + self.end_time.geometry().left() + self.end_time.geometry().width(), 385, 50, 25)
-        nowbutton3.clicked.connect(lambda: self.set_to_now(self.end_date, self.end_time))
+        # nowbutton3 = GreyButton("Now", 50, 25, self)
+        # nowbutton3.setGeometry(10 + self.end_time.geometry().left() + self.end_time.geometry().width(), 385, 50, 25)
+        # nowbutton3.clicked.connect(lambda: self.set_to_now(self.end_date, self.end_time))
         
         labelline3 = QLabel("----------------------------------------------------------------------", self)
         labelline3.setGeometry(encap_left_align, 410, 500, 25)
