@@ -649,21 +649,24 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
             except Exception as e:
                 print(f"Failed to upload data: {e}") 
 
-        elif cure_end != " :00": # and enc == " :00" and cure_start == " :00":
+        elif comment: 
             try:  
                 read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
                 records = await fetch_PostgreSQL(pool, read_query, modname=module)
                 comment_old = [dict(record) for record in records][0]["comment"]
 
                 db_upload = {
-                    'cure_end': cure_end,
                     'xml_gen_datetime': None,
                     'xml_upload_success': None,
                     'comment': f"{comment_old}; {comment}", }
                 
+                if cure_end != " :00": # and enc == " :00" and cure_start == " :00":
+                    db_upload.update({'cure_end': cure_end,})
+                
                 await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
             except Exception as e:
                 print(f"Failed to update data: {e}") 
+                return False
         else:
             print("Something happened. Data didn't save")
             return False
