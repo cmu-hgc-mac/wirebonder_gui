@@ -7,6 +7,7 @@ from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont, QBrush
 from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox, QMessageBox, QPushButton
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtGui import QDoubleValidator
 import numpy as np
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
                                     upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
@@ -180,6 +181,9 @@ class FrontPage(QMainWindow):
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
+        validator = QDoubleValidator(0.0, 9999.9999, 2, self)  
+        validator.setNotation(QDoubleValidator.StandardNotation)
+
         lab6 = QLabel("<b>Pull Test (optional):</b>", self.widget)
         lab6.setGeometry(20,735, 200, 25)
         lab6 = QLabel("Technician CERN ID:", self.widget)
@@ -190,13 +194,15 @@ class FrontPage(QMainWindow):
         lab4.setGeometry(20,980,150,50)
         self.pull_comments = QTextEdit(self.widget)
         self.pull_comments.setGeometry(20, 1025, 150, 150)
-        lab4 = QLabel("Mean:", self.widget)
+        lab4 = QLabel("Mean (g):", self.widget)
         lab4.setGeometry(20,800,150,50)
         self.mean = QLineEdit(self.widget)
         self.mean.setGeometry(20, 840, 150, 25)
+        self.mean.setValidator(validator)
         lab4 = QLabel("Standard deviation:", self.widget)
         lab4.setGeometry(20,860,150,50)
         self.std = QLineEdit(self.widget)
+        self.std.setValidator(validator)
         self.std.setGeometry(20, 900, 150, 25)
         lab4 = QLabel("Date and time:", self.widget)
         lab4.setGeometry(20,925,150,50)
@@ -472,6 +478,9 @@ class EncapsPage(QMainWindow):
         labelline1 = QLabel("----------------------------------------------------------------------", self)
         labelline1.setGeometry(encap_left_align, 70+30-5, 500, 25)
 
+        validator = QDoubleValidator(0.0, 9999.99, 2, self)  
+        validator.setNotation(QDoubleValidator.StandardNotation)
+
         lab2 = QLabel("Technician CERN ID:", self)
         lab2.setGeometry(encap_left_align, 130, 150, 25)
         self.techname = QLineEdit(self)
@@ -482,16 +491,19 @@ class EncapsPage(QMainWindow):
         label.setGeometry(encap_left_align,165+30-5, 150, 25)
         self.rel_hum = QLineEdit(self)
         self.rel_hum.setGeometry(encap_left_align,190+30-5, 150, 25)
+        self.rel_hum.setValidator(validator)
     
         label = QLabel("Temperature (C):", self)
         label.setGeometry(40 + self.rel_hum.geometry().left() + self.rel_hum.geometry().width(),165+30-5, 150, 25)
         self.temperature = QLineEdit(self)
         self.temperature.setGeometry(40 + self.rel_hum.geometry().left() + self.rel_hum.geometry().width(), 190+30-5, 150, 25)
+        self.temperature.setValidator(validator)
 
         label = QLabel("Cure Temperature (C):", self)
         label.setGeometry(30 + self.temperature.geometry().left() + self.temperature.geometry().width(),165+30-5, 150, 25)
         self.curetemperature = QLineEdit(self)
         self.curetemperature.setGeometry(30 + self.temperature.geometry().left() + self.temperature.geometry().width(),190+30-5, 150, 25)
+        self.curetemperature.setValidator(validator)
 
         label = QLabel("Cure <b>start</b> (YYYY/MM/DD, HH:MM in 24h time):", self)
         label.setGeometry(encap_left_align,235+30-5, 400, 25)
@@ -512,7 +524,8 @@ class EncapsPage(QMainWindow):
         label = QLabel("Cure duration:", self)
         label.setGeometry(encap_left_align, 325, 100, 25)
         self.time_enter = QLineEdit(self)
-        self.time_enter.setGeometry(10 + label.geometry().left() + label.geometry().width(), 325, 45, 25)
+        self.time_enter.setGeometry(10 + label.geometry().left() + label.geometry().width(), 325, 50, 25)
+        self.time_enter.setValidator(validator)
         self.time_enter.textChanged.connect(lambda: self.get_end_time(self.end_date, self.end_time, time_type, self.start_date.text(), self.start_time.text(), self.time_enter.text(), None))
         time_type = QLabel("", self)
         time_type.setGeometry(2 + self.time_enter.geometry().left() + self.time_enter.geometry().width(), 325, 40, 25)
@@ -703,14 +716,10 @@ class EncapsPage(QMainWindow):
     def get_end_time(self, end_date, end_time, time_type, start_date, start_time, duration = None, unit = None):
         if unit:
             time_type.setText(unit)
-        try:
-            duration = float(duration.strip())
-            okgo = True
-        except:
-            okgo = False
 
-        if (duration and start_date.strip() and start_time.strip()) and time_type.text() and okgo:
+        if (duration and start_date.strip() and start_time.strip()) and time_type.text():
             try:
+                duration = float(duration.strip())
                 base_time = datetime.strptime(f"{start_date.strip()} {start_time.strip()}", "%Y/%m/%d %H:%M")
                 if time_type.text() in ("mins", "minutes"):
                     base_time += timedelta(minutes=duration)
@@ -722,6 +731,10 @@ class EncapsPage(QMainWindow):
                 end_time.setText(str(base_time.strftime("%H"))+":"+str(base_time.strftime("%M")))
             except:
                 raise ValueError("Unsupported unit. Use 'mins', 'hrs', or 'days'.")
+        elif duration == "":
+            end_date.setText("")
+            end_time.setText("")
+
 
 #overarching window
 class MainWindow(QMainWindow):
