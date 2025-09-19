@@ -435,13 +435,18 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
     
     # checkcols = ['list_grounded_cells', 'list_unbonded_cells', 'cell_no', 'bond_count_for_cell', 'bond_type', 'wedge_id' ,'spool_batch']
     lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
+    
+    for t in ['wedge_id', 'spool_batch', 'technician', 'comment']:
+        lastsave_fwb_new[t] = None if not lastsave_fwb_new[t] else lastsave_fwb_new[t]
+        lastsave_fwb[t]     = None if not lastsave_fwb[t]     else lastsave_fwb[t]
+    
     dict_unchanged = lastsave_fwb_new == lastsave_fwb
     if dict_unchanged:
         print(f"Data for {modname} unchanged. No new entry saved for front wirebond.")
         return True, lastsave_fwb
     else:
         if home_seq: 
-            print("Either save or reset current changes to exit.")
+            print("Either save or reset current front wirebond changes to exit.")
             return False, lastsave_fwb
         db_table_name = 'front_wirebond'
         try:
@@ -508,7 +513,7 @@ async def upload_back_wirebond(pool, modname, module_no, technician, comment, we
         return True, lastsave_bwb
     else:
         if home_seq: 
-            print("Either save or reset current changes to exit.")
+            print("Either save or reset current back wirebond changes to exit.")
             return False, lastsave_bwb
         db_table_name = 'back_wirebond'
         try:
@@ -559,7 +564,7 @@ async def upload_bond_pull_test(pool, modname, module_no, avg, sd, technician, c
         return True, lastsave_fpi
     else:
         if home_seq: 
-            print("Either save or reset current changes to exit.")
+            print("Either save or reset current bond pull test changes to exit.")
             return False, lastsave_fpi
         db_table_name = 'bond_pull_test'
         try:

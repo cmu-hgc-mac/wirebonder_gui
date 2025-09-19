@@ -1002,6 +1002,7 @@ class MainWindow(QMainWindow):
                 self.widget.addWidget(backpage)
                 self.widget.setCurrentWidget(backpage)
             self.label3.setText(self.modname)
+            self.label3.setTextInteractionFlags(Qt.TextSelectableByMouse)
             self.label3.setGeometry(self.save_button.geometry().left()+ self.save_button.width+20, 0, 160, 25)
             self.label3.show()
 
