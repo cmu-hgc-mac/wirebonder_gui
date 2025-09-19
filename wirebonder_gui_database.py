@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget,  QLabel, QTextEdit, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt,  QPoint, QTimer
 from PyQt5.QtGui import QPainter, QPen,  QPixmap, QFont, QBrush
-from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox
+from PyQt5.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QComboBox, QMessageBox, QPushButton
 from qasync import QEventLoop, asyncSlot
 from PyQt5.QtGui import QCloseEvent
 import numpy as np
@@ -563,6 +563,7 @@ class EncapsPage(QMainWindow):
         self.combobox2 = QComboBox(self)
         self.combobox2.addItems(["frontside", "backside"])
         self.combobox2.setGeometry(15, 70, 150, 25)
+        self.combobox2.currentTextChanged.connect(self.switch_encap_side)
         self.label2 = QLabel("Module ID:",self)
         self.label2.setGeometry(20, 110, 150, 25)
         self.modid = QLineEdit(self)
@@ -596,30 +597,80 @@ class EncapsPage(QMainWindow):
     def run_async_function(self):
         asyncio.ensure_future(self.async_task())
     
+    def switch_encap_side(self, value):
+        if self.encapside != self.combobox2.currentText():
+            msg = QMessageBox()
+            msg.setWindowTitle("Do you want to change sides?")
+            msg.setText(f"All listed modules will be changed to {self.combobox2.currentText()}.")
+            msg.setIcon(QMessageBox.Question)
+            option_switch, option_keep = QPushButton(f"Switch all modules to {self.combobox2.currentText()}"), QPushButton(f"Continue with {self.encapside}")
+            msg.addButton(option_switch, QMessageBox.ActionRole)
+            msg.addButton(option_keep, QMessageBox.ActionRole)
+            msg.exec_()
+
+            clicked_button = msg.clickedButton()
+            if clicked_button == option_switch:
+                self.encapside = self.combobox2.currentText()
+                self.modules = {modname: self.combobox2.currentText() for modname in self.modules.keys()}
+                string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
+                self.scrolllabel.setText(string)
+            elif clicked_button == option_keep:
+                self.combobox2.setCurrentIndex( self.combobox2.findText( self.encapside) )                        
+
     @asyncSlot()
     async def async_epoxy_batch(self):
         result = await read_encaps(pool)  
         self.epoxy_batch.setText(result["epoxy_batch"])
 
-    async def check_mod_exists_encap(self,modname):
-        read_query = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL) LIMIT 1) as in_info;"""
-        check = await async_check(pool, read_query)
-        if check['in_info'] is not None:
-            modinfo_checkvar = "wb_front" if self.combobox2.currentText() == "frontside" else "wb_back"
-            read_query2 = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL AND {modinfo_checkvar} IS NOT NULL) LIMIT 1) as in_info;"""
-            check2 = await async_check(pool, read_query2)
-            if check2['in_info'] is not None:
-                self.modules[modname] = self.combobox2.currentText()
-                self.modnos[modname] = check['in_info']
-                string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
-                self.scrolllabel.setText(string)
-                self.set_to_now(self.enc_date, self.enc_time)
-            else:
-                self.problemlabel.setText(f"Module not {self.combobox2.currentText()} wirebonded.")
-                self.problemlabel.show()    
+    def show_encap_popup(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("Pick a side")
+        msg.setText("Which side is being encapsulated?")
+        msg.setIcon(QMessageBox.Question)
+        option_fr, option_bk = QPushButton("frontside"), QPushButton("backside")
+        msg.addButton(option_fr, QMessageBox.ActionRole)
+        msg.addButton(option_bk, QMessageBox.ActionRole)
+        msg.exec_()
+
+        clicked_button = msg.clickedButton()
+        if clicked_button == None:
+            return None
+        elif clicked_button == option_fr:
+            return "frontside"
+        elif clicked_button == option_bk:
+            return "backside"
         else:
-            self.problemlabel.setText(f"This module is not available.")
+            return None
+
+    async def check_mod_exists_encap(self, modname):
+        if not self.modules:
+            self.encapside = None
+            self.encapside = self.show_encap_popup()
+
+        if self.encapside:
+            self.combobox2.setCurrentIndex( self.combobox2.findText( self.encapside) )
+            read_query = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL) LIMIT 1) as in_info;"""
+            check = await async_check(pool, read_query)
+            if check['in_info'] is not None:
+                modinfo_checkvar = "wb_front" if self.combobox2.currentText() == "frontside" else "wb_back"
+                read_query2 = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL AND {modinfo_checkvar} IS NOT NULL) LIMIT 1) as in_info;"""
+                check2 = await async_check(pool, read_query2)
+                if check2['in_info'] is not None:
+                    self.modules[modname] = self.combobox2.currentText()
+                    self.modnos[modname] = check['in_info']
+                    string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
+                    self.scrolllabel.setText(string)
+                    self.set_to_now(self.enc_date, self.enc_time)
+                else:
+                    self.problemlabel.setText(f"Module not {self.combobox2.currentText()} wirebonded.")
+                    self.problemlabel.show()    
+            else:
+                self.problemlabel.setText(f"This module is not available.")
+                self.problemlabel.show()
+        else:
+            self.problemlabel.setText(f"Please pick a side for encapsulation.")
             self.problemlabel.show()
+
 
     def add(self):
         self.problemlabel.hide()
