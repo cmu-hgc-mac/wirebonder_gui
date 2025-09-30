@@ -437,7 +437,7 @@ class EncapsPage(QMainWindow):
         encap_space = 7
         encap_left_align = 300
         self.pageid = "encapspage"
-        self.encapside = None
+        self.encapside = "frontside"
         self.setWindowTitle("Tri-State Buttons")
         self.setGeometry(0, 0, w_width, w_height)
 
