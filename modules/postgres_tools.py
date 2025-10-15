@@ -123,14 +123,14 @@ async def find_to_revisit(pool,):
     bad_modules = {}
 
     read_query = f"""WITH 
-            latest_fr_wb AS (SELECT DISTINCT ON (module_name) * FROM front_wirebond ORDER BY module_name DESC, (date_bond + time_bond) DESC),
-            latest_bk_wb AS (SELECT DISTINCT ON (module_name) * FROM back_wirebond ORDER BY module_name DESC, (date_bond + time_bond) DESC)
-            SELECT mi.module_name, fw.wb_fr_marked_done, bw.wb_bk_marked_done
+            latest_fr_wb AS (SELECT DISTINCT ON (REPLACE(module_name, '-','') AS module_name) * FROM front_wirebond ORDER BY REPLACE(module_name, '-','') DESC, (date_bond + time_bond) DESC),
+            latest_bk_wb AS (SELECT DISTINCT ON (REPLACE(module_name, '-','') AS module_name) * FROM back_wirebond ORDER BY REPLACE(module_name, '-','') DESC, (date_bond + time_bond) DESC)
+            SELECT REPLACE(mi.module_name, '-',''), fw.wb_fr_marked_done, bw.wb_bk_marked_done
             FROM module_info mi
-            LEFT JOIN latest_fr_wb fw ON mi.module_name = fw.module_name
-            LEFT JOIN latest_bk_wb bw ON mi.module_name = bw.module_name
+            LEFT JOIN latest_fr_wb fw ON REPLACE(mi.module_name, '-','') = REPLACE(fw.module_name, '-','')
+            LEFT JOIN latest_bk_wb bw ON REPLACE(mi.module_name, '-','') = REPLACE(bw.module_name, '-','')
             WHERE mi.assembled IS NOT NULL AND ((fw.wb_fr_marked_done = false OR fw.wb_fr_marked_done IS NULL)
-            OR (bw.wb_bk_marked_done = false OR bw.wb_bk_marked_done IS NULL)) """
+            OR (bw.wb_bk_marked_done = false OR bw.wb_bk_marked_done IS NULL)) ORDER BY REPLACE(mi.module_name, '-','') """
 
     records = await fetch_PostgreSQL(pool, read_query)
     if records is not None:
