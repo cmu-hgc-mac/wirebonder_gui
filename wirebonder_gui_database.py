@@ -730,8 +730,8 @@ class EncapsPage(QMainWindow):
                     base_time += timedelta(days=duration)
                 end_date.setText(str(base_time.strftime("%Y")) + "/" + str(base_time.strftime("%m")) + "/" + str(base_time.strftime("%d")))
                 end_time.setText(str(base_time.strftime("%H"))+":"+str(base_time.strftime("%M")))
-            except:
-                raise ValueError("Unsupported unit. Use 'mins', 'hrs', or 'days'.")
+            except ValueError:
+                None ### do nothing. In the middle of typing a new value, the formatting is unsupported and will throw an error. (previously: raise ValueError("Unsupported unit. Use 'mins', 'hrs', or 'days'.")
         elif duration == "":
             end_date.setText("")
             end_time.setText("")
