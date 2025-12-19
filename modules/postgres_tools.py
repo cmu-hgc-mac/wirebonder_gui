@@ -93,7 +93,7 @@ async def fetch_PostgreSQL(pool, query, modname = None):
 async def add_new_to_db(pool, modname, hxbname = None):
     if len(str(modname)) != 0:
         hxbname = None if len(str(hxbname)) == 0 else str(hxbname)
-        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+        read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','') AS module_name
             FROM module_info
             WHERE REPLACE(module_name, '-','') = $1)"""
         records = await fetch_PostgreSQL(pool, read_query, modname=modname)
@@ -125,7 +125,7 @@ async def find_to_revisit(pool,):
     read_query = f"""WITH 
             latest_fr_wb AS (SELECT DISTINCT ON (module_name) * FROM front_wirebond ORDER BY module_name DESC, (date_bond + time_bond) DESC),
             latest_bk_wb AS (SELECT DISTINCT ON (module_name) * FROM back_wirebond ORDER BY module_name DESC, (date_bond + time_bond) DESC)
-            SELECT REPLACE(mi.module_name, '-',''), fw.wb_fr_marked_done, bw.wb_bk_marked_done
+            SELECT REPLACE(mi.module_name, '-','') AS module_name, fw.wb_fr_marked_done, bw.wb_bk_marked_done
             FROM module_info mi
             LEFT JOIN latest_fr_wb fw ON REPLACE(mi.module_name, '-','') = REPLACE(fw.module_name, '-','')
             LEFT JOIN latest_bk_wb bw ON REPLACE(mi.module_name, '-','') = REPLACE(bw.module_name, '-','')
@@ -196,7 +196,7 @@ async def read_front_db(pool, modname, df_pad_map):
     front_encaps_info = {'technician': None, 'comment': None}
 
     #read from front_wirebond to see if there is anything in it for this module
-    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','') AS module_name
         FROM front_wirebond WHERE REPLACE(module_name, '-','') = $1);"""
     records = await fetch_PostgreSQL(pool, read_query, modname=modname)
     check = [dict(record) for record in records][0]
@@ -266,7 +266,7 @@ async def read_front_db(pool, modname, df_pad_map):
 #read backside wirebonder information
 async def read_back_db(pool, modname, df_backside_mbites_pos):
     #check if info on this module already exists
-    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','') AS module_name
         FROM back_wirebond
         WHERE REPLACE(module_name, '-','') = $1);"""
     records = await fetch_PostgreSQL(pool, read_query, modname=modname)
@@ -331,7 +331,7 @@ async def read_back_db(pool, modname, df_backside_mbites_pos):
 #read pull test information
 async def read_pull_db(pool, modname):
     #check if info already exists
-    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','')
+    read_query = f"""SELECT EXISTS(SELECT REPLACE(module_name, '-','') AS module_name
         FROM bond_pull_test
         WHERE REPLACE(module_name, '-','') = $1);"""
     records = await fetch_PostgreSQL(pool, read_query, modname=modname)
