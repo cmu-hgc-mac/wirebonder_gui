@@ -670,11 +670,12 @@ class EncapsPage(QMainWindow):
                 read_query2 = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL AND {modinfo_checkvar} IS NOT NULL) LIMIT 1) as in_info;"""
                 check2 = await async_check(pool, read_query2)
                 if check2['in_info'] is not None:
+                    if self.scrolllabel.label.text() == "": self.set_to_now(self.enc_date, self.enc_time)
                     self.modules[modname] = self.combobox2.currentText()
                     self.modnos[modname] = check['in_info']
                     string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
                     self.scrolllabel.setText(string)
-                    self.set_to_now(self.enc_date, self.enc_time)
+                    
                 else:
                     self.problemlabel.setText(f"Module not {self.combobox2.currentText()} wirebonded.")
                     self.problemlabel.show()    
