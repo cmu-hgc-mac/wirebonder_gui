@@ -604,77 +604,79 @@ async def upload_encaps(pool, modules, modnos, technician, enc, cure_start, cure
         cure_temperature = None
 
     for module in modules:
-        db_table_name = "front_encap" if modules[module] == "frontside" else "back_encap"
-        db_primary_key = "frencap_no" if  modules[module] == "frontside" else "bkencap_no"
+        encap_types = ['frontside', 'backside'] if modules[module] == "BOTHsides" else [modules[module]]
+        for encap_type in encap_types:
+            db_table_name = "front_encap" if encap_type == "frontside" else "back_encap"
+            db_primary_key = "frencap_no" if  encap_type == "frontside" else "bkencap_no"
 
-        if (enc != " :00" and cure_start != " :00"): 
-            try:  
-                read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
-                records = await fetch_PostgreSQL(pool, read_query, modname=module)
-                comment_old = [dict(record) for record in records][0]["comment"]
-            except Exception as e:
-                comment_old = "" #"No old record"
+            if (enc != " :00" and cure_start != " :00"): 
+                try:  
+                    read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
+                    records = await fetch_PostgreSQL(pool, read_query, modname=module)
+                    comment_old = [dict(record) for record in records][0]["comment"]
+                except Exception as e:
+                    comment_old = "" #"No old record"
 
-            db_upload_name_only = {'module_name' : module}
-            db_upload = {
-                'module_name': module,
-                'date_encap' : enc_date,
-                'time_encap' : enc_time,
-                'technician' : technician,
-                'comment' : f"{comment_old}; {comment}" ,
-                'cure_start': cure_start,
-                'temp_c': temperature,
-                'cure_temp_c': cure_temperature,
-                'rel_hum': rel_hum,
-                'epoxy_batch': epoxy_batch,
-                'xml_gen_datetime': None,
-                'xml_upload_success': None,
-                }
-            if cure_end != " :00":
-                db_upload.update({'cure_end': cure_end,})
-
-            try:  #get module number
-                db_upload.update({'module_no' : modnos[module]})
-                # read_query = f"""SELECT module_no
-                #     FROM module_info
-                #     WHERE REPLACE(module_name, '-','') = '{module}';"""
-                # records = await fetch_PostgreSQL(pool, read_query)
-                # module_no = [dict(record) for record in records][0]["module_no"]
-                # db_upload.update({'module_no' : int(module_no),})
-
-            except:
-                print('Module number for encapsulated module not found.')
-
-            db_info_data = {'encap_front': datetime.date.today()} if modules[module] == "frontside" else {'encap_back': datetime.date.today()}
-
-            try:
-                await upload_PostgreSQL(pool, db_table_name, db_upload_name_only, check_conflict_col='module_name') 
-                await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
-                await update_PostgreSQL(pool, table_name = 'module_info', db_upload_data = db_info_data , name_col = 'module_name', part_name = module)
-            except Exception as e:
-                print(f"Failed to upload data: {e}") 
-
-        elif comment: 
-            try:  
-                read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
-                records = await fetch_PostgreSQL(pool, read_query, modname=module)
-                comment_old = [dict(record) for record in records][0]["comment"]
-
+                db_upload_name_only = {'module_name' : module}
                 db_upload = {
+                    'module_name': module,
+                    'date_encap' : enc_date,
+                    'time_encap' : enc_time,
+                    'technician' : technician,
+                    'comment' : f"{comment_old}; {comment}" ,
+                    'cure_start': cure_start,
+                    'temp_c': temperature,
+                    'cure_temp_c': cure_temperature,
+                    'rel_hum': rel_hum,
+                    'epoxy_batch': epoxy_batch,
                     'xml_gen_datetime': None,
                     'xml_upload_success': None,
-                    'comment': f"{comment_old}; {comment}", }
-                
-                if cure_end != " :00": # and enc == " :00" and cure_start == " :00":
+                    }
+                if cure_end != " :00":
                     db_upload.update({'cure_end': cure_end,})
-                
-                await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
-            except Exception as e:
-                print(f"Failed to update data: {e}") 
+
+                try:  #get module number
+                    db_upload.update({'module_no' : modnos[module]})
+                    # read_query = f"""SELECT module_no
+                    #     FROM module_info
+                    #     WHERE REPLACE(module_name, '-','') = '{module}';"""
+                    # records = await fetch_PostgreSQL(pool, read_query)
+                    # module_no = [dict(record) for record in records][0]["module_no"]
+                    # db_upload.update({'module_no' : int(module_no),})
+
+                except:
+                    print('Module number for encapsulated module not found.')
+
+                db_info_data = {'encap_front': datetime.date.today()} if encap_type == "frontside" else {'encap_back': datetime.date.today()}
+
+                try:
+                    await upload_PostgreSQL(pool, db_table_name, db_upload_name_only, check_conflict_col='module_name') 
+                    await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
+                    await update_PostgreSQL(pool, table_name = 'module_info', db_upload_data = db_info_data , name_col = 'module_name', part_name = module)
+                except Exception as e:
+                    print(f"Failed to upload data: {e}") 
+
+            elif comment: 
+                try:  
+                    read_query = f"""SELECT comment FROM {db_table_name} WHERE REPLACE(module_name, '-','') = $1 ORDER BY {db_primary_key} DESC;"""
+                    records = await fetch_PostgreSQL(pool, read_query, modname=module)
+                    comment_old = [dict(record) for record in records][0]["comment"]
+
+                    db_upload = {
+                        'xml_gen_datetime': None,
+                        'xml_upload_success': None,
+                        'comment': f"{comment_old}; {comment}", }
+                    
+                    if cure_end != " :00": # and enc == " :00" and cure_start == " :00":
+                        db_upload.update({'cure_end': cure_end,})
+                    
+                    await update_PostgreSQL(pool, db_table_name, db_upload, name_col = 'module_name', part_name = module)
+                except Exception as e:
+                    print(f"Failed to update data: {e}") 
+                    return False
+            else:
+                print("Something happened. Data didn't save")
                 return False
-        else:
-            print("Something happened. Data didn't save")
-            return False
 
     create_backup_csv(data_dict = db_upload)
     return True 

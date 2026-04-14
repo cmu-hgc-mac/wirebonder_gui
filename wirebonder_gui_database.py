@@ -575,7 +575,7 @@ class EncapsPage(QMainWindow):
         self.comments.setGeometry(encap_left_align, 460, 300, 150)
 
         self.combobox2 = QComboBox(self)
-        self.combobox2.addItems(["frontside", "backside"])
+        self.combobox2.addItems(["BOTHsides", "frontside", "backside"])
         self.combobox2.setGeometry(15, 70, 150, 25)
         self.combobox2.currentTextChanged.connect(self.switch_encap_side)
         self.label2 = QLabel("Module ID:",self)
@@ -641,9 +641,10 @@ class EncapsPage(QMainWindow):
         msg.setWindowTitle("Pick a side")
         msg.setText("Which side is being encapsulated?")
         msg.setIcon(QMessageBox.Question)
-        option_fr, option_bk = QPushButton("frontside"), QPushButton("backside")
+        option_fr, option_bk, option_both = QPushButton("frontside"), QPushButton("backside"), QPushButton("BOTHsides")
         msg.addButton(option_fr, QMessageBox.ActionRole)
         msg.addButton(option_bk, QMessageBox.ActionRole)
+        msg.addButton(option_both, QMessageBox.ActionRole)
         msg.exec_()
 
         clicked_button = msg.clickedButton()
@@ -653,6 +654,8 @@ class EncapsPage(QMainWindow):
             return "frontside"
         elif clicked_button == option_bk:
             return "backside"
+        elif clicked_button == option_both:
+            return "BOTHsides"
         else:
             return None
 
@@ -891,9 +894,9 @@ class MainWindow(QMainWindow):
         self.bad_modules = await find_to_revisit(pool)
         for module in self.bad_modules:
             mod_str = module + ' '
-            if not self.bad_modules[module][0]: #true = frontside done
+            if not self.bad_modules[module][0]: #true = frontside wirebonding done
                 mod_str = mod_str + "fr "
-            if not self.bad_modules[module][1]: # true = backside done
+            if not self.bad_modules[module][1]: # true = backside wirebonding done
                 mod_str = mod_str + " bk"
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
