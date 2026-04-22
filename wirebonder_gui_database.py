@@ -10,7 +10,7 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtGui import QDoubleValidator
 import numpy as np
 from modules.postgres_tools import (fetch_PostgreSQL, read_from_db, read_encaps, upload_front_wirebond, check_valid_module,
-                                    upload_back_wirebond, upload_bond_pull_test, find_to_revisit, upload_encaps, add_new_to_db)
+                                    upload_back_wirebond, upload_bond_pull_test, find_to_revisit, find_to_rebond, upload_encaps, add_new_to_db)
 from modules.wirebonder_gui_buttons import (Hex, HexWithButtons, WedgeButton, GreyButton, SetToNominal, ResetButton, rotate_point,
                                             SaveButton, ResetButton2, HalfHexWithButtons, HalfHex, GreyCircle, HomePageButton, ScrollLabel)
 import geometries.module_type_at_mac as mod_type_mac
@@ -747,7 +747,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         #first, display place to input module name
         space = 7
-        left_align = int(w_width/3)
+        left_align = int((w_width - 620) / 2)
         labelll = QLabel("<b>Multi-module Encapsulation:</b>", self)
         labelll.setGeometry(left_align, int(w_height/10), 350, 25)
 
@@ -818,6 +818,10 @@ class MainWindow(QMainWindow):
         self.scrolllabel.setGeometry(left_align, space + self.addbutton.geometry().top() + self.addbutton.geometry().height(), 300, 300)
         self.scrolllabel.setText("Waiting for modules...")
 
+        self.scrolllabel2 = ScrollLabel(self)
+        self.scrolllabel2.setGeometry(left_align + 320, space + self.addbutton.geometry().top() + self.addbutton.geometry().height(), 300, 300)
+        self.scrolllabel2.setText("Waiting for modules...")
+
         self.homebutton = HomePageButton("Home page", 75, 25, self)
         self.homebutton.setGeometry(0, 0, self.homebutton.width, self.homebutton.height)
         self.save_button = SaveButton(self.widget, "", "", 90, 25, "Save", self)
@@ -827,6 +831,7 @@ class MainWindow(QMainWindow):
         self.init_and_show()
         self.opened_once = False
         self.bad_modules = None
+        self.rebond_modules = None
         self.rotate_by_angle = math.radians(0) #*0
 
         global x_offset, y_offset
@@ -869,7 +874,9 @@ class MainWindow(QMainWindow):
         print("Currently on MainWindow")
         self.modno = 0
         self.scrolllabel.setText("Waiting for modules...")
+        self.scrolllabel2.setText("Waiting for modules...")
         self.bad_modules = None
+        self.rebond_modules = None
         self.opened_once = False
         self.widget.hide()
         self.modid.setText('')
@@ -878,9 +885,10 @@ class MainWindow(QMainWindow):
         #self.combobox.show()
         self.label2.show()
         self.label3.setText("Wirebonding and Encapsulation")
-        self.label3.setGeometry(int(w_width/3), 0, 400, 25)
+        self.label3.setGeometry(int((w_width - 620) / 2), 0, 400, 25)
         self.load_button.show()
         self.scrolllabel.show()
+        self.scrolllabel2.show()
         self.logolabel.show()
         self.namelabel.show()
         self.label.hide()
@@ -900,6 +908,11 @@ class MainWindow(QMainWindow):
                 mod_str = mod_str + " bk"
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
+        string2 = 'Modules to revisit for rebonding:\n'
+        self.rebond_modules = await find_to_rebond(pool)
+        for module in self.rebond_modules:
+            string2 = string2 + module + ' ' + str(self.rebond_modules[module]) + "\n"
+        self.scrolllabel2.setText(string2)
         
     async def check_mod_exists_main(self, page):
         if page == "encapspage":

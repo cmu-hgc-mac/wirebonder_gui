@@ -142,6 +142,24 @@ async def find_to_revisit(pool,):
             
     return(bad_modules)
 
+#get list of modules to revisit for rebonding
+async def find_to_rebond(pool,):
+    rebond_modules = {}
+
+    read_query = """SELECT REPLACE(module_name, '-','') AS module_name, pad_to_attempt_rebond
+            FROM module_info
+            WHERE pad_to_attempt_rebond IS NOT NULL AND pad_to_attempt_rebond != '{}'
+            ORDER BY REPLACE(module_name, '-','')"""
+
+    records = await fetch_PostgreSQL(pool, read_query)
+    if records is not None:
+        check = [dict(record) for record in records]
+        for mod in check:
+            if mod['pad_to_attempt_rebond']:
+                rebond_modules[mod['module_name']] = mod['pad_to_attempt_rebond']
+
+    return(rebond_modules)
+
 async def read_from_db(pool, modname, df_pad_map, df_backside_mbites_pos):
     d = {}
     try:
