@@ -90,6 +90,8 @@ class FrontPage(QMainWindow):
         self.state_counter_labels = {}
         self.ground_tracker_labels = {}
         self.state_button_labels = {}
+        attemptbondlist = list(np.intersect1d(self.df_front_states.index[self.df_front_states['grounded'] == 0].tolist(),self.df_front_states.index[self.df_front_states['state'] == 3].tolist()))
+        attemptbondlist = str([int(i) for i in attemptbondlist])
         attemptrebondlist = list(np.intersect1d(self.df_front_states.index[self.df_front_states['grounded'] == 0].tolist(),self.df_front_states.index[self.df_front_states['state'] == 3].tolist()))
         attemptrebondlist = str([int(i) for i in attemptrebondlist])
         tobegroundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 1].tolist()
@@ -155,21 +157,27 @@ class FrontPage(QMainWindow):
         labellegend.setGeometry(20,90, 300,80)
         labeltbgrounded = QLabel(f"ToBeGrounded: {tobegroundedlist}", self.widget)
         labelgrounded = QLabel(f"Grounded: {groundedlist}", self.widget)
-        labelattrebond = QLabel(f"ToBeBonded: {attemptrebondlist}", self.widget)
+        labelattbond = QLabel(f"ToBeBonded: {attemptbondlist}", self.widget)
+        labelattrebond = QLabel(f"ToBeReBonded: {attemptrebondlist}", self.widget)
         labeltbgrounded.setTextInteractionFlags(Qt.TextSelectableByMouse)
         labelgrounded.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        labelattbond.setTextInteractionFlags(Qt.TextSelectableByMouse)
         labelattrebond.setTextInteractionFlags(Qt.TextSelectableByMouse)
         labelgrounded.setFont(lfont)
         labeltbgrounded.setFont(lfont)
+        labelattbond.setFont(lfont)
         labelattrebond.setFont(lfont)
         labelgrounded.setWordWrap(True)
         labeltbgrounded.setWordWrap(True)
+        labelattbond.setWordWrap(True)
         labelattrebond.setWordWrap(True)
         labelgrounded.setGeometry(20,90+80, 300,20)
         labeltbgrounded.setGeometry(20,90+100, 300,20)
-        labelattrebond.setGeometry(20,90+120, 300,20)
+        labelattbond.setGeometry(20,90+120, 300,20)
+        labelattrebond.setGeometry(20,90+140, 300,20)
         self.ground_tracker_labels['tobegroundedlist'] = labeltbgrounded
         self.ground_tracker_labels['groundedlist'] = labelgrounded
+        self.ground_tracker_labels['attemptbondlist'] = labelattbond
         self.ground_tracker_labels['attemptrebondlist'] = labelattrebond
 
         info_label = QLabel("<a href=\"https://github.com/cmu-hgc-mac/wirebonder_gui/blob/main/README.md\">Help",self.widget)
@@ -996,6 +1004,7 @@ class MainWindow(QMainWindow):
         #self.combobox.hide()
         self.label2.hide()
         self.scrolllabel.hide()
+        self.scrolllabel2.hide()
         self.label.hide()
         self.load_button.hide()
         self.logolabel.hide()

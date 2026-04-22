@@ -253,8 +253,9 @@ async def read_front_db(pool, modname, df_pad_map):
     for index in ground_from_test:
         df_front_states.loc[index] = {"state": 0, "grounded": 1}
 
-    for index in attempt_rebond:
-        df_front_states.loc[index] = {"state": 3, "grounded": 0}
+    ### Disabling this so to distinguish true unbonded from rebond requests
+    # for index in attempt_rebond:
+    #     df_front_states.loc[index] = {"state": 3, "grounded": 0}
 
     #autofill wedge_id and spool_batch with the most recent one used if it's blank
     if front_wirebond_info['wedge_id'] == None or front_wirebond_info['wedge_id'] == '':
