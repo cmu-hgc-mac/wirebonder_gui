@@ -92,8 +92,7 @@ class FrontPage(QMainWindow):
         self.state_button_labels = {}
         attemptbondlist = list(np.intersect1d(self.df_front_states.index[self.df_front_states['grounded'] == 0].tolist(),self.df_front_states.index[self.df_front_states['state'] == 3].tolist()))
         attemptbondlist = str([int(i) for i in attemptbondlist])
-        attemptrebondlist = list(np.intersect1d(self.df_front_states.index[self.df_front_states['grounded'] == 0].tolist(),self.df_front_states.index[self.df_front_states['state'] == 3].tolist()))
-        attemptrebondlist = str([int(i) for i in attemptrebondlist])
+        attemptrebondlist = str([int(i) for i in self.info_dict.get("attempt_rebond", [])])
         tobegroundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 1].tolist()
         tobegroundedlist = str([int(i) for i in tobegroundedlist])
         groundedlist = self.df_front_states.index[self.df_front_states['grounded'] == 2].tolist()

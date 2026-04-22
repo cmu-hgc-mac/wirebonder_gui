@@ -280,7 +280,7 @@ async def read_front_db(pool, modname, df_pad_map):
         front_wirebond_info['spool_batch'] = old_w_i['spool_batch']
 
     return {"df_front_states" : df_front_states,  "front_encaps_info": None,
-        "front_wirebond_info": front_wirebond_info}
+        "front_wirebond_info": front_wirebond_info, "attempt_rebond": attempt_rebond}
 
 #read backside wirebonder information
 async def read_back_db(pool, modname, df_backside_mbites_pos):
