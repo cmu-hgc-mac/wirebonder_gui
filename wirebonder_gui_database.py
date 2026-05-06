@@ -157,7 +157,7 @@ class FrontPage(QMainWindow):
         labeltbgrounded = QLabel(f"ToBeGrounded: {tobegroundedlist}", self.widget)
         labelgrounded = QLabel(f"Grounded: {groundedlist}", self.widget)
         labelattbond = QLabel(f"ToBeBonded: {attemptbondlist}", self.widget)
-        labelattrebond = QLabel(f"ToBeReBonded: {attemptrebondlist}", self.widget)
+        labelattrebond = QLabel(f"TechnicianToCheck: {attemptrebondlist}", self.widget)
         labeltbgrounded.setTextInteractionFlags(Qt.TextSelectableByMouse)
         labelgrounded.setTextInteractionFlags(Qt.TextSelectableByMouse)
         labelattbond.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -915,7 +915,7 @@ class MainWindow(QMainWindow):
                 mod_str = mod_str + " bk"
             string = string + (mod_str+ "\n")
         self.scrolllabel.setText(string)
-        string2 = 'Modules to revisit for rebonding:\n'
+        string2 = 'Modules for technician to check:\n'
         self.rebond_modules = await find_to_rebond(pool)
         for module in self.rebond_modules:
             string2 = string2 + module + ' ' + str(self.rebond_modules[module]) + "\n"

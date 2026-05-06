@@ -149,7 +149,7 @@ async def find_to_rebond(pool,):
     read_query = """SELECT REPLACE(module_name, '-','') AS module_name, pad_to_attempt_rebond
             FROM module_info
             WHERE pad_to_attempt_rebond IS NOT NULL AND pad_to_attempt_rebond != '{}'
-            ORDER BY REPLACE(module_name, '-','')"""
+            ORDER BY module_no DESC"""
 
     records = await fetch_PostgreSQL(pool, read_query)
     if records is not None:
