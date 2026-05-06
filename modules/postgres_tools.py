@@ -385,7 +385,7 @@ async def read_encaps(pool, ):
 
 
 #save front wirebonder information to database
-async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None, home_seq = None):
+async def upload_front_wirebond(pool, modname, module_no, technician, comment, wedge_id, spool_batch, marked_done = False, wb_time = None, buttons = None, lastsave_fwb = None, home_seq = None, dismiss_recheck = False):
 
     technician = None if len(technician) == 0 else technician
     comment    = None if len(comment)    == 0 else comment
@@ -447,7 +447,7 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
     additional_ground = []
     db_update_module_info = {'dead_pad_to_be_ground':  list((set(dead_pad_to_be_ground_init)  - set(list_grounded_cells))) + additional_ground,
                              'noisy_pad_to_be_ground': list((set(noisy_pad_to_be_ground_init) - set(list_grounded_cells))) + additional_ground,
-                             'pad_to_attempt_rebond':  list(set(list_unbonded_cells))}
+                             'pad_to_attempt_rebond':  [] if dismiss_recheck else list(set(list_unbonded_cells))}
     
     if not home_seq:
         create_backup_csv(data_dict = db_upload)
@@ -460,7 +460,7 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
         lastsave_fwb[t]     = None if not lastsave_fwb[t]     else lastsave_fwb[t]
     
     dict_unchanged = lastsave_fwb_new == lastsave_fwb
-    if dict_unchanged:
+    if dict_unchanged and not dismiss_recheck:
         print(f"Data for {modname} unchanged. No new entry saved for front wirebond.")
         return True, lastsave_fwb
     else:
@@ -469,11 +469,16 @@ async def upload_front_wirebond(pool, modname, module_no, technician, comment, w
             return False, lastsave_fwb
         db_table_name = 'front_wirebond'
         try:
-            await upload_PostgreSQL(pool, db_table_name, db_upload)
-            lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
+            if not dict_unchanged:
+                await upload_PostgreSQL(pool, db_table_name, db_upload)
+                lastsave_fwb_new = {tkey: db_upload[tkey] for tkey in list(lastsave_fwb.keys())}
             db_date_info = {'wb_front': datetime.date.today()}
             if db_update_module_info['dead_pad_to_be_ground'] or db_update_module_info['noisy_pad_to_be_ground'] or db_update_module_info['pad_to_attempt_rebond']:
                 db_date_info.update(db_update_module_info)
+            elif dismiss_recheck:
+                db_date_info = {'pad_to_attempt_rebond': db_update_module_info['pad_to_attempt_rebond']}
+                print(f"Dismissing module revisit")
+
             await update_PostgreSQL(pool=pool, table_name = 'module_info', db_upload_data = db_date_info, name_col = 'module_name', part_name = modname)
             return True, lastsave_fwb_new
         except Exception as e:

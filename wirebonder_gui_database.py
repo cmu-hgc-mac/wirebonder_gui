@@ -115,31 +115,31 @@ class FrontPage(QMainWindow):
         nominal_button.show()
 
         lab6 = QLabel("<b>Wirebonding Information:</b>", self.widget)
-        lab6.setGeometry(20,275, 200, 25)
+        lab6.setGeometry(20,300, 200, 25)
         lab6 = QLabel("Technician CERN ID:", self.widget)
-        lab6.setGeometry(20,300, 150, 25)
+        lab6.setGeometry(20,325, 150, 25)
         self.techname = QLineEdit(self.widget)
-        self.techname.setGeometry(20,325, 150, 25)
+        self.techname.setGeometry(20,350, 150, 25)
         self.techname.setText(self.info_dict["front_wirebond_info"]["technician"])
         lab4 = QLabel("Comments:", self.widget)
-        lab4.setGeometry(20,515,150,50)
+        lab4.setGeometry(20,540,150,50)
         self.comments = QTextEdit(self.widget)
-        self.comments.setGeometry(20, 560, 150, 150)
+        self.comments.setGeometry(20, 585, 150, 150)
         self.comments.setText(self.info_dict["front_wirebond_info"]["comment"])
         lab4 = QLabel("Wedge ID:", self.widget)
-        lab4.setGeometry(20,340,150,50)
+        lab4.setGeometry(20,365,150,50)
         self.wedgeid = QLineEdit(self.widget)
-        self.wedgeid.setGeometry(20, 380, 150, 25)
+        self.wedgeid.setGeometry(20, 405, 150, 25)
         self.wedgeid.setText(self.info_dict["front_wirebond_info"]["wedge_id"])
         lab4 = QLabel("Spool batch:", self.widget)
-        lab4.setGeometry(20,400,150,50)
+        lab4.setGeometry(20,425,150,50)
         self.spool = QLineEdit(self.widget)
-        self.spool.setGeometry(20, 440, 150, 25)
+        self.spool.setGeometry(20, 465, 150, 25)
         self.spool.setText(self.info_dict["front_wirebond_info"]["spool_batch"])
         lab4 = QLabel("Date and time:", self.widget)
-        lab4.setGeometry(20,455,150,50)
+        lab4.setGeometry(20,480,150,50)
         self.wb_time = QLineEdit(self.widget)
-        self.wb_time.setGeometry(20, 500, 150, 25)
+        self.wb_time.setGeometry(20, 525, 150, 25)
         self.wb_time.setText(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
 
@@ -183,8 +183,13 @@ class FrontPage(QMainWindow):
         info_label.setOpenExternalLinks(True)
         info_label.setGeometry(250, 110, 100, 25)
 
+        self.dismiss_recheck = QCheckBox("Dismiss Re-Check", self.widget)
+        self.dismiss_recheck.setGeometry(20,245,150,25)
+        has_rebond = bool(self.info_dict.get("attempt_rebond", []))
+        self.dismiss_recheck.setEnabled(has_rebond)
+
         self.marked_done = QCheckBox("Frontside complete", self.widget)
-        self.marked_done.setGeometry(20,245,150,25)
+        self.marked_done.setGeometry(20,270,150,25)
         if self.info_dict["front_wirebond_info"]["wb_fr_marked_done"]:
             self.marked_done.setCheckState(Qt.Checked)
 
@@ -1065,7 +1070,11 @@ class MainWindow(QMainWindow):
         page = widget.currentWidget()
         print('Currently on page', page.pageid)
         if page.pageid == "frontpage":
-            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave, home_seq=home_seq)
+            saved, page.fwb_lastsave = await upload_front_wirebond(pool, self.modname, self.modno, page.techname.text(), page.comments.toPlainText(), page.wedgeid.text(), page.spool.text(), page.marked_done.isChecked(),  page.wb_time.text(), page.buttons, lastsave_fwb = page.fwb_lastsave, home_seq=home_seq, dismiss_recheck=page.dismiss_recheck.isChecked())
+            if saved and page.dismiss_recheck.isChecked():
+                page.dismiss_recheck.setChecked(False)
+                page.dismiss_recheck.setEnabled(False)
+                page.ground_tracker_labels['attemptrebondlist'].setText("TechnicianToCheck: []")
             savedp, page.fpi_lastsave = await upload_bond_pull_test(pool, self.modname, self.modno, page.mean.text(), page.std.text(), page.pull_techname.text(), page.pull_comments.toPlainText(), page.pull_time.text(), lastsave_fpi = page.fpi_lastsave, home_seq=home_seq)
             saved = saved and savedp
         elif page.pageid == "backpage":
