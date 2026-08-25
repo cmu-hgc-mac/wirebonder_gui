@@ -1094,7 +1094,7 @@ class MainWindow(QMainWindow):
             if len(page.modules) != 0:
                 if home_seq:
                     self.encapspage.timestatlabel.setText("To exit, <b>clear all modules</b>.")
-                    self.encapspage.timestatlabel.setStyleSheet("color: blue;")
+                    self.encapspage.timestatlabel.setStyleSheet("color: green;")
                     return False
                 if page.combobox2.currentText() in ("frontside", "BOTHsides") and not page.notches_done.isChecked():
                     self.encapspage.timestatlabel.setText("Please confirm <b>Frontside Notches Done</b> before saving.")
