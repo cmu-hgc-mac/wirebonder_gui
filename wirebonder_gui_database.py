@@ -616,6 +616,11 @@ class EncapsPage(QMainWindow):
         self.epoxy_batch.setText("Waiting for batch...")
         self.epoxy_batch.setGeometry(40 + self.techname.geometry().left() + self.techname.geometry().width() ,130+25, 150, 25)
 
+        self.notches_done = QCheckBox("Frontside Notches Done", self)
+        self.notches_done.setChecked(False)
+        self.notches_done.setGeometry(50 + self.epoxy_batch.geometry().left() + self.epoxy_batch.geometry().width(), 130+25, 220, 25)
+        self.notches_done.setVisible(self.combobox2.currentText() in ("frontside", "BOTHsides"))
+
         self.modules = {}
         self.modnos = {}
         self.async_epoxy_batch()
@@ -641,7 +646,9 @@ class EncapsPage(QMainWindow):
                 string = "\n".join(f"{module} {self.modules[module]}" for module in self.modules)
                 self.scrolllabel.setText(string)
             elif clicked_button == option_keep:
-                self.combobox2.setCurrentIndex( self.combobox2.findText( self.encapside) )                        
+                self.combobox2.setCurrentIndex( self.combobox2.findText( self.encapside) )
+
+        self.notches_done.setVisible(self.combobox2.currentText() in ("frontside", "BOTHsides"))
 
     @asyncSlot()
     async def async_epoxy_batch(self):
@@ -678,6 +685,7 @@ class EncapsPage(QMainWindow):
 
         if self.encapside:
             self.combobox2.setCurrentIndex( self.combobox2.findText( self.encapside) )
+            self.notches_done.setVisible(self.encapside in ("frontside", "BOTHsides"))
             read_query = f"""SELECT( SELECT module_no FROM module_info WHERE (REPLACE(module_name, '-','') = '{modname}' AND assembled IS NOT NULL) LIMIT 1) as in_info;"""
             check = await async_check(pool, read_query)
             if check['in_info'] is not None:
@@ -1084,14 +1092,18 @@ class MainWindow(QMainWindow):
             cure_start_full = f"{page.start_date.text()} {page.start_time.text()}:00"
             cure_end_full = f"{page.end_date.text()} {page.end_time.text()}:00"
             if len(page.modules) != 0:
-                if home_seq: 
+                if home_seq:
                     self.encapspage.timestatlabel.setText("To exit, <b>clear all modules</b>.")
                     self.encapspage.timestatlabel.setStyleSheet("color: blue;")
+                    return False
+                if page.combobox2.currentText() in ("frontside", "BOTHsides") and not page.notches_done.isChecked():
+                    self.encapspage.timestatlabel.setText("Please confirm <b>Frontside Notches Done</b> before saving.")
+                    self.encapspage.timestatlabel.setStyleSheet("color: red;")
                     return False
                 saved = await upload_encaps(pool, page.modules, page.modnos, page.techname.text(), enc_full, cure_start_full, cure_end_full, page.temperature.text(), page.curetemperature.text(), page.rel_hum.text(), page.epoxy_batch.text(), page.comments.toPlainText())
                 if not saved:
                     self.encapspage.timestatlabel.setText("To save, provide  <b>encap+start</b>  time (and/or)  <b>end</b>  time.") #<br>To exit, <b>remove modules</b>.")
-                    self.encapspage.timestatlabel.setStyleSheet("color: blue;")
+                    self.encapspage.timestatlabel.setStyleSheet("color: red;")
                 else:
                     self.encapspage.timestatlabel.setText("")
                     self.encapspage.clearall()
